@@ -27,6 +27,7 @@ tables = {version = "^3.9.2", python = "<3.13"}
 scikit-learn = "^1.6.1"
 logdecorator = {version = "^2.5", python = ">=3.10"}
 nvidia-ml-py = "^12.535"      # nvidia-ml-py3 is abandoned and fails to locate nvml
+tqdm = "^4.66"                # transitive via transformers, declared because notebooks use it directly
 tensorboard = "^2.19.0"
 bootstrap-stat = "0.2.4.2"   # 0.3.x drops the bootstrap_stat submodule
 tokenizers = "^0.21.0"

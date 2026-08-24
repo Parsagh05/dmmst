@@ -49,3 +49,4 @@ glom>=24.11
 joblib>=1.4.2
 tensorboard>=2.19
 nvidia-ml-py                  # NOT nvidia-ml-py3: that wheel is from 2017 and cannot locate nvml
+tqdm                          # progress bars; already a transformers/datasets dep, pinned here because the notebooks drive it directly

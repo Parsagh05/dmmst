@@ -152,7 +152,12 @@ One per person, fully independent — they share nothing but the repo.
   NumPy verification, unit tests, and MMV vs. `nllpch` on METABRIC.
 
 Both default to `SMOKE_TEST = True` (3 epochs, ~1 min) so a broken setup surfaces before
-committing to the 500-epoch runs. The training path needs neither `lifelines` nor a
+committing to the 500-epoch runs.
+
+Runs stream **live**: a `tqdm` bar per run, driven off the trainer's own `'epoch': N`
+log lines, plus an outer bar across the run list. Errors print immediately; routine
+metric lines are throttled to one per 10 s, because at `eval_steps: 1` a 500-epoch run
+emits ~1500 of them. The full log is still retained for diagnosing failures. The training path needs neither `lifelines` nor a
 `scipy` downgrade — `lifelines` is used only by `sat.eda`.
 
 ## Upstream bugs found and fixed
