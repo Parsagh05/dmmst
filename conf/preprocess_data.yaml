@@ -1,0 +1,8 @@
+# @package _global_
+task: preprocess_data
+
+defaults:
+  - _self_
+  - defaults
+
+max_shard_size: "1GB"

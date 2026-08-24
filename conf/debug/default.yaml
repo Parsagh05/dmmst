@@ -1,0 +1,39 @@
+# @package _global_
+
+# default debugging setup, runs 1 full epoch
+# other debugging configs can inherit from this one
+
+# disable callbacks during debugging
+defaults:
+ - optional local: cpu
+ - override /callbacks: null
+
+# sets level of all command line loggers to 'DEBUG'
+# https://hydra.cc/docs/tutorials/basic/running_your_app/logging/
+hydra:
+  job_logging:
+    root:
+      level: DEBUG
+    formatters:
+      colorlog:
+        format: '[%(cyan)s%(asctime)s%(reset)s][%(purple)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(filename)s:%(lineno)d - %(message)s'
+  hydra_logging:
+    root:
+      level: DEBUG
+    formatters:
+      colorlog:
+        format: '[%(cyan)s%(asctime)s%(reset)s][%(purple)s%(name)s%(reset)s][%(log_color)s%(levelname)s%(reset)s] - %(filename)s:%(lineno)d - %(message)s'
+
+  # use this to also set hydra loggers to 'DEBUG'
+  # verbose: True
+
+trainer:
+  training_arguments:
+    output_dir: ${data_dir}/debug/${modelname} #  redirect the output
+    overwrite_output_dir: True
+    full_determinism: True
+    max_steps: 1
+
+
+# overwrite task name so debugging logs are stored in separate folder
+task_name: sat-debug-${task}-${modelname}-${dataset}-${job}

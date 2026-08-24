@@ -1,0 +1,7 @@
+_target_: sat.data.dataset.parse_metabric.metabric
+source: ${data_source}
+processed_dir: ${modelhub}
+n_bins: 10
+encode: ordinal
+strategy: quantile
+name: ${dataset}

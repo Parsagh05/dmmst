@@ -1,0 +1,15 @@
+# @package _global_
+# Baseline model - not part of the paper's method. See SCOPE.md.
+dataset: support
+modelname: mensa
+
+defaults:
+  - support/defaults
+  - override /data/load: support
+  - override /data/parse: ${data/load}
+  - override /tokenizers: support
+  - override /transformers: bert
+  - override /tasks: mensa-survival
+  - override /trainer: support/default
+
+survival_loss_weight: 1.0

@@ -1,0 +1,28 @@
+# @package _global_
+# Baseline model - not part of the paper's method. See SCOPE.md.
+dataset: metabric_numeric
+modelname: mensa
+
+defaults:
+  - metabric_numeric/defaults
+  - override /data/load: metabric_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: metabric
+  - override /transformers: numeric_bert
+  - override /tasks: mensa-survival
+  - override /trainer: metabric/default
+
+# Task-specific parameters
+mensa_intermediate_size: 64
+mensa_num_hidden_layers: 2
+mensa_num_mixtures: 4
+mensa_distribution: weibull
+mensa_temp: 1000.0
+mensa_discount: 1.0
+mensa_bias: true
+mensa_batch_norm: true
+mensa_hidden_dropout_prob: 0.2
+mensa_elbo: true
+mensa_event_distribution: true
+mensa_dependency_regularization: 0.01
+survival_loss_weight: 1.0

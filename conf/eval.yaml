@@ -1,0 +1,10 @@
+# @package _global_
+task: evaluate
+
+defaults:
+  - _self_
+  - defaults
+
+bootstrap_samples: 50
+num_threads: -1 # use all cores
+bootstrap_ci_level: 0.95

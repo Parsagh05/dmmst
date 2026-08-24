@@ -1,0 +1,10 @@
+# Margin-Mean-Variance loss (UniSurv, arXiv:2409.06209) on its own.
+# Returns L_mm + lambda_v * L_v.
+survival:
+  _target_: sat.loss.MMVLoss
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  importance_sample_weights: ${data.label_transform.save_dir}/imp_sample.csv
+  num_events: ${data.num_events}
+  max_time: ${survival_max_time}
+  variance_weight: ${mmv_variance_weight}

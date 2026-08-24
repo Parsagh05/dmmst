@@ -1,0 +1,7 @@
+_target_: sat.data.dataset.parse_hsa_synthetic.hsa
+source: ${data_source}
+processed_dir: ${modelhub}
+scale_method: standard
+scale_numerics: true
+min_scale_numerics: 1.0
+name: ${dataset}

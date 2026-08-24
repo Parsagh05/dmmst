@@ -1,0 +1,13 @@
+# SUPPORT uses the same DeepSurv-style train/test HDF5 layout as METABRIC, so it
+# reuses the same parser; only the categorical/continuous column split differs.
+# 14 features: age, sex, race, num.co, diabetes, dementia, cancer, meanbp, hr,
+#              resp, temp, wblc, sod, crea
+_target_: sat.data.dataset.parse_metabric.metabric
+source: ${data_source}
+processed_dir: ${modelhub}
+n_bins: 10
+encode: ordinal
+strategy: quantile
+name: ${dataset}
+cols_categorical: [1, 2, 3, 4, 5, 6]              # sex, race, num.co, diabetes, dementia, cancer
+cols_standardize: [0, 7, 8, 9, 10, 11, 12, 13]    # age + the physiological measurements

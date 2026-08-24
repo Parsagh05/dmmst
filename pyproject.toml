@@ -1,0 +1,123 @@
+[tool.poetry]
+name = "dmmst"
+version = "0.1.0"
+description = "Dynamic Multi-modal & Multi-event Survival Transformer"
+authors = [
+    "Dominik Dahlem <mail@dominik-dahlem.com>",
+]
+maintainers = [
+    "Dominik Dahlem <mail@dominik-dahlem.com>",
+    "Mahed Abroshan <mahed.ab@gmail.com>",
+]
+readme = "README.md"
+repository = "https://github.com/sat/sat.git"
+keywords = ["survival", "transformer"]
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+hydra-core = "^1.3.2"
+hydra-colorlog = "^1.2.0"
+transformers = "4.50.0"
+datasets = "3.4.1"
+evaluate = "^0.4.3"
+h5py = "^3.13.0"
+pandas = "^2.2.3"
+polars = "^0.20.15"
+tables = {version = "^3.9.2", python = "<3.13"}
+scikit-learn = "^1.6.1"
+logdecorator = {version = "^2.5", python = ">=3.10"}
+nvidia-ml-py = "^12.535"      # nvidia-ml-py3 is abandoned and fails to locate nvml
+tensorboard = "^2.19.0"
+bootstrap-stat = "0.2.4.2"   # 0.3.x drops the bootstrap_stat submodule
+tokenizers = "^0.21.0"
+numba = "0.61.0"
+numpy = "<2.2"
+einops = "0.8.1"
+torchtuples = "^0.2.2"
+accelerate = "^1.4.0"
+lifelines = "0.27.8"
+scipy = ">=1.11,<1.14"       # lifelines 0.27.8 needs scipy.integrate.trapz
+seaborn = "^0.13.2"
+hydra-optuna-sweeper = { git = "https://github.com/dahlem/hydra", subdirectory = "plugins/hydra_optuna_sweeper" }
+plotly = "^6.0.1"
+ipython = "^9.0.2"
+glom = "^24.11.0"
+pyarrow = "^15.0.2"
+fastparquet = "^2024.5.0"
+joblib = "^1.4.2"
+torchsurv = "0.1.4"          # 0.2.x requires torch>=2.8
+
+[tool.poetry.group.dev.dependencies]
+pytest = "8.3.5"
+coverage = "^7.6.12"
+black = "^25.1.0"
+tensorboard = "^2.19.0"
+pyflakes = "^3.2.0"
+isort = "^6.0.1"
+mypy = "^1.9.0"
+ruff = "^0.3.4"
+pre-commit = "^3.5.0"
+bandit = "^1.7.8"
+nbstripout = "^0.7.1"
+types-pyyaml = "^6.0.12.12"
+hypothesis = "^6.131.18"
+
+
+[tool.poetry.group.test.dependencies]
+tabulate = "^0.9.0"
+
+[tool.black]
+line-length = 88
+target-version = ['py312']
+include = '\.pyi?$'
+exclude = '''
+/(
+    \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | _build
+  | buck-out
+  | build
+  | dist
+)/
+'''
+
+[tool.pytest.ini_options]
+log_cli = true
+log_cli_level = "DEBUG"
+
+[tool.isort]
+profile = "black"
+line_length = 88
+known_first_party = ["sat"]
+sections = ["FUTURE", "STDLIB", "THIRDPARTY", "FIRSTPARTY", "LOCALFOLDER"]
+skip = ["sat/pycox"]
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+exclude = ["sat/pycox", "tests/"]
+
+[[tool.mypy.overrides]]
+module = ["sat.pycox.*", "tests.*"]
+ignore_errors = true
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+lint.select = ["E", "F", "B", "W", "I"]
+lint.ignore = ["E203", "E501"]
+
+[tool.poetry.scripts]
+optimize = "sat.optuna_optimize:optimize"
+visualize_optuna = "sat.optuna_visualize:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

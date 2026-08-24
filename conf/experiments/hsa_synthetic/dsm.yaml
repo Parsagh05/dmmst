@@ -1,0 +1,16 @@
+# @package _global_
+dataset: hsa_synthetic
+modelname: dsm
+
+defaults:
+  - hsa_synthetic/defaults
+  - override /data/load: hsa_synthetic
+  - override /data/parse: ${data/load}
+  - override /data/transform: default
+  - override /tokenizers: hsa_synthetic
+  - override /transformers: numeric_bert
+  - override /tasks: dsm-survival
+  - override /trainer: hsa_synthetic/default
+
+
+survival_loss_weight: 1.0
