@@ -154,6 +154,14 @@ One per person, fully independent — they share nothing but the repo.
 Both default to `SMOKE_TEST = True` (3 epochs, ~1 min) so a broken setup surfaces before
 committing to the 500-epoch runs.
 
+Kaggle's **"GPU T4 x2" exposes two GPUs**, which makes HF Trainer wrap the model in
+`nn.DataParallel` (`if self.args.n_gpu > 1`). DataParallel scatters every forward input
+across devices and dies here with `RuntimeError: chunk expects at least a 1-dimensional
+tensor`, because some inputs are 0-dimensional. The notebooks therefore pin child runs
+to one GPU via `CUDA_VISIBLE_DEVICES` (`USE_SINGLE_GPU = True`). That is also the right
+call on merit — the model is ~3 MB, so this is overhead-bound and DataParallel's
+per-step scatter/gather would make it slower even if it worked.
+
 Runs stream **live**: a `tqdm` bar per run, driven off the trainer's own `'epoch': N`
 log lines, plus an outer bar across the run list. Errors print immediately; routine
 metric lines are throttled to one per 10 s, because at `eval_steps: 1` a 500-epoch run

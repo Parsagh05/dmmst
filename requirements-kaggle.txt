@@ -1,6 +1,10 @@
 # Verified working set (Python 3.11). Four pins below are non-obvious --
 # each one was an actual failure before being pinned.
 
+# NOTE on Kaggle's "GPU T4 x2": two visible GPUs make HF Trainer use DataParallel,
+# which crashes this model with "chunk expects at least a 1-dimensional tensor".
+# Run with CUDA_VISIBLE_DEVICES=0 (the notebooks do this automatically).
+
 # --- torch: install FIRST, from the CUDA index, or pip pulls a CPU/newer build ---
 # pip install torch==2.5.1+cu121 torchvision==0.20.1+cu121 \
 #     --index-url https://download.pytorch.org/whl/cu121
