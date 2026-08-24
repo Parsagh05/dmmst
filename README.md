@@ -22,6 +22,10 @@ you commit to full runs.
 
 Bundled datasets (nothing to download): METABRIC, SUPPORT, hsa-synthetic.
 
+Each notebook finishes by writing a single zip to `/kaggle/working` with all metrics,
+tables, per-run logs, the environment snapshot and the resolved configs - one download
+instead of picking through the Output panel.
+
 Folder Structure
 ============================
 

@@ -162,6 +162,12 @@ to one GPU via `CUDA_VISIBLE_DEVICES` (`USE_SINGLE_GPU = True`). That is also th
 call on merit — the model is ~3 MB, so this is overhead-bound and DataParallel's
 per-step scatter/gather would make it slower even if it worked.
 
+Each notebook ends by writing a single **zip** to `/kaggle/working` containing every
+`metrics.json`, the CSV tables, `experimental_setup.md`, the **full per-run logs**
+(prefixed `FAILED_` when a run died), an `environment.json` snapshot, and the
+**fully-resolved Hydra config** of every run — so any number can be traced back to the
+exact composed config that produced it.
+
 Runs stream **live**: a `tqdm` bar per run, driven off the trainer's own `'epoch': N`
 log lines, plus an outer bar across the run list. Errors print immediately; routine
 metric lines are throttled to one per 10 s, because at `eval_steps: 1` a 500-epoch run
