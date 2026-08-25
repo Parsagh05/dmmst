@@ -1,0 +1,16 @@
+# Metrics matched to the SurvTRACE protocol (Wang & Sun, BCB '22) so numbers are
+# directly comparable with their Table 2: sksurv concordance_index_ipcw with tau
+# truncation and a training-set censoring distribution, at the 25/50/75% quantiles
+# of uncensored event times.
+- _target_: sat.evaluate.survtrace_metrics.SurvTRACEMetrics
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+# keep the existing metrics alongside for continuity with earlier runs
+- _target_: sat.evaluate.eval_modules.ComputeBrier
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  per_horizon: ${brier_per_horizon}
+- _target_: sat.evaluate.eval_modules.ComputeCIndex
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv

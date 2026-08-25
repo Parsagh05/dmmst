@@ -1,0 +1,39 @@
+# @package _global_
+# Model + optimiser matched to SurvTRACE's STConfig:
+#   hidden_size 16, intermediate_size 64, num_hidden_layers 3, num_attention_heads 2
+#   lr 1e-3, weight_decay 1e-4, batch 64
+defaults:
+  - ../defaults
+
+learning_rate: 0.001
+weight_decay: 0.0001
+warmup_steps: 0
+
+label_transform_scheme: quantiles
+label_transform_cuts: 4          # -> cuts [0, q25, q50, q75, max] = SurvTRACE num_durations 5
+
+select_hidden_layers: null
+sentence_emb: 2
+token_emb: 2
+dropout: 0.0
+
+transformer_hidden_size: 16
+transformer_num_hidden_layers: 3
+transformer_num_attention_heads: 2
+transformer_intermediate_size: 64
+transformer_attention_probs_dropout_prob: 0.1
+transformer_hidden_probs_dropout: ${dropout}
+
+shared_intermediate_size: 64
+shared_batch_norm: false
+shared_hidden_dropout_prob: 0.0
+shared_bias: true
+shared_num_hidden_layers: 0
+shared_num_labels: 16
+
+survival_intermediate_size: 64
+survival_num_hidden_layers: 1
+survival_batch_norm: false
+survival_hidden_dropout_prob: false
+survival_bias: true
+survival_loss_weight: 1.0

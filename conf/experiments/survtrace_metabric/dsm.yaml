@@ -1,0 +1,14 @@
+# @package _global_
+# SurvTRACE-comparable dsm baseline.
+dataset: metabric_numeric
+modelname: survtrace_dsm
+
+defaults:
+  - survtrace_metabric/defaults
+  - override /data/load: metabric_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: metabric
+  - override /transformers: numeric_bert
+  - override /tasks: dsm-survival
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default

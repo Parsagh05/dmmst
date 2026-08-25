@@ -1,0 +1,16 @@
+# @package _global_
+# Cox PH linear reference. Uses the same split, features and metric as the neural
+# models so it acts as a sanity floor: any deep model that scores below this is
+# not earning its complexity. Run with `python -m sat.coxph`, not sat.finetune.
+dataset: metabric_numeric
+modelname: survtrace_coxph
+
+defaults:
+  - survtrace_metabric/defaults
+  - override /data/load: metabric_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: metabric
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default

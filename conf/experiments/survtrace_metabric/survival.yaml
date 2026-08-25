@@ -1,0 +1,15 @@
+# @package _global_
+# SurvTRACE-comparable run: standardized (NOT discretized) features, their model
+# size and optimiser settings, and the sksurv IPCW C-td metric with tau truncation.
+dataset: metabric_numeric
+modelname: survtrace_survival
+
+defaults:
+  - survtrace_metabric/defaults
+  - override /data/load: metabric_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: metabric
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default

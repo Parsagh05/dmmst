@@ -1,0 +1,13 @@
+# SUPPORT via the numeric (standardized, non-discretized) path - the encoding the
+# paper's Sec. 2.2 describes and the one SurvTRACE uses (StandardScaler).
+# 14 features: age, sex, race, num.co, diabetes, dementia, cancer, meanbp, hr,
+#              resp, temp, wblc, sod, crea
+# modality: 1 = continuous, 0 = categorical. Continuous = [0,7..13] per SurvTRACE.
+_target_: sat.data.dataset.parse_metabric_numerics.metabric
+source: ${data_source}
+processed_dir: ${modelhub}
+scale_method: standard
+scale_numerics: true
+min_scale_numerics: 1.0
+name: ${dataset}
+modality: [1, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]

@@ -174,6 +174,48 @@ metric lines are throttled to one per 10 s, because at `eval_steps: 1` a 500-epo
 emits ~1500 of them. The full log is still retained for diagnosing failures. The training path needs neither `lifelines` nor a
 `scipy` downgrade — `lifelines` is used only by `sat.eda`.
 
+## Reproducing the published benchmark
+
+The first full run scored ~0.10-0.15 below SurvTRACE's Table 2 on METABRIC, with every
+model below plain Cox PH. That was mostly a **measurement** problem, not a modelling one.
+
+**The C-index was computed wrongly.** `ComputeCIndex` looped over the duration cuts and
+took the risk estimate at each, but never passed `tmax`/`tau` to the concordance
+calculator, so every "horizon" scored concordance over the whole follow-up. It also fit
+the IPCW censoring distribution on the *test* split instead of train. The symptom was a
+C-index flat across horizons (0.571/0.577/0.583) where published values fall
+(0.713/0.680/0.644).
+
+[survtrace_metrics.py](sat/evaluate/survtrace_metrics.py) reproduces the reference
+protocol exactly — `sksurv.metrics.concordance_index_ipcw` with `tau` truncation and a
+train-fitted censoring distribution, evaluated at the 25/50/75% quantiles of uncensored
+event times. Select it with `tasks/metrics=survtrace`.
+
+**Feature encoding.** `conf/data/parse/metabric.yaml` discretises continuous covariates
+with `KBinsDiscretizer(n_bins=10)`. SurvTRACE uses `StandardScaler`, and the paper's own
+§2.2 argues explicitly *against* discretisation. The `*_numeric` parse path is the one to
+use; switching alone is worth about +0.025 C-index.
+
+**What was already correct:** the duration cuts. `train_labeltransform` computes
+`linspace(0,1,cuts+1)[1:-1]` quantiles of uncensored event times, giving
+`[0, q25, q50, q75, max]` — exactly SurvTRACE's `num_durations: 5`.
+
+`conf/experiments/survtrace_{metabric,support}/` bundles all of this with SurvTRACE's own
+hyperparameters (hidden 16, intermediate 64, 3 layers, 2 heads, lr 1e-3, weight decay
+1e-4, batch 64, early stopping).
+
+### Cox PH reference
+
+[sat/coxph.py](sat/coxph.py) fits `sksurv` Cox PH on the same split, features and metric,
+so there is a sanity floor every deep model must clear:
+
+    python -m sat.coxph experiments=survtrace_metabric/survival
+
+**Caveat on error bars:** the splitter is hash-based on record ID, so changing `seed`
+varies model initialisation but *not* the train/test split. SurvTRACE reports variation
+over 10 different splits. Our spreads are therefore narrower than theirs and are not
+directly comparable as uncertainty estimates.
+
 ## Upstream bugs found and fixed
 
 All three were latent in the original repo and would have hit any real run:

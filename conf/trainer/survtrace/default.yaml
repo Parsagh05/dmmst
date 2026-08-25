@@ -1,0 +1,31 @@
+# Training setup from the SurvTRACE reference implementation
+# (experiment_metabric.ipynb): batch 64, lr 1e-3, weight_decay 1e-4,
+# epochs 20 with early_stop_patience 5.
+custom: false
+
+training_arguments:
+  _target_: transformers.TrainingArguments
+  report_to: "tensorboard"
+  optim: adamw_torch
+  overwrite_output_dir: true
+  num_train_epochs: 100
+  per_device_train_batch_size: 64
+  per_device_eval_batch_size: 512
+  load_best_model_at_end: true
+  greater_is_better: ${tasks.eval_metric_greater_is_better}
+  eval_strategy: "epoch"
+  save_strategy: "epoch"
+  logging_strategy: "epoch"
+  eval_delay: 0
+  weight_decay: ${weight_decay}
+  metric_for_best_model: ${tasks.eval_metric}
+  learning_rate: ${learning_rate}
+  lr_scheduler_type: constant
+  warmup_steps: ${warmup_steps}
+  save_total_limit: 1
+  output_dir: ${modelhub}/${dataset}/${modelname}
+  save_safetensors: false
+  gradient_accumulation_steps: 1
+  gradient_checkpointing: false
+  dataloader_pin_memory: true
+  remove_unused_columns: false

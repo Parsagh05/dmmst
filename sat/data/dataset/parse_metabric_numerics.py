@@ -10,6 +10,7 @@ __authors__ = ["Dominik Dahlem"]
 __status__ = "Development"
 
 from dataclasses import dataclass
+from typing import List, Optional
 from logging import DEBUG, ERROR
 from pathlib import Path
 
@@ -36,6 +37,10 @@ class metabric:
     scale_method: str
     scale_numerics: bool = True
     min_scale_numerics: float = 1.0
+    # Per-column modality: 1 = continuous (numeric value kept), 0 = categorical
+    # (token only). Defaults to METABRIC's 9-feature layout; SUPPORT and any other
+    # DeepSurv-style HDF5 dataset supply their own from the config.
+    modality: Optional[List[int]] = None
 
     @log_on_start(DEBUG, "Create metabric data representation...")
     @log_on_error(
@@ -85,13 +90,24 @@ class metabric:
 
             # 2. encode the features
             # differentiate modalities, i.e., token = 0, numerics = 1
-            modality = [1, 1, 1, 1, 0, 0, 0, 0, 1]
+            modality = list(
+                self.modality if self.modality is not None
+                else [1, 1, 1, 1, 0, 0, 0, 0, 1]
+            )
+            n_features = len(modality)
+            if df_features.shape[1] != n_features:
+                raise ValueError(
+                    f"modality has {n_features} entries but the data has "
+                    f"{df_features.shape[1]} feature columns"
+                )
 
             # create tokens for a transformer model
             logger.debug("Prepend column name to the features turning them into tokens")
             logger.debug(f"Original feature columns: {df_features.columns}")
             new_feature_columns = []
-            new_feature_columns.extend(list(map(lambda c: "x" + str(c), range(9))))
+            new_feature_columns.extend(
+                list(map(lambda c: "x" + str(c), range(n_features)))
+            )
             new_target_columns = ["t", "e"]
             logger.debug(f"New feature columns: {new_feature_columns}")
             logger.debug(f"New target columns: {new_target_columns}")

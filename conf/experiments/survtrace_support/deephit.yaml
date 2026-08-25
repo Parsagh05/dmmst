@@ -1,0 +1,16 @@
+# @package _global_
+# SurvTRACE-comparable deephit baseline.
+dataset: support_numeric
+modelname: survtrace_deephit
+
+defaults:
+  - survtrace_support/defaults
+  - override /data/load: support_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: support_numeric
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/losses: deephit
+  - override /tasks/losses/balancing: grad
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default
