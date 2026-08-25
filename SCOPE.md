@@ -200,6 +200,14 @@ use; switching alone is worth about +0.025 C-index.
 `linspace(0,1,cuts+1)[1:-1]` quantiles of uncensored event times, giving
 `[0, q25, q50, q75, max]` — exactly SurvTRACE's `num_durations: 5`.
 
+**Installing scikit-survival:** pick the release that matches the numpy already
+present and never move numpy itself — `pandas`/`pyarrow` are compiled against it, and
+downgrading gives `ValueError: numpy.dtype size changed ... Expected 96, got 88` on the
+next `import pandas`. numpy>=2 → `scikit-survival`; numpy<2 → `scikit-survival==0.22.2`.
+The notebooks detect this and pin numpy to its installed version so pip fails loudly
+rather than breaking the image. Without sksurv everything still runs, only the `ctd_*`
+metrics are absent.
+
 `conf/experiments/survtrace_{metabric,support}/` bundles all of this with SurvTRACE's own
 hyperparameters (hidden 16, intermediate 64, 3 layers, 2 heads, lr 1e-3, weight decay
 1e-4, batch 64, early stopping).

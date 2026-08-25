@@ -47,8 +47,11 @@ try:
 except ImportError:  # pragma: no cover
     HAVE_SKSURV = False
     logger.warning(
-        "scikit-survival is not installed; the SurvTRACE-matched metrics are "
-        "unavailable. Install it with: pip install 'scikit-survival==0.22.2'"
+        "scikit-survival is not installed; the SurvTRACE-matched ctd_* metrics "
+        "will be absent (everything else still runs). Install the release that "
+        "matches your numpy: numpy>=2 -> 'scikit-survival', numpy<2 -> "
+        "'scikit-survival==0.22.2'. Do NOT move numpy to satisfy it: pandas and "
+        "pyarrow are compiled against it."
     )
 
 

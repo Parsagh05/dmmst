@@ -14,7 +14,7 @@
 transformers==4.50.0          # repo subclasses HF internals; 4.57 breaks modeling_bert.py
 datasets==3.4.1
 tokenizers>=0.21,<0.22
-numpy<2                       # numba 0.61 needs <2.2; scikit-survival 0.22 + pyarrow 15 need <2
+numpy                         # do NOT pin/move this on Kaggle: pandas and pyarrow are compiled against the image's numpy
 accelerate>=1.4.0
 evaluate>=0.4.3
 
@@ -29,7 +29,12 @@ lifelines==0.27.8
 scipy<1.14
 # PIN 3: bootstrap-stat 0.3.x removed the bootstrap_stat submodule that
 #        sat/utils/statistics.py imports.
-scikit-survival==0.22.2      # reference IPCW C-td + Brier; newer versions force numpy>=2 and break numba/pyarrow
+# PIN 5: scikit-survival supplies the reference IPCW C-td + Brier. Which release
+#        you need depends on the numpy already present, and numpy MUST NOT be moved
+#        (pandas/pyarrow are compiled against it; changing it gives
+#        "ValueError: numpy.dtype size changed"). numpy>=2 -> scikit-survival;
+#        numpy<2 -> scikit-survival==0.22.2. The notebooks pick automatically.
+scikit-survival
 bootstrap-stat==0.2.4.2
 # PIN 4: bootstrap-stat pulls pathos, which wants dill>=0.4.1, but datasets
 #        3.4.1 requires dill<0.3.9. pathos 0.3.2 is compatible with both.
