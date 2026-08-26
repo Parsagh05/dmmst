@@ -224,6 +224,62 @@ varies model initialisation but *not* the train/test split. SurvTRACE reports va
 over 10 different splits. Our spreads are therefore narrower than theirs and are not
 directly comparable as uncertainty estimates.
 
+## DSM / MENSA: two bugs that made them lose to linear Cox PH
+
+Both scored ~0.55 C_td against Cox PH's 0.61-0.63, with high seed variance. Two
+independent defects, both in the parametric-mixture path:
+
+**1. The mixture gate was noise.** The head did
+`F.gumbel_softmax(logits_g, tau=self.temp)` in training and passed **raw logits** at
+inference — while `WeibullMixtureDistribution.get_mixture_weights` applies its own
+softmax on top. So training saw a double-softmaxed, Gumbel-noised gate at tau=1000
+(i.e. near-uniform random), inference saw a different, correctly normalised quantity,
+and the gate never learned. DSM (Nagpal et al.) uses no Gumbel noise: the gate is
+`logits/temp` into a log-softmax. Now deterministic and identical in both modes.
+
+**2. The parametric scale did not match the duration scale.** `shape`/`scale` leave the
+parameter net as `softplus(...) + 0.01`, i.e. order 1, but the duration cuts are raw
+(0-355 on METABRIC, 0-2029 on SUPPORT). Weibull survival is `exp(-(t/scale)^shape)`, so
+`t=42` against `scale~1` underflows: predicted survival collapsed to
+`[0.998, 0.008, 0.003, 0.001, 0.000]` — "99% dead by day 43". Ranking still worked, so
+this hid behind a plausible C_td while the Brier score was **0.68**, worse than a
+constant predictor. Both the head and the loss now work on a normalised
+`t / max(duration_cut)` axis; the rescaling is monotone, so ranking is untouched and
+calibration is repaired.
+
+Effect on METABRIC (seed 0):
+
+| | C_td | Brier |
+|---|---|---|
+| DSM before | 0.546 | 0.68 |
+| DSM after | **0.634** | **0.189** |
+| MENSA before | 0.552 | 0.578 |
+| MENSA after | 0.567 | 0.204 |
+
+DSM now clears Cox PH. **MENSA still does not** (0.567 vs 0.613) — its calibration is
+fixed but discrimination is not, and it is a multi-event model being asked to work on
+single-event data, so `hsa_synthetic` is the setting where it should actually be judged.
+
+## Measuring MMV fairly
+
+MMV optimises *mean lifetime*, not ranking, so concordance cannot show whether it
+works — and the survival head emits no `time_to_event`, so `ComputeL1` cannot be used
+with it either. `SurvivalMAEMetrics` derives `mu_hat = integral of S(t) dt`
+(UniSurv Eq. 3) straight from the predicted curve and scores it as `mae_uncensored`
+(observed events only) and `mae_margin` (Haider's margin MAE, the actual target of
+`L_mm`). Select with `tasks/metrics=survtrace_mae`.
+
+METABRIC, seed 0 — the difference this exposes:
+
+| recipe | C_td | Brier | MAE uncens. | MAE margin |
+|---|---|---|---|---|
+| `nllpch` | 0.6643 | 0.1926 | 86.57 | 92.22 |
+| `nllpch_mmv` | 0.6546 | 0.1791 | **60.83** | **79.46** |
+
+A ~30% cut in time-to-event error for ~0.01 of C_td. Judged on concordance alone MMV
+looks useless; judged on what it optimises it is a clear win. Single seed — the
+multi-seed confirmation is what the notebook run is for.
+
 ## Upstream bugs found and fixed
 
 All three were latent in the original repo and would have hit any real run:

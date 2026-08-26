@@ -207,7 +207,15 @@ class DSMLoss(Loss):
 
             # Get event indicators and durations for this event
             event_indicator = events[:, event_idx]  # [batch_size]
-            event_duration = durations[:, event_idx]  # [batch_size]
+            # Normalise the observed time by the same factor the DSM/MENSA head
+            # uses for its evaluation grid (the largest duration cut). The
+            # parameter net emits shape/scale of order 1, so the likelihood and
+            # the predicted survival curve must both live on the [0, 1] time axis;
+            # training on raw durations while predicting on a normalised grid
+            # trains the parameters against the wrong scale and inverts the risk
+            # ordering (C_td below 0.5).
+            time_scale = torch.clamp(self.duration_cuts.to(device).max(), min=1e-7)
+            event_duration = durations[:, event_idx] / time_scale  # [batch_size]
 
             # Skip if no events of this type
             if not torch.any(event_indicator):

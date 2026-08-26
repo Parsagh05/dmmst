@@ -164,15 +164,23 @@ class DSMTaskHead(SurvivalTask):
         """
         batch_size, num_time_points = time_points.shape
 
-        # For training, use gumbel softmax for the mixture weights
-        if self.training:
-            # Apply gumbel softmax to create differentiable one-hot vectors
-            processed_logits = F.gumbel_softmax(
-                logits_g, tau=self.temp, hard=False, dim=1
-            )
-        else:
-            # Just pass through the original logits for inference
-            processed_logits = logits_g
+        # The mixture gate must be handled identically in training and inference.
+        # It previously was not:
+        #
+        #   training : F.gumbel_softmax(logits_g, tau=self.temp)  -> probabilities
+        #   inference: logits_g                                   -> raw logits
+        #
+        # and WeibullMixtureDistribution/LogNormalMixtureDistribution apply their own
+        # softmax on top (see get_mixture_weights). So during training the gate was
+        # softmaxed twice, with Gumbel noise added, at tau=1000 - which drives the
+        # mixture weights to a near-uniform random draw and destroys the gate's
+        # gradient signal - while inference used a completely different, correctly
+        # normalised quantity. That train/inference mismatch is why DSM/MENSA scored
+        # near chance (C_td ~0.55, below linear Cox PH) with high seed variance.
+        #
+        # DSM (Nagpal et al.) applies no Gumbel noise: the gate is logits/temp fed to
+        # a log-softmax. Match that, deterministically, in both modes.
+        processed_logits = logits_g / self.temp
 
         # Extract event type if available for the specified event
         event_type = None
@@ -225,15 +233,23 @@ class DSMTaskHead(SurvivalTask):
         """
         batch_size, num_time_points = time_points.shape
 
-        # For training, use gumbel softmax for the mixture weights
-        if self.training:
-            # Apply gumbel softmax to create differentiable one-hot vectors
-            processed_logits = F.gumbel_softmax(
-                logits_g, tau=self.temp, hard=False, dim=1
-            )
-        else:
-            # Just pass through the original logits for inference
-            processed_logits = logits_g
+        # The mixture gate must be handled identically in training and inference.
+        # It previously was not:
+        #
+        #   training : F.gumbel_softmax(logits_g, tau=self.temp)  -> probabilities
+        #   inference: logits_g                                   -> raw logits
+        #
+        # and WeibullMixtureDistribution/LogNormalMixtureDistribution apply their own
+        # softmax on top (see get_mixture_weights). So during training the gate was
+        # softmaxed twice, with Gumbel noise added, at tau=1000 - which drives the
+        # mixture weights to a near-uniform random draw and destroys the gate's
+        # gradient signal - while inference used a completely different, correctly
+        # normalised quantity. That train/inference mismatch is why DSM/MENSA scored
+        # near chance (C_td ~0.55, below linear Cox PH) with high seed variance.
+        #
+        # DSM (Nagpal et al.) applies no Gumbel noise: the gate is logits/temp fed to
+        # a log-softmax. Match that, deterministically, in both modes.
+        processed_logits = logits_g / self.temp
 
         # Extract event type if available for the specified event
         event_type = None
@@ -300,11 +316,29 @@ class DSMTaskHead(SurvivalTask):
                     )
                 duration_cuts = torch.clamp(duration_cuts, min=eps)
 
-            time_points = duration_cuts.unsqueeze(0).expand(batch_size, -1)
+            # Evaluate the parametric mixture on a NORMALISED time axis.
+            #
+            # shape/scale come out of the parameter net as softplus(...) + 0.01, i.e.
+            # order 1, but the duration cuts are on the raw scale of the data (0-355
+            # on METABRIC, 0-2029 on SUPPORT). Weibull survival is
+            # exp(-(t/scale)^shape), so t=42 against scale~1 underflows to zero: the
+            # predicted survival collapsed to [0.998, 0.008, 0.003, 0.001, 0.000],
+            # i.e. "99% dead by day 43". Ranking still worked, so C_td looked fine
+            # while the Brier score was ~0.68 (worse than a constant predictor).
+            #
+            # DSM (Nagpal et al.) avoids this by fitting on a rescaled time axis.
+            # Dividing every horizon by the largest cut puts t in [0, 1], which is the
+            # range the parameter net can actually express. It is a monotone rescaling
+            # so the ranking is unchanged; only the calibration is repaired.
+            self._time_scale = torch.clamp(duration_cuts.max(), min=eps)
+            time_points = (
+                (duration_cuts / self._time_scale).unsqueeze(0).expand(batch_size, -1)
+            )
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(
-                    f"Using duration cuts from loss, shape: {time_points.shape}, range: [{time_points.min():.5f}, {time_points.max():.5f}]"
+                    f"Using duration cuts from loss (normalised by {self._time_scale:.4f}), "
+                    f"shape: {time_points.shape}, range: [{time_points.min():.5f}, {time_points.max():.5f}]"
                 )
         else:
             # If duration cuts aren't available, create a reasonable range

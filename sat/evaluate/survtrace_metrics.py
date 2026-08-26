@@ -180,3 +180,113 @@ class SurvTRACEMetrics:
         if brier:
             metrics["brier_survtrace_weighted_avg"] = float(np.mean(brier))
         return metrics
+
+
+class SurvivalMAEMetrics:
+    """Time-to-event error implied by the predicted survival curve.
+
+    Why this exists
+    ---------------
+    MMV (UniSurv Eq. 3-6) optimises the *mean lifetime* of the predicted density,
+    not a ranking. Judging it by concordance alone measures something it does not
+    target, and the survival task head emits no ``time_to_event``, so the existing
+    ``ComputeL1`` regression metric cannot be used with it.
+
+    This derives the same quantity MMV optimises directly from the survival curve
+
+        mu_hat = integral of S(t) dt        (UniSurv Eq. 3)
+
+    and scores it two ways:
+
+    * ``mae_uncensored`` - |mu_hat - T| over observed events only. Simple, but
+      biased: it silently discards the censored majority.
+    * ``mae_margin`` - Haider et al.'s margin MAE. Observed subjects are scored
+      against T, censored subjects against the Kaplan-Meier best guess
+      ``e_m = T + integral_T^inf S_km / S_km(T)``, weighted by ``1 - S_km(T)``.
+      This is exactly the target of MMV's L_mm, so it is the fair test.
+
+    Note the same truncation caveat as everywhere else: S is only known out to the
+    last duration cut, so mu_hat is a lower bound on the true expected lifetime.
+    Fine for *comparing* models on one dataset, not an absolute lifetime estimate.
+    """
+
+    def __init__(self, cfg, duration_cuts: str, training_set: Optional[str] = None):
+        from sat.utils.km import KaplanMeierArea
+
+        self.cfg = cfg
+        cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"]).cuts.values
+        self.cuts = np.asarray(cuts, dtype=float)
+
+        self.kms = {}
+        if training_set is not None:
+            df = pd.read_csv(training_set, header=0)
+            for event in range(self.cfg.num_events):
+                self.kms[event] = KaplanMeierArea(
+                    df[f"duration_event{event + 1}"], df[f"event{event + 1}"] == 1
+                )
+
+    def _mean_lifetime(self, surv):
+        """UniSurv Eq. 3: mu_hat = integral of S, trapezoidal over the cut grid."""
+        grid = self.cuts
+        if surv.shape[-1] == len(grid) - 1:
+            grid = grid[1:]
+        elif surv.shape[-1] != len(grid):
+            grid = grid[: surv.shape[-1]]
+        widths = np.diff(grid)
+        left, right = surv[:, :-1], surv[:, 1:]
+        return np.sum(widths * (left + right) / 2.0, axis=1)
+
+    def compute_event(self, predictions, references, event):
+        out = {}
+        if predictions.size == 0 or predictions.ndim < 4:
+            return out
+
+        events_test = references[:, (1 * self.cfg.num_events + event)].astype(bool)
+        durations_test = references[:, (3 * self.cfg.num_events + event)].astype(float)
+        surv = predictions[:, 2, event]
+
+        mu = self._mean_lifetime(surv)
+
+        obs = events_test
+        if obs.any():
+            out[f"mae_uncensored_{event}th_event"] = float(
+                np.mean(np.abs(mu[obs] - durations_test[obs]))
+            )
+
+        km = self.kms.get(event)
+        if km is not None:
+            target = durations_test.astype(float).copy()
+            weight = np.ones_like(target)
+            cens = ~events_test
+            if cens.any():
+                ct = durations_test[cens]
+                try:
+                    target[cens] = km.best_guess(ct)
+                    weight[cens] = 1.0 - km.predict(ct)
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(f"margin MAE unavailable: {e}")
+                    weight[cens] = 0.0
+            denom = weight.sum()
+            if denom > 0:
+                out[f"mae_margin_{event}th_event"] = float(
+                    np.sum(weight * np.abs(mu - target)) / denom
+                )
+        return out
+
+    def compute(self, predictions, references):
+        from sat.evaluate.eval_modules import SurvivalEvaluationModule
+
+        predictions = SurvivalEvaluationModule.survival_predictions(self, predictions)
+        metrics, unc, mar = {}, [], []
+        for event in range(self.cfg.num_events):
+            m = self.compute_event(predictions, references, event)
+            metrics.update(m)
+            if f"mae_uncensored_{event}th_event" in m:
+                unc.append(m[f"mae_uncensored_{event}th_event"])
+            if f"mae_margin_{event}th_event" in m:
+                mar.append(m[f"mae_margin_{event}th_event"])
+        if unc:
+            metrics["mae_uncensored"] = float(np.mean(unc))
+        if mar:
+            metrics["mae_margin"] = float(np.mean(mar))
+        return metrics

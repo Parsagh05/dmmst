@@ -1,0 +1,18 @@
+# SurvTRACE-comparable discrimination/calibration PLUS the time-to-event error
+# implied by the survival curve. Use this whenever MMV is involved: MMV optimises
+# mean lifetime, so concordance alone cannot show whether it works.
+- _target_: sat.evaluate.survtrace_metrics.SurvTRACEMetrics
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+- _target_: sat.evaluate.survtrace_metrics.SurvivalMAEMetrics
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+- _target_: sat.evaluate.eval_modules.ComputeBrier
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  per_horizon: ${brier_per_horizon}
+- _target_: sat.evaluate.eval_modules.ComputeCIndex
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv

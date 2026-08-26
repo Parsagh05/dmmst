@@ -156,14 +156,12 @@ class MENSATaskHead(SurvivalTask):
             event_logits_g = logits_g[:, event_idx, :]  # [batch_size, num_mixtures]
 
             # Process logits differently for training vs inference
-            if self.training:
-                # Apply gumbel softmax to create differentiable one-hot vectors
-                processed_logits = F.gumbel_softmax(
-                    event_logits_g, tau=self.temp, hard=False, dim=1
-                )
-            else:
-                # Just pass through the original logits for inference
-                processed_logits = event_logits_g
+            # Deterministic gate, identical in training and inference. See the
+            # note in heads/dsm.py: gumbel_softmax(tau=temp) here was both adding
+            # noise and double-softmaxing (the mixture distribution softmaxes
+            # internally), and inference used raw logits instead - a train/inference
+            # mismatch that left the gate untrained.
+            processed_logits = event_logits_g / self.temp
 
             # Extract event type if available for the specified event
             event_type = None
@@ -229,14 +227,12 @@ class MENSATaskHead(SurvivalTask):
             event_logits_g = logits_g[:, event_idx, :]  # [batch_size, num_mixtures]
 
             # Process logits differently for training vs inference
-            if self.training:
-                # Apply gumbel softmax to create differentiable one-hot vectors
-                processed_logits = F.gumbel_softmax(
-                    event_logits_g, tau=self.temp, hard=False, dim=1
-                )
-            else:
-                # Just pass through the original logits for inference
-                processed_logits = event_logits_g
+            # Deterministic gate, identical in training and inference. See the
+            # note in heads/dsm.py: gumbel_softmax(tau=temp) here was both adding
+            # noise and double-softmaxing (the mixture distribution softmaxes
+            # internally), and inference used raw logits instead - a train/inference
+            # mismatch that left the gate untrained.
+            processed_logits = event_logits_g / self.temp
 
             # Extract event type if available for the specified event
             event_type = None
@@ -310,7 +306,14 @@ class MENSATaskHead(SurvivalTask):
                     )
                 duration_cuts = torch.clamp(duration_cuts, min=eps)
 
-            time_points = duration_cuts.unsqueeze(0).expand(batch_size, -1)
+            # Normalised time axis - same reason as heads/dsm.py: the parametric
+            # scale is order 1 while the duration cuts are on the raw data scale, so
+            # exp(-(t/scale)^shape) underflows and the survival curve collapses.
+            # Monotone rescaling, so ranking is untouched and calibration is fixed.
+            self._time_scale = torch.clamp(duration_cuts.max(), min=1e-7)
+            time_points = (
+                (duration_cuts / self._time_scale).unsqueeze(0).expand(batch_size, -1)
+            )
 
             if logger.isEnabledFor(logging.DEBUG):
                 logger.debug(
