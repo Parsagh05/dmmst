@@ -46,3 +46,5 @@ config:
       elbo: ${dsm_paper_elbo}
       mlp_dropout: ${dsm_paper_dropout}
       scale_init: ${dsm_paper_scale_init}
+      training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+      pretrain: ${dsm_paper_pretrain}

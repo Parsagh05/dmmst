@@ -55,6 +55,7 @@ dsm_paper_discount: 1.0       # alpha on the censored log-survival term
 dsm_paper_elbo: true          # reference default for the main training phase
 dsm_paper_dropout: 0.0
 dsm_paper_scale_init: null    # null = from the data; -1.0 = reference default
+dsm_paper_pretrain: true      # DSM fits base shape/scale on the durations before training
 
 # MENSA as published (arXiv:2409.06525, ML4H 2025) - a BASELINE, not our method.
 # Its trajectory term is prior work closely related to our L_mul, so it is the most

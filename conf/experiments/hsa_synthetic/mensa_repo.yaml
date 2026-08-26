@@ -13,6 +13,7 @@ defaults:
   - override /tokenizers: hsa_synthetic
   - override /transformers: numeric_bert
   - override /tasks: mensa-paper-survival
+  - override /tasks/metrics: survtrace_within
   - override /trainer: hsa_synthetic/default
 
 mensa_trajectory_time: reference

@@ -10,6 +10,7 @@ defaults:
   - override /tokenizers: hsa_synthetic
   - override /transformers: numeric_bert
   - override /tasks: survival
+  - override /tasks/metrics: survtrace_within
   - override /trainer: hsa_synthetic/default
 
 survival_intermediate_size: 16

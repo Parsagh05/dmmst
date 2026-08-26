@@ -116,6 +116,68 @@ def dsm_log_f_s(shape, scale, gate_logits, t, elbo: bool = False):
     return log_f, log_s
 
 
+def pretrain_base_params(durations, events, n_dists, n_iter=1000, lr=1e-2):
+    """Fit covariate-free base (log-shape, log-scale) by maximum likelihood.
+
+    DSM does this before the main training run (`utilities.py::pretrain_dsm`): it
+    fits a 1-feature, 1-layer model on the durations alone and copies the resulting
+    `shape`/`scale` parameters into the full model as initialisation.
+
+    Skipping it is why the head was unstable across seeds - every run started its
+    base parameters at an arbitrary point (-1) and some seeds never recovered, e.g.
+    DSM on METABRIC gave 0.671/0.650/0.675/0.664/0.597 and on SUPPORT sat below
+    linear Cox PH on every seed. Pretraining gives every seed the same
+    data-matched starting point.
+
+    Args:
+        durations: observed times, [n]
+        events: 1 if the event was observed, [n]
+        n_dists: number of mixture components.
+
+    Returns:
+        (shape, scale), each [n_dists], detached.
+    """
+    t = torch.as_tensor(durations, dtype=torch.float32).reshape(-1)
+    e = torch.as_tensor(events, dtype=torch.float32).reshape(-1) > 0
+    t = torch.clamp(t, min=1e-6)
+
+    shape = torch.full((n_dists,), -1.0, requires_grad=True)
+    scale = torch.full((n_dists,), -1.0, requires_grad=True)
+    opt = torch.optim.Adam([shape, scale], lr=lr)
+
+    log_t = torch.log(t).unsqueeze(1)
+    best, best_params, patience = float("inf"), None, 0
+    for _ in range(n_iter):
+        opt.zero_grad()
+        k = shape.unsqueeze(0)
+        b = scale.unsqueeze(0)
+        ek = torch.exp(torch.clamp(k, max=20.0))
+        log_base = b + log_t
+        s_comp = -torch.exp(torch.clamp(ek * log_base, max=30.0))
+        f_comp = k + b + (ek - 1.0) * log_base + s_comp
+        # reference sums components without mixture weights at this stage
+        ll = f_comp[e].sum() + s_comp[~e].sum()
+        loss = -ll / t.shape[0]
+        if not torch.isfinite(loss):
+            break
+        loss.backward()
+        opt.step()
+
+        v = float(loss.detach())
+        if v < best - 1e-4:
+            best, patience = v, 0
+            best_params = (shape.detach().clone(), scale.detach().clone())
+        else:
+            patience += 1
+            if patience > 20:
+                break
+
+    if best_params is None:
+        return torch.full((n_dists,), -1.0), torch.full((n_dists,), -1.0)
+    logger.info(f"DSM pretrain: unconditional NLL {best:.4f}")
+    return best_params
+
+
 class DSMPaperConfig(SurvivalConfig):
     """Configuration for the paper-faithful DSM head."""
 
@@ -130,6 +192,8 @@ class DSMPaperConfig(SurvivalConfig):
         mlp_layers: Optional[List[int]] = None,
         mlp_dropout: float = 0.0,
         scale_init: Optional[float] = None,
+        training_set: Optional[str] = None,
+        pretrain: bool = True,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -144,6 +208,9 @@ class DSMPaperConfig(SurvivalConfig):
         self.mlp_dropout = mlp_dropout
         # None -> derive from the duration cuts; -1.0 reproduces the reference.
         self.scale_init = scale_init
+        # transformed training labels, for DSM's covariate-free pretraining phase
+        self.training_set = training_set
+        self.pretrain = pretrain
 
 
 class DSMPaperTaskHead(SurvivalTask):
@@ -185,11 +252,25 @@ class DSMPaperTaskHead(SurvivalTask):
         else:
             scale_init = -1.0
 
-        # learnable per-(risk, component) base parameters; reference inits both -1
-        self.shape = nn.Parameter(-torch.ones(self.num_events, self.k_dists))
-        self.scale = nn.Parameter(
-            torch.full((self.num_events, self.k_dists), scale_init)
-        )
+        # learnable per-(risk, component) base parameters. The reference inits both
+        # to -1 and then *pretrains* them on the durations; we do the same when the
+        # training labels are reachable, else fall back to the scale heuristic.
+        shape_init = -torch.ones(self.num_events, self.k_dists)
+        scale_init_t = torch.full((self.num_events, self.k_dists), scale_init)
+        if config.pretrain and config.training_set:
+            try:
+                labels = pd.read_csv(config.training_set, header=0)
+                for p in range(self.num_events):
+                    sh, sc = pretrain_base_params(
+                        labels[f"duration_event{p + 1}"].values,
+                        (labels[f"event{p + 1}"] == 1).values,
+                        self.k_dists,
+                    )
+                    shape_init[p], scale_init_t[p] = sh, sc
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"DSM pretraining skipped ({e}); using scale heuristic")
+        self.shape = nn.Parameter(shape_init)
+        self.scale = nn.Parameter(scale_init_t)
 
         self.act = nn.SELU()
         self.shapeg = nn.ModuleList(
