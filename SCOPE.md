@@ -224,6 +224,30 @@ varies model initialisation but *not* the train/test split. SurvTRACE reports va
 over 10 different splits. Our spreads are therefore narrower than theirs and are not
 directly comparable as uncertainty estimates.
 
+## DeepHit: the extra loss term
+
+Lee et al. (AAAI 2018) state plainly: *"This loss function is the sum of two terms
+L_Total = L1 + L2"* -- the log-likelihood (Eq. 2) and the ranking loss (Eq. 4). There
+is no third term. `conf/tasks/losses/deephit.yaml` adds `DeepHitCalibrationLoss`,
+which is not in the paper.
+
+[deephit_paper.yaml](conf/tasks/losses/deephit_paper.yaml) is L1 + L2 only, with
+`alpha_k` on the ranking term. Use it when reporting under the name "DeepHit".
+METABRIC seed 0:
+
+| recipe | 25% | 50% | 75% | C_td | Brier |
+|---|---|---|---|---|---|
+| `deephit` (3 terms) | 0.652 | 0.646 | 0.636 | 0.645 | 0.195 |
+| **`deephit_paper`** | **0.681** | 0.652 | 0.634 | **0.656** | 0.196 |
+| published | 0.712 | 0.657 | 0.603 | - | - |
+
+Dropping the non-paper term helps, and the result now beats published at 75%. The
+residual gap at 25% is structural rather than a loss bug: DeepHit's architecture emits
+a single softmax over the whole (event x time) grid, so the mass sums to one by
+construction, whereas SAT parameterises a discrete hazard. The likelihood here
+reconstructs `y_{k,s}` as `hazard_k(t) * S_k(t-) * prod_{j!=k} S_j(t)`, which is a
+valid competing-risks likelihood but not the same parameterisation.
+
 ## DSM, implemented as published
 
 `heads/dsm.py` was never the published parameterisation. It emits

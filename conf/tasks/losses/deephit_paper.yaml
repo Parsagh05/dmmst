@@ -1,0 +1,30 @@
+# DeepHit exactly as published (Lee et al., AAAI 2018):
+#
+#     L_Total = L1 + L2
+#
+#   L1 (Eq. 2) log-likelihood of the joint (event, time) distribution
+#   L2 (Eq. 4) ranking loss, eta(x,y) = exp(-(x - y) / sigma), summed over
+#              acceptable pairs, weighted by alpha_k per event
+#
+# There is NO third term. `deephit.yaml` adds DeepHitCalibrationLoss, which does
+# not appear in Lee et al.; it comes from a later variant. Use this recipe when
+# reporting numbers under the name "DeepHit".
+defaults:
+  - balancing: fixed
+
+survival:
+  _target_: sat.loss.MetaLoss
+  losses:
+    - _target_: sat.loss.DeepHitLikelihoodLoss
+      num_events: ${data.num_events}
+      importance_sample_weights: ${data.label_transform.save_dir}/imp_sample.csv
+    - _target_: sat.loss.SampleRankingLoss
+      duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+      num_events: ${data.num_events}
+      sigma: ${ranking_loss_sigma}
+      importance_sample_weights: ${data.label_transform.save_dir}/imp_sample.csv
+  coeffs:
+    - 1.0                       # L1
+    - ${deephit_alpha}          # alpha_k on L2
+  balance_strategy: fixed
+  balance_params: {}

@@ -1,0 +1,15 @@
+# @package _global_
+# DeepHit as published (Lee et al., AAAI 2018): L_Total = L1 + L2, no third term.
+dataset: metabric_numeric
+modelname: survtrace_deephit_paper
+
+defaults:
+  - survtrace_metabric/defaults
+  - override /data/load: metabric_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: metabric
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/losses: deephit_paper
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default

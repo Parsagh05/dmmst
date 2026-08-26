@@ -32,6 +32,7 @@ mmv_variance_weight: 0.01  # lambda_v in Eq. 10; paper grids {0.001, 0.01, 0.1, 
 
 # DeepHit
 calibration_loss_coeff: 0.2
+deephit_alpha: 1.0            # alpha_k in Lee et al. Eq. 4 (weight on the ranking term L2)
 
 # DSM - Deep Survival Machines
 dsm_intermediate_size: 64
