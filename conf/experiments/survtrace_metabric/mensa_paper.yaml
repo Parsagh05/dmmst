@@ -1,5 +1,18 @@
 # @package _global_
-# MENSA as published (arXiv:2409.06525). BASELINE - not our method.
+# MENSA, as published (arXiv:2409.06525).
+#
+# Two variants ship so the paper/code discrepancy can be measured rather than
+# guessed at. They share ONE implementation and differ only in these two knobs:
+#
+#   mensa_trajectory_time : "paper"     -> Eq. 8 as written, log S_B(T_A)
+#                           "reference" -> released code, log S_B(T_B)
+#   mensa_paper_scale_init: null        -> base log-scale from the data
+#                           -1.0        -> the reference's literal default
+#
+# The reference's -1.0 assumes event times of order 1. METABRIC runs to 355 and
+# SUPPORT to 2029, so with -1.0 the survival curve starts pinned near zero and the
+# gradient is uninformative. Expect the repo variant to underperform on these
+# datasets for that reason - which is the point of running both.
 dataset: metabric_numeric
 modelname: survtrace_mensa_paper
 
@@ -12,3 +25,6 @@ defaults:
   - override /tasks: mensa-paper-survival
   - override /tasks/metrics: survtrace
   - override /trainer: survtrace/default
+
+mensa_trajectory_time: paper
+mensa_paper_scale_init: null

@@ -1,5 +1,5 @@
 # @package _global_
-# MENSA, as published (arXiv:2409.06525).
+# MENSA, as released by the authors (github.com/thecml/mensa).
 #
 # Two variants ship so the paper/code discrepancy can be measured rather than
 # guessed at. They share ONE implementation and differ only in these two knobs:
@@ -14,7 +14,7 @@
 # gradient is uninformative. Expect the repo variant to underperform on these
 # datasets for that reason - which is the point of running both.
 dataset: support_numeric
-modelname: survtrace_mensa_paper
+modelname: survtrace_mensa_repo
 
 defaults:
   - survtrace_support/defaults
@@ -26,5 +26,5 @@ defaults:
   - override /tasks/metrics: survtrace
   - override /trainer: survtrace/default
 
-mensa_trajectory_time: paper
-mensa_paper_scale_init: null
+mensa_trajectory_time: reference
+mensa_paper_scale_init: -1.0

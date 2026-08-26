@@ -1,9 +1,9 @@
 # @package _global_
-# MENSA on the 2-event dataset, as published (arXiv:2409.06525). This is the setting MENSA is designed for
+# MENSA on the 2-event dataset, as released by the authors (github.com/thecml/mensa). This is the setting MENSA is designed for
 # and where its trajectory term (Eq. 8) is meaningful - set mensa_traj_lambda > 0
 # and mensa_trajectories to a genuinely known ordering.
 dataset: hsa_synthetic
-modelname: mensa_paper
+modelname: mensa_repo
 
 defaults:
   - hsa_synthetic/defaults
@@ -15,5 +15,5 @@ defaults:
   - override /tasks: mensa-paper-survival
   - override /trainer: hsa_synthetic/default
 
-mensa_trajectory_time: paper
-mensa_paper_scale_init: null
+mensa_trajectory_time: reference
+mensa_paper_scale_init: -1.0
