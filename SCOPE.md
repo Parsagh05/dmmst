@@ -224,6 +224,36 @@ varies model initialisation but *not* the train/test split. SurvTRACE reports va
 over 10 different splits. Our spreads are therefore narrower than theirs and are not
 directly comparable as uncertainty estimates.
 
+## DSM, implemented as published
+
+`heads/dsm.py` was never the published parameterisation. It emits
+`softplus(net) + 0.01` -- positive parameters of order 1 -- while DSM emits values in
+**log space** on top of a learnable base and exponentiates downstream:
+
+    shape = SELU(shapeg(xrep)) + shape_base     # base init -1
+    scale = SELU(scaleg(xrep)) + scale_base
+    gate  = gateg(xrep) / temp                  # bias=False
+
+Because `exp(b)` reaches any magnitude, DSM has no time-scale problem. The softplus
+version does, which is what forced the time-normalisation workaround and produced a
+Brier of 0.68.
+
+[dsm_paper.py](sat/models/heads/dsm_paper.py) +
+[loss/survival/dsm_paper.py](sat/loss/survival/dsm_paper.py) follow the reference,
+including the ELBO surrogate (`elbo=True`, reference default) and the `discount`
+`alpha` on the censored term.
+
+**It reproduces the published numbers.** METABRIC, seed 0:
+
+| | 25% | 50% | 75% |
+|---|---|---|---|
+| ours (`dsm_paper`) | 0.711 | 0.666 | 0.631 |
+| published | 0.707 | 0.663 | 0.636 |
+| gap | +0.004 | +0.003 | -0.005 |
+
+Brier 0.192. `dsm_repo` uses the reference's literal `-1.0` scale init (C_td 0.546,
+Brier 0.541) -- run both to see that the init, not the method, was the problem.
+
 ## MENSA, implemented as published
 
 **MENSA is not our method.** It is *MENSA: A Multi-Event Network for Survival Analysis

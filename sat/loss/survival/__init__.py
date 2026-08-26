@@ -14,6 +14,7 @@ from .nllpchazard import SATNLLPCHazardLoss
 # --- baselines ---
 from .deephit import DeepHitCalibrationLoss, DeepHitLikelihoodLoss
 from .dsm import DSMLoss
+from .dsm_paper import DSMPaperLoss
 from .mensa import MENSALoss
 from .mensa_paper import MENSAPaperLoss
 
@@ -24,6 +25,7 @@ __all__ = [
     "DeepHitLikelihoodLoss",
     "DeepHitCalibrationLoss",
     "DSMLoss",
+    "DSMPaperLoss",
     "MENSALoss",
     "MENSAPaperLoss",
 ]

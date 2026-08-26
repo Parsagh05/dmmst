@@ -14,6 +14,7 @@ from transformers.models.bert.configuration_bert import BertConfig
 from .base import BaseConfig
 from .classification import EventClassificationTaskConfig, EventClassificationTaskHead
 from .dsm import DSMConfig, DSMTaskHead
+from .dsm_paper import DSMPaperConfig, DSMPaperTaskHead
 from .embeddings import SentenceEmbedding, TokenEmbedding
 from .mensa import MENSAConfig, MENSATaskHead
 from .mensa_paper import MENSAPaperConfig, MENSAPaperTaskHead
@@ -47,6 +48,7 @@ __all__ = [
     "EventDurationTaskConfig",
     "MTLConfig",
     "DSMConfig",
+    "DSMPaperConfig",
     "MENSAConfig",
     "MENSAPaperConfig",
     "SatBertConfig",
@@ -56,6 +58,7 @@ __all__ = [
     "EventDurationTaskHead",
     "MTLForSurvival",
     "DSMTaskHead",
+    "DSMPaperTaskHead",
     "MENSATaskHead",
     "MENSAPaperTaskHead",
 ]

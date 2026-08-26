@@ -1,0 +1,20 @@
+# @package _global_
+# DSM, with the reference's default init.
+#   dsm_paper : scale_init from the data
+#   dsm_repo  : scale_init -1.0, the reference's literal default (assumes t ~ 1;
+#               METABRIC runs to 355, so expect this to underperform)
+# Both use the published log-space SELU + learnable-base parameterisation.
+dataset: metabric_numeric
+modelname: survtrace_dsm_repo
+
+defaults:
+  - survtrace_metabric/defaults
+  - override /data/load: metabric_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: metabric
+  - override /transformers: numeric_bert
+  - override /tasks: dsm-paper-survival
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default
+
+dsm_paper_scale_init: -1.0
