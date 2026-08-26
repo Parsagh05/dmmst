@@ -1,0 +1,12 @@
+# MENSA loss exactly as published (arXiv:2409.06525):
+#   Eq. 7  multi-event likelihood, inverse-frequency event weights
+#   Eq. 8  trajectory term, log S_B(T_A) over known orderings A -> B
+#   Eq. 9  L_total = (1-lambda) L_ME + lambda L_traj
+survival:
+  _target_: sat.loss.MENSAPaperLoss
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  num_events: ${data.num_events}
+  trajectories: ${mensa_trajectories}
+  traj_lambda: ${mensa_traj_lambda}
+  trajectory_time: ${mensa_trajectory_time}

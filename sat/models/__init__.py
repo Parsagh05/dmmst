@@ -27,6 +27,9 @@ AutoModel.register(heads.DSMConfig, heads.DSMTaskHead)
 AutoConfig.register(heads.MENSAConfig.model_type, heads.MENSAConfig)
 AutoModel.register(heads.MENSAConfig, heads.MENSATaskHead)
 
+AutoConfig.register(heads.MENSAPaperConfig.model_type, heads.MENSAPaperConfig)
+AutoModel.register(heads.MENSAPaperConfig, heads.MENSAPaperTaskHead)
+
 AutoConfig.register(
     heads.EventClassificationTaskConfig.model_type,
     heads.EventClassificationTaskConfig,

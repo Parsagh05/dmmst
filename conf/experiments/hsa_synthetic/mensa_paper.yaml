@@ -1,0 +1,16 @@
+# @package _global_
+# MENSA as published (arXiv:2409.06525) on the 2-event dataset. This is the setting
+# MENSA is designed for - and where its trajectory term (Eq. 8) and our L_mul are
+# actually comparable. Set mensa_traj_lambda > 0 and mensa_trajectories to enable it.
+dataset: hsa_synthetic
+modelname: mensa_paper
+
+defaults:
+  - hsa_synthetic/defaults
+  - override /data/load: hsa_synthetic
+  - override /data/parse: ${data/load}
+  - override /data/transform: default
+  - override /tokenizers: hsa_synthetic
+  - override /transformers: numeric_bert
+  - override /tasks: mensa-paper-survival
+  - override /trainer: hsa_synthetic/default

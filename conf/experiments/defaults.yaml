@@ -45,6 +45,18 @@ dsm_batch_norm: true
 dsm_hidden_dropout_prob: 0.2
 dsm_elbo: true
 
+# MENSA as published (arXiv:2409.06525, ML4H 2025) - a BASELINE, not our method.
+# Its trajectory term is prior work closely related to our L_mul, so it is the most
+# relevant competitor rather than a generic baseline. See SCOPE.md.
+mensa_paper_num_mixtures: 4      # paper searches Psi in {1,3,5,7}
+mensa_paper_intermediate_size: 64
+mensa_paper_temp: 1.0            # reference default; NOT DSM's 1000 (that flattens the gate)
+mensa_paper_dropout: 0.0
+mensa_paper_scale_init: null    # null = derive from the data; -1.0 = reference default
+mensa_traj_lambda: 0.0           # lambda in Eq. 9; 0 = pure Eq. 7 likelihood
+mensa_trajectories: []           # known orderings [[A, B], ...], 0-indexed
+mensa_trajectory_time: paper     # "paper" = Eq. 8 S_B(T_A); "reference" = released code S_B(T_B)
+
 # MENSA - Multi-Event Neural Survival Analysis
 mensa_intermediate_size: 64
 mensa_num_hidden_layers: 1

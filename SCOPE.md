@@ -224,7 +224,57 @@ varies model initialisation but *not* the train/test split. SurvTRACE reports va
 over 10 different splits. Our spreads are therefore narrower than theirs and are not
 directly comparable as uncertainty estimates.
 
-## DSM / MENSA: two bugs that made them lose to linear Cox PH
+## MENSA, implemented as published
+
+**MENSA is not our method.** It is *MENSA: A Multi-Event Network for Survival Analysis
+with Trajectory-based Likelihood Estimation* (ML4H 2025, arXiv:2409.06525,
+github.com/thecml/mensa) — and it is uncited in our paper despite being the closest
+competitor: it covers competing *and* co-occurring events, and its trajectory-based
+likelihood targets the same thing as our `L_mul`, namely correct within-subject event
+ordering. Table 1 needs a MENSA row and related work needs to distinguish the two.
+
+What shipped with SAT as "MENSA" is a MENSA-*inspired* reimplementation — a Weibull
+mixture with a learnable event-dependency matrix and sparsity regularisation. The word
+"trajectory" appears nowhere in it. Publishing its numbers under that name would
+misattribute a result to a published paper.
+
+[mensa_paper.py](sat/models/heads/mensa_paper.py) and
+[loss/survival/mensa_paper.py](sat/loss/survival/mensa_paper.py) implement the paper:
+
+| Paper | Here |
+|---|---|
+| Eq. 3-4, shared MLP + per-state residual adapters, `log beta = beta~ + SELU(...)` | `MENSAPaperTaskHead.params` |
+| Eq. 5-6, Weibull mixture in log space | `weibull_log_f_s` |
+| Eq. 7, multi-event likelihood, inverse-frequency `w_p` | `MENSAPaperLoss` |
+| Eq. 8, trajectory term `log S_B(T_A)` | `MENSAPaperLoss`, `trajectories` / `traj_lambda` |
+| Eq. 9, `(1-lambda) L_ME + lambda L_traj` | `MENSAPaperLoss` |
+
+Use `experiments=survtrace_metabric/mensa_paper` or `hsa_synthetic/mensa_paper`.
+12 unit tests check the maths against closed-form Weibull and against each equation.
+
+**Two documented deviations**, both forced:
+
+1. *The paper's Eq. 8 evaluates `S_B` at `T_A`; the released code evaluates it at
+   `T_B`* (it passes the survival array already computed at each event's own time).
+   `trajectory_time` selects — default `"paper"`.
+2. *Numerics.* The reference computes `-(exp(b) t)**exp(k)` directly, which overflows
+   to `inf` on raw durations (355 on METABRIC, 2029 on SUPPORT) and makes
+   `PowBackward1` return NaN. We compute it in log space —
+   `exp(exp(k) * (b + log t))` — algebraically identical, clamped before
+   exponentiating. Relatedly the reference initialises the base log-scale to `-1`,
+   which assumes `t ~ 1`; at `t ~ 100` that pins survival at ~0 with no gradient. The
+   base scale is initialised from the data instead (`scale_init: null`); set
+   `scale_init: -1.0` for the reference default. The functional form and loss are
+   unchanged.
+
+**Result (METABRIC, seed 0):** C_td 0.588, Brier 0.262 — better than the old
+MENSA-style code (0.567 / 0.578) but still below Cox PH (0.613). METABRIC is
+single-event, so MENSA's whole premise is inactive there; `hsa_synthetic` (2 events) is
+the setting where it and our `L_mul` are actually comparable. On that dataset the
+trajectory term *lowers* C_td when given a fabricated ordering (0.577 → 0.541 with
+`0 -> 1`), which is the expected behaviour: it only helps when the ordering is real.
+
+## DSM / MENSA-style: two bugs that made them lose to linear Cox PH
 
 Both scored ~0.55 C_td against Cox PH's 0.61-0.63, with high seed variance. Two
 independent defects, both in the parametric-mixture path:

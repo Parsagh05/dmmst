@@ -25,6 +25,7 @@ from .survival.nllpchazard import SATNLLPCHazardLoss
 from .survival.deephit import DeepHitCalibrationLoss, DeepHitLikelihoodLoss
 from .survival.dsm import DSMLoss
 from .survival.mensa import MENSALoss
+from .survival.mensa_paper import MENSAPaperLoss
 
 __all__ = [
     "Loss",
@@ -49,4 +50,5 @@ __all__ = [
     "DeepHitCalibrationLoss",
     "DSMLoss",
     "MENSALoss",
+    "MENSAPaperLoss",
 ]

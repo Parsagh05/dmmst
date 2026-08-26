@@ -15,6 +15,7 @@ from .nllpchazard import SATNLLPCHazardLoss
 from .deephit import DeepHitCalibrationLoss, DeepHitLikelihoodLoss
 from .dsm import DSMLoss
 from .mensa import MENSALoss
+from .mensa_paper import MENSAPaperLoss
 
 __all__ = [
     "SATNLLPCHazardLoss",
@@ -24,4 +25,5 @@ __all__ = [
     "DeepHitCalibrationLoss",
     "DSMLoss",
     "MENSALoss",
+    "MENSAPaperLoss",
 ]

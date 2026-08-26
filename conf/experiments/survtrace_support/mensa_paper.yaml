@@ -1,0 +1,14 @@
+# @package _global_
+# MENSA as published (arXiv:2409.06525). BASELINE - not our method.
+dataset: support_numeric
+modelname: survtrace_mensa_paper
+
+defaults:
+  - survtrace_support/defaults
+  - override /data/load: support_numeric
+  - override /data/parse: ${data/load}
+  - override /tokenizers: support_numeric
+  - override /transformers: numeric_bert
+  - override /tasks: mensa-paper-survival
+  - override /tasks/metrics: survtrace
+  - override /trainer: survtrace/default
