@@ -8,6 +8,17 @@
 - _target_: sat.evaluate.eval_modules.ComputeWithinSubjectCIndex
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+# Time-to-event error implied by the survival curve. Included HERE, in the default
+# metric set, rather than only in a separate `survtrace_mae` recipe, because the
+# notebook that selects the recipe is a file uploaded to Kaggle separately from the
+# repo: refreshing the clone does not refresh the notebook, so a stale notebook kept
+# requesting the old metric set and the MMV runs came back with no mae_* at all
+# across three separate executions. Capabilities belong in the repo, which is
+# auto-refreshed, not in the notebook, which is not. Cheap to compute and additive.
+- _target_: sat.evaluate.survtrace_metrics.SurvivalMAEMetrics
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
 - _target_: sat.evaluate.eval_modules.ComputeBrier
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
