@@ -44,3 +44,5 @@ config:
       temp: ${mensa_paper_temp}
       mlp_dropout: ${mensa_paper_dropout}
       scale_init: ${mensa_paper_scale_init}
+      training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+      pretrain: ${mensa_paper_pretrain}

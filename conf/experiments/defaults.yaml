@@ -64,7 +64,8 @@ mensa_paper_num_mixtures: 4      # paper searches Psi in {1,3,5,7}
 mensa_paper_intermediate_size: 64
 mensa_paper_temp: 1.0            # reference default; NOT DSM's 1000 (that flattens the gate)
 mensa_paper_dropout: 0.0
-mensa_paper_scale_init: null    # null = derive from the data; -1.0 = reference default
+mensa_paper_scale_init: null
+mensa_paper_pretrain: false   # not in MENSA's released code; on = borrow DSM's pretraining
 mensa_traj_lambda: 0.0           # lambda in Eq. 9; 0 = pure Eq. 7 likelihood
 mensa_trajectories: []           # known orderings [[A, B], ...], 0-indexed
 mensa_trajectory_time: paper     # "paper" = Eq. 8 S_B(T_A); "reference" = released code S_B(T_B)

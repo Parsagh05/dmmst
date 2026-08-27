@@ -54,6 +54,7 @@ import torch.nn.functional as F
 from sat.utils import logging
 
 from .base import SurvivalTask
+from .dsm_paper import pretrain_base_params
 from .output import SAOutput
 from .survival import SurvivalConfig
 
@@ -131,6 +132,8 @@ class MENSAPaperConfig(SurvivalConfig):
         mlp_layers: Optional[List[int]] = None,
         mlp_dropout: float = 0.0,
         scale_init: Optional[float] = None,
+        training_set: Optional[str] = None,
+        pretrain: bool = False,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -143,6 +146,12 @@ class MENSAPaperConfig(SurvivalConfig):
         self.mlp_dropout = mlp_dropout
         # None -> derive from the duration cuts; set -1.0 for the reference default
         self.scale_init = scale_init
+        # MENSA's released code has no pretraining phase (DSM, from which it
+        # derives, does). Off by default so the faithful variant stays faithful;
+        # turn on to test whether the base-parameter init explains MENSA trailing
+        # DSM on single-event data, where the two models are nearly identical.
+        self.training_set = training_set
+        self.pretrain = pretrain
 
 
 class MENSAPaperTaskHead(SurvivalTask):
@@ -208,10 +217,23 @@ class MENSAPaperTaskHead(SurvivalTask):
         else:
             scale_init = -1.0
 
-        self.shape = nn.Parameter(-torch.ones(self.num_events * self.n_dists))
-        self.scale = nn.Parameter(
-            torch.full((self.num_events * self.n_dists,), scale_init)
-        )
+        shape_init = -torch.ones(self.num_events, self.n_dists)
+        scale_init_t = torch.full((self.num_events, self.n_dists), scale_init)
+        if config.pretrain and config.training_set:
+            try:
+                labels = pd.read_csv(config.training_set, header=0)
+                for p_ in range(self.num_events):
+                    sh, sc = pretrain_base_params(
+                        labels[f"duration_event{p_ + 1}"].values,
+                        (labels[f"event{p_ + 1}"] == 1).values,
+                        self.n_dists,
+                    )
+                    shape_init[p_], scale_init_t[p_] = sh, sc
+                logger.info("MENSA base parameters pretrained (non-reference option)")
+            except Exception as e:  # noqa: BLE001
+                logger.warning(f"MENSA pretraining skipped ({e})")
+        self.shape = nn.Parameter(shape_init.reshape(-1))
+        self.scale = nn.Parameter(scale_init_t.reshape(-1))
 
         self.act = nn.SELU()
         self.shapeg = nn.ModuleList(
