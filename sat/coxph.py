@@ -78,19 +78,61 @@ def _coxph(cfg: DictConfig):
     times = cuts[1:-1]  # 25/50/75% quantiles of uncensored event times
     horizons = [0.25, 0.5, 0.75][: len(times)]
 
-    def xy(split_name):
+    num_events = int(cfg.data.num_events)
+
+    def xy(split_name, event_idx=0):
+        """Design matrix plus the duration/indicator for one event.
+
+        With num_events > 1 each event has its own column, and we fit a separate
+        cause-specific Cox model per event - the CS-CPH baseline SurvTRACE uses,
+        which treats the other events as censored.
+        """
         split = dataset[split_name]
         x = np.asarray([np.asarray(v, dtype=float) for v in split[numeric_col]])
-        d = np.asarray(split[duration_col], dtype=float).reshape(-1)
-        e = np.asarray(split[event_col], dtype=float).reshape(-1)
-        if d.ndim > 1:
-            d = d[:, 0]
-        if e.ndim > 1:
-            e = e[:, 0]
+        d = np.asarray(split[duration_col], dtype=float)
+        e = np.asarray(split[event_col], dtype=float)
+        d = d[:, event_idx] if d.ndim > 1 else d.reshape(-1)
+        e = e[:, event_idx] if e.ndim > 1 else e.reshape(-1)
         return x, d, e
 
-    x_train, d_train, e_train = xy("train")
-    x_test, d_test, e_test = xy("test")
+    metrics = {}
+    all_ctd, all_brier = [], []
+    for event_idx in range(num_events):
+        m = _fit_one_event(
+            xy, event_idx, times, horizons, CoxPHSurvivalAnalysis,
+            concordance_index_ipcw, brier_score,
+        )
+        metrics.update(m)
+        if f"ctd_{event_idx}th_event" in m:
+            all_ctd.append(m[f"ctd_{event_idx}th_event"])
+        if f"brier_{event_idx}th_event" in m:
+            all_brier.append(m[f"brier_{event_idx}th_event"])
+
+    metrics["ctd_weighted_avg"] = (
+        float(np.mean(all_ctd)) if all_ctd else float("nan")
+    )
+    metrics["brier_survtrace_weighted_avg"] = (
+        float(np.mean(all_brier)) if all_brier else float("nan")
+    )
+
+    out_dir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    payload = {"test": {k: {"mean": v, "variance": 0.0, "sd": 0.0}
+                        for k, v in metrics.items()}}
+    payload["validation"] = payload["test"]
+    with (out_dir / "metrics.json").open("w") as f:
+        json.dump(payload, f, indent=4)
+    logger.info(f"Cox PH metrics -> {out_dir/'metrics.json'}")
+    for k, v in metrics.items():
+        logger.info(f"  {k} = {v:.4f}")
+    return metrics
+
+
+def _fit_one_event(xy, event_idx, times, horizons, CoxPHSurvivalAnalysis,
+                   concordance_index_ipcw, brier_score):
+    """Fit and score a single cause-specific Cox model."""
+    x_train, d_train, e_train = xy("train", event_idx)
+    x_test, d_test, e_test = xy("test", event_idx)
     logger.info(f"train {x_train.shape}, test {x_test.shape}")
 
     et_train = _structured(e_train, d_train)
@@ -114,7 +156,7 @@ def _coxph(cfg: DictConfig):
         tau = float(times[i])
         ci = concordance_index_ipcw(et_train, et_test, estimate=risk[:, i], tau=tau)[0]
         cis.append(ci)
-        metrics[f"ctd_0th_event_{horizons[i]}"] = float(ci)
+        metrics[f"ctd_{event_idx}th_event_{horizons[i]}"] = float(ci)
 
     # sksurv's Brier requires every test time to lie inside the training
     # censoring distribution's support. SurvTRACE sidesteps this by forcing the
@@ -131,27 +173,14 @@ def _coxph(cfg: DictConfig):
                 )
                 for j, i in enumerate(usable):
                     brs.append(bs[j])
-                    metrics[f"brier_0th_event_{horizons[i]}"] = float(bs[j])
+                    metrics[f"brier_{event_idx}th_event_{horizons[i]}"] = float(bs[j])
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"Brier score unavailable: {e}")
 
-    metrics["ctd_0th_event"] = float(np.mean(cis)) if cis else float("nan")
-    metrics["ctd_weighted_avg"] = metrics["ctd_0th_event"]
-    metrics["brier_0th_event"] = float(np.mean(brs)) if brs else float("nan")
-    metrics["brier_survtrace_weighted_avg"] = metrics["brier_0th_event"]
-
-    out_dir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
-    out_dir.mkdir(parents=True, exist_ok=True)
-    payload = {"test": {k: {"mean": v, "variance": 0.0, "sd": 0.0}
-                        for k, v in metrics.items()}}
-    payload["validation"] = payload["test"]
-    with (out_dir / "metrics.json").open("w") as f:
-        json.dump(payload, f, indent=4)
-
-    logger.info(f"Cox PH metrics -> {out_dir/'metrics.json'}")
-    for k, v in metrics.items():
-        logger.info(f"  {k} = {v:.4f}")
+    metrics[f"ctd_{event_idx}th_event"] = float(np.mean(cis)) if cis else float("nan")
+    metrics[f"brier_{event_idx}th_event"] = float(np.mean(brs)) if brs else float("nan")
     return metrics
+
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="finetune.yaml")

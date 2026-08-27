@@ -1,0 +1,17 @@
+# @package _global_
+# Cox PH reference (cause-specific, one model per event) on the 2-event dataset. Multi-event is the setting that matters for the
+# paper's L_mul claim, so every baseline needs a config here, not just on the
+# single-event tabular datasets.
+dataset: hsa_synthetic
+modelname: coxph
+
+defaults:
+  - hsa_synthetic/defaults
+  - override /data/load: hsa_synthetic
+  - override /data/parse: ${data/load}
+  - override /data/transform: default
+  - override /tokenizers: hsa_synthetic
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default
