@@ -10,11 +10,13 @@ __status__ = "Development"
 from sat.data.dataset.parse_hsa_synthetic import hsa as hsa_synthetic
 from sat.data.dataset.parse_metabric import metabric
 from sat.data.dataset.parse_metabric_numerics import metabric as metabric_numeric
+from sat.data.dataset.parse_multievent import multievent
 from sat.data.dataset.parse_seer import seer
 
 __all__ = [
     "metabric",
     "hsa_synthetic",
     "metabric_numeric",
+    "multievent",
     "seer",
 ]

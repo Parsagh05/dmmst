@@ -5,9 +5,16 @@
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
   training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
-- _target_: sat.evaluate.eval_modules.ComputeWithinSubjectCIndex
+  per_event_horizons: ${per_event_horizons}
+# Within-subject ordering scored on exactly the pairs of Eq. 5 (L_mul), at the earlier
+# event's time, including observed-vs-censored pairs, with a population-KM reference.
+# The older within_subject_ipcw (fixed horizon, observed pairs only, ~5 s per call on
+# 1500 subjects because it loops over patients) is no longer computed at every
+# evaluation step; use tasks/metrics=within_subject_cindex if it is needed.
+- _target_: sat.evaluate.multievent_metrics.WithinSubjectOrdering
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
 # Time-to-event error implied by the survival curve. Included HERE, in the default
 # metric set, rather than only in a separate `survtrace_mae` recipe, because the
 # notebook that selects the recipe is a file uploaded to Kaggle separately from the

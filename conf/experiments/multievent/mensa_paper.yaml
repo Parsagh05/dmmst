@@ -1,0 +1,18 @@
+# @package _global_
+# BASELINE: MENSA as published (arXiv:2409.06525) - NOT the MENSA-inspired
+# mensa-survival head, which must not be reported under MENSA's name.
+modelname: mensa_paper
+
+defaults:
+  - multievent/defaults
+  - override /data/load: multievent
+  - override /data/parse: multievent
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: mensa-paper-survival
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default
+
+mensa_trajectory_time: paper
+mensa_paper_scale_init: null

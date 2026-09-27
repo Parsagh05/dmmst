@@ -1,0 +1,15 @@
+# @package _global_
+# BASELINE: DeepHit as published, same transformer over the history.
+modelname: deephit_paper
+
+defaults:
+  - ehrseq/defaults
+  - override /data/load: ehrseq
+  - override /data/parse: ehrseq
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/losses: deephit_paper
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default

@@ -12,4 +12,4 @@ config:
   initializer_range: ${transformer_initializer_range}
   layer_norm: ${transformer_layer_norm}
   return_dict: true
-  vocab_size: 1000
+  vocab_size: ${oc.select:transformer_vocab_size,1000}

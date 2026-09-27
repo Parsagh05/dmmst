@@ -1,0 +1,14 @@
+# @package _global_
+# Our model on a coded history. Loss recipe via tasks/losses=...; representation via ehr_repr=.
+modelname: survival
+
+defaults:
+  - ehrseq/defaults
+  - override /data/load: ehrseq
+  - override /data/parse: ehrseq
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default

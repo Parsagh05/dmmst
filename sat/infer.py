@@ -7,15 +7,17 @@ from logging import DEBUG, ERROR
 from pathlib import Path
 
 import hydra
+import torch
 from datasets import load_dataset
 from logdecorator import log_on_end, log_on_error, log_on_start
 from omegaconf import DictConfig
+from tokenizers.processors import TemplateProcessing
 from transformers import PreTrainedTokenizerFast
-from transformers.pipelines import pipeline
 
 from sat.models import heads
+from sat.models.heads.embeddings import TokenEmbedding
 from sat.models.utils import get_device, load_model
-from sat.utils import config, logging, rand
+from sat.utils import config, logging, rand, tokenizing
 from sat.utils.output import write_interpolation, write_output
 
 logger = logging.get_default_logger()
@@ -52,73 +54,76 @@ def _infer(cfg: DictConfig) -> None:
         )
         return
 
-    def tokenize_function(
-        examples,
-        tokenizer=None,
-        data_key="code",
-        max_length=512,
-        padding="max_length",
-        truncation=True,
-        split_into_words=True,
-        pad_to_multiple_of=8,
-        return_tensors="pt",
-    ):
+    if cfg.token_emb == TokenEmbedding.BERT.value:
+        # identical to finetune: the model was trained with a [CLS] token
+        tokenizer._tokenizer.post_processor = TemplateProcessing(
+            single="$A [CLS]" if cfg.tokenizers.cls_model_type == "GPT" else "[CLS] $A",
+            special_tokens=[("[CLS]", tokenizer.convert_tokens_to_ids("[CLS]"))],
+        )
+
+    def tokenize_function(examples):
+        text = examples[cfg.tokenizers.tokenize_column]
+        if cfg.tokenizers.is_split_into_words:
+            text = [t.split() for t in text]
         return tokenizer(
-            text=examples[data_key],
-            max_length=max_length,
-            padding=padding,
-            truncation=truncation,
-            is_split_into_words=split_into_words,
-            pad_to_multiple_of=pad_to_multiple_of,
-            return_tensors=return_tensors,
+            text=text,
+            max_length=cfg.tokenizers.max_seq_length,
+            padding=cfg.tokenizers.padding_args.padding,
+            truncation=cfg.tokenizers.do_truncation,
+            is_split_into_words=cfg.tokenizers.is_split_into_words,
+            pad_to_multiple_of=cfg.tokenizers.padding_args.pad_to_multiple_of,
         )
 
-    tokenized_dataset = dataset.map(
-        tokenize_function,
-        batched=True,
-        fn_kwargs={
-            "tokenizer": tokenizer,
-            "data_key": cfg.tokenizers.tokenize_column,
-            "max_length": cfg.tokenizers.max_seq_length,
-            "truncation": cfg.tokenizers.do_truncation,
-            "split_into_words": cfg.tokenizers.is_split_into_words,
-            "padding": cfg.tokenizers.padding_args.padding,
-            "pad_to_multiple_of": cfg.tokenizers.padding_args.pad_to_multiple_of,
-        },
-    )
-    logger.debug(f"Dataset columns: {tokenized_dataset.column_names}")
-
-    logger.debug(
-        f"""
-        Load pipeline with
-
-        model: {model}
-        tokenizer: {tokenizer}
-        """
-    )
-
-    sa_pipe = pipeline(
-        "survival-analysis",
-        model=model,
-        tokenizer=tokenizer,
-        tokenize_column=cfg.tokenizers.tokenize_column,
-        max_length=cfg.tokenizers.max_seq_length,
-        truncation=cfg.tokenizers.do_truncation,
-        padding=cfg.tokenizers.padding_args.padding,
-        pad_to_multiple_of=cfg.tokenizers.padding_args.pad_to_multiple_of,
-        device=device,
-    )
-
+    dataset = dataset["infer"]
     if cfg.select_id:
-        dataset = tokenized_dataset["infer"].filter(
-            lambda x: x[cfg.data.id_col] == cfg.select_id
-        )
-        ids = cfg.select_id
-    else:
-        dataset = tokenized_dataset["infer"]
-        ids = dataset[cfg.data.id_col]
+        dataset = dataset.filter(lambda x: x[cfg.data.id_col] == cfg.select_id)
+    ids = dataset[cfg.data.id_col]
 
-    output = sa_pipe(dataset)
+    dataset = dataset.map(tokenize_function, batched=True)
+    if "numerics" in dataset.column_names:
+        # identical to finetune: align the numeric values with the (padded,
+        # truncated, possibly [CLS]-prefixed) token sequence
+        dataset = dataset.map(
+            tokenizing.numerics_padding_and_truncation,
+            fn_kwargs={
+                "max_seq_length": cfg.tokenizers.max_seq_length,
+                "truncation_direction": cfg.tokenizers.truncation_args.direction,
+                "padding_direction": cfg.tokenizers.padding_args.direction,
+                "token_emb": cfg.token_emb,
+            },
+        )
+    else:
+        logger.warning(
+            "No 'numerics' column in infer_data: numeric features will not reach the model."
+        )
+
+    # The HF "survival-analysis" pipeline is bypassed: it was never registered here,
+    # re-tokenised the text with the wrong split flag (collapsing the batch) and never
+    # forwarded `numerics`, so predictions ignored the patients' actual values.
+    cols = [c for c in ("input_ids", "attention_mask", "numerics") if c in dataset.column_names]
+    dataset.set_format(type="torch", columns=cols)
+    chunks = []
+    with torch.no_grad():
+        for start in range(0, len(dataset), 512):
+            batch = dataset[start : start + 512]
+            inputs = {k: batch[k].to(device) for k in cols}
+            if "numerics" in inputs:
+                inputs["numerics"] = inputs["numerics"].float()
+            out = model(**inputs)
+            # (logits, hazard, risk, survival, ...) without loss - the layout
+            # write_output expects for a plain tuple
+            fields = ("logits", "hazard", "risk", "survival", "time_to_event", "event")
+            chunks.append(
+                tuple(
+                    out[f].detach().cpu() if torch.is_tensor(out[f]) else out[f]
+                    for f in fields
+                    if out.get(f) is not None
+                )
+            )
+    output = tuple(
+        torch.cat([c[i] for c in chunks]) if torch.is_tensor(chunks[0][i]) else chunks[0][i]
+        for i in range(len(chunks[0]))
+    )
 
     logger.info(f"Write prediction to {cfg.trainer.training_arguments.output_dir}")
     write_output(

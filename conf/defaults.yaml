@@ -2,6 +2,9 @@
 
 job: job
 seed: null
+# null = the original fixed hash split. An integer re-draws train/val/test, so that
+# repeating runs over split_seed measures split variation, not just init variation.
+split_seed: null
 
 defaults:
   - paths: default

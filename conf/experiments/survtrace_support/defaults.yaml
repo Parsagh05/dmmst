@@ -37,3 +37,8 @@ survival_batch_norm: false
 survival_hidden_dropout_prob: false
 survival_bias: true
 survival_loss_weight: 1.0
+
+# Select the checkpoint on the SurvTRACE-protocol C_td, not on the legacy
+# ipcw_weighted_avg (no tau truncation, IPCW fitted on the evaluated split).
+tasks:
+  eval_metric: eval_ctd_weighted_avg

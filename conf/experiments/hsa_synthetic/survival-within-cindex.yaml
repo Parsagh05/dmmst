@@ -1,4 +1,8 @@
 # @package _global_
+# Our model trained WITH the within-subject event-ranking term L_mul (paper Eq. 5),
+# i.e. the paper's L_PCH + L_rank + L_mul recipe. This config used to train with plain
+# nllpch and only switch the metric set, so the run reported as "+L_mul" never
+# contained L_mul.
 dataset: hsa_synthetic
 modelname: survival
 
@@ -10,6 +14,7 @@ defaults:
   - override /tokenizers: hsa_synthetic
   - override /transformers: numeric_bert
   - override /tasks: survival
+  - override /tasks/losses: nllpch_sample_event_ranking
   - override /tasks/metrics: survtrace_within
   - override /trainer: hsa_synthetic/default
 

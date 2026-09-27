@@ -60,6 +60,7 @@ def _train_labeltransform(cfg: DictConfig) -> None:
         test_ratio=cfg.data.test_ratio,
         test_split_strategy="hash",
         split_names=cfg.data.splits,
+        split_seed=cfg.get("split_seed"),
     )
     dataset = ds_splitter.load_split(cfg=cfg.data.load)
     full_dataset = _concat_ds(dataset, cfg)

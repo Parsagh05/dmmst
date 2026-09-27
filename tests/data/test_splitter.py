@@ -275,3 +275,32 @@ def test_edge_cases(streaming):
         splitter = StreamingKFoldSplitter(id_field="id", k=2)
         result = splitter.load_split(cfg, fold_index=0)
         assert len(result["train"]) + len(result["val"]) + len(result["test"]) == 1
+
+
+def test_hash_split_sizes_train_is_largest():
+    """Regression: train and val used to be swapped (train ~10%, val ~60%)."""
+    cfg = DummyConfig(dataset_name="synthetic", streaming=False)
+    with patch("hydra.utils.call", return_value=make_synthetic_dataset(2000)):
+        splitter = StreamingKFoldSplitter(
+            id_field="id", k=None, val_ratio=0.1, test_ratio=0.3
+        )
+        result = splitter.load_split(cfg)
+    n_train, n_val, n_test = (len(result[s]) for s in ("train", "val", "test"))
+    assert n_train > n_test > n_val
+    assert abs(n_train / 2000 - 0.6) < 0.05
+    assert abs(n_val / 2000 - 0.1) < 0.03
+    assert abs(n_test / 2000 - 0.3) < 0.05
+
+
+def test_split_seed_changes_partition_reproducibly():
+    cfg = DummyConfig(dataset_name="synthetic", streaming=False)
+
+    def test_ids(seed):
+        with patch("hydra.utils.call", return_value=make_synthetic_dataset(500)):
+            s = StreamingKFoldSplitter(id_field="id", k=None, split_seed=seed)
+            return set(s.load_split(cfg)["test"]["id"])
+
+    assert test_ids(None) == test_ids(None)
+    assert test_ids(3) == test_ids(3)
+    assert test_ids(3) != test_ids(4)
+    assert test_ids(3) != test_ids(None)

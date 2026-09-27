@@ -1,0 +1,14 @@
+# @package _global_
+# BASELINE: DSM as published (Nagpal et al.).
+modelname: dsm_paper
+
+defaults:
+  - multievent/defaults
+  - override /data/load: multievent
+  - override /data/parse: multievent
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: dsm-paper-survival
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default

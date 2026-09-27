@@ -1,0 +1,14 @@
+# @package _global_
+# BASELINE: cause-specific Cox PH. Use with ehr_repr=bag (a sequence has no fixed design).
+modelname: coxph
+
+defaults:
+  - ehrseq/defaults
+  - override /data/load: ehrseq
+  - override /data/parse: ehrseq
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default

@@ -64,6 +64,34 @@ def _structured(events, durations):
     )
 
 
+def event_horizons(training_set: str, num_events: int, q=(0.25, 0.5, 0.75)) -> dict:
+    """{event: quantiles of that event's observed times} from the training labels."""
+    df = pd.read_csv(training_set, header=0)
+    out = {}
+    for k in range(num_events):
+        t = df.loc[df[f"event{k + 1}"] == 1, f"duration_event{k + 1}"].values.astype(float)
+        if len(t):
+            out[k] = np.quantile(t, q)
+    return out
+
+
+def _on_times(cuts, risk, surv, times):
+    """Risk / survival read off the cut grid at arbitrary times. The columns of
+    risk/surv align with cuts[1:]; t=0 is prepended (risk 0, survival 1) and values
+    are interpolated log-linearly in (1 - risk) resp. survival, i.e. under the
+    piecewise-constant hazard the model assumes."""
+    from sat.evaluate.multievent_metrics import _interp_cif
+
+    grid = np.asarray(cuts, dtype=float)
+    if risk.shape[-1] == len(grid) - 1:
+        risk = np.concatenate([np.zeros((len(risk), 1)), risk], axis=1)
+        surv = np.concatenate([np.ones((len(surv), 1)), surv], axis=1)
+    n = len(risk)
+    r = np.stack([_interp_cif(grid, risk, np.full(n, t)) for t in times], axis=1)
+    s = np.stack([1.0 - _interp_cif(grid, 1.0 - surv, np.full(n, t)) for t in times], axis=1)
+    return r, s
+
+
 class SurvTRACEMetrics:
     """C-index (IPCW, truncated) and Brier score, per the SurvTRACE protocol.
 
@@ -76,14 +104,31 @@ class SurvTRACEMetrics:
             made the previous numbers incomparable.
     """
 
-    def __init__(self, cfg, duration_cuts: str, training_set: Optional[str] = None):
+    def __init__(
+        self,
+        cfg,
+        duration_cuts: str,
+        training_set: Optional[str] = None,
+        per_event_horizons: bool = False,
+    ):
         self.cfg = cfg
 
         cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"]).cuts.values
+        self.cuts = np.asarray(cuts, dtype=float)
         # evaluation horizons: drop the leading 0 and the trailing max, exactly as
         # SurvTRACE does with duration_index[1:-1]
         self.times = cuts[1:-1]
         self.horizons = [0.25, 0.5, 0.75][: len(self.times)]
+        # Multi-event data whose events live on different time scales (EBMT: recovery
+        # within weeks, death over years) cannot share one set of horizons: pooled
+        # quantiles put every horizon before the late events have happened. With
+        # per_event_horizons each event is scored at the 25/50/75% quantiles of its
+        # own observed times (risk read off the model's cut grid, log-linearly).
+        self.event_times = (
+            event_horizons(training_set, cfg.num_events)
+            if per_event_horizons and training_set is not None
+            else {}
+        )
 
         self.train = {}
         if training_set is None:
@@ -115,12 +160,18 @@ class SurvTRACEMetrics:
         risk = predictions[:, 1, event]  # [n, n_cuts]
         surv = predictions[:, 2, event]
 
+        times, labels = self.times, self.horizons
+        if event in self.event_times:
+            times, labels = self.event_times[event], [0.25, 0.5, 0.75]
+            risk, surv = _on_times(self.cuts, risk, surv, times)
+        times = np.asarray(times, dtype=float)
+
         # sksurv refuses times outside the follow-up of the training data
         t_max_train = et_train["t"].max()
         t_max_test = durations_test.max()
         usable = [
             i
-            for i, t in enumerate(self.times)
+            for i, t in enumerate(times)
             if t < min(t_max_train, t_max_test) and (durations_test >= t).any()
         ]
         if not usable:
@@ -129,13 +180,13 @@ class SurvTRACEMetrics:
 
         cis, brs = [], []
         for i in usable:
-            tau = float(self.times[i])
+            tau = float(times[i])
             try:
                 ci = concordance_index_ipcw(
                     et_train, et_test, estimate=risk[:, i], tau=tau
                 )[0]
                 cis.append(ci)
-                out[f"ctd_{event}th_event_{self.horizons[i]}"] = float(ci)
+                out[f"ctd_{event}th_event_{labels[i]}"] = float(ci)
             except Exception as e:  # noqa: BLE001
                 logger.warning(f"C-index failed at tau={tau}: {e}")
 
@@ -148,11 +199,11 @@ class SurvTRACEMetrics:
             if keep.sum() > 0:
                 _, bs = sksurv_brier_score(
                     et_train, et_test[keep], surv[keep][:, idx],
-                    self.times[idx].astype(float),
+                    times[idx].astype(float),
                 )
                 for j, i in enumerate(usable):
                     brs.append(bs[j])
-                    out[f"brier_{event}th_event_{self.horizons[i]}"] = float(bs[j])
+                    out[f"brier_{event}th_event_{labels[i]}"] = float(bs[j])
         except Exception as e:  # noqa: BLE001
             logger.warning(f"Brier score failed: {e}")
 

@@ -45,6 +45,41 @@ def _feature_matrix(split, feature_cols):
     return df.apply(pd.to_numeric, errors="coerce").fillna(0.0).values.astype(float)
 
 
+class _Design:
+    """Cox design matrix: numeric features as values, categorical features one-hot.
+
+    Categorical positions (modality 0) carry a placeholder 1.0 in ``numerics``; their
+    information is in the token (e.g. ``x4_x4_1.0``). Using ``numerics`` alone - as
+    this baseline used to - silently gave Cox a constant column for every categorical
+    feature (4 of 9 on METABRIC, 6 of 14 on SUPPORT). The vocabulary is fit on train
+    and the first level of each feature is dropped (reference category).
+    """
+
+    def __init__(self, train, numeric_col):
+        self.numeric_col = numeric_col
+        modality = np.asarray(train["modality"][0]) if "modality" in train.column_names else None
+        width = len(train[numeric_col][0])
+        self.num_pos = [i for i in range(width) if modality is None or modality[i] == 1]
+        self.cat_pos = [i for i in range(width) if modality is not None and modality[i] == 0]
+        toks = [x.split() for x in train["x"]] if self.cat_pos else []
+        self.levels = {
+            i: sorted({t[i] for t in toks})[1:] for i in self.cat_pos
+        }
+        self.n_numeric = len(self.num_pos)
+        self.n_onehot = sum(len(v) for v in self.levels.values())
+
+    def __call__(self, split):
+        num = np.asarray([np.asarray(v, dtype=float) for v in split[self.numeric_col]])
+        cols = [num[:, self.num_pos]]
+        if self.cat_pos:
+            toks = [x.split() for x in split["x"]]
+            for i in self.cat_pos:
+                col = np.array([t[i] for t in toks])
+                cols.append(np.stack([col == lv for lv in self.levels[i]], 1).astype(float)
+                            if self.levels[i] else np.zeros((len(col), 0)))
+        return np.concatenate(cols, axis=1)
+
+
 @rand.seed
 def _coxph(cfg: DictConfig):
     from sksurv.linear_model import CoxPHSurvivalAnalysis
@@ -60,6 +95,7 @@ def _coxph(cfg: DictConfig):
         test_ratio=cfg.data.test_ratio,
         test_split_strategy="hash",
         split_names=cfg.data.splits,
+        split_seed=cfg.get("split_seed"),
     )
     dataset = ds_splitter.load_split(
         cfg=cfg.data.load, fold_index=cfg.replication if cfg.cv.k else None
@@ -80,6 +116,9 @@ def _coxph(cfg: DictConfig):
 
     num_events = int(cfg.data.num_events)
 
+    design = _Design(dataset[cfg.data.splits[0]], numeric_col)
+    logger.info(f"Cox design: {design.n_numeric} numeric + {design.n_onehot} one-hot columns")
+
     def xy(split_name, event_idx=0):
         """Design matrix plus the duration/indicator for one event.
 
@@ -88,7 +127,7 @@ def _coxph(cfg: DictConfig):
         which treats the other events as censored.
         """
         split = dataset[split_name]
-        x = np.asarray([np.asarray(v, dtype=float) for v in split[numeric_col]])
+        x = design(split)
         d = np.asarray(split[duration_col], dtype=float)
         e = np.asarray(split[event_col], dtype=float)
         d = d[:, event_idx] if d.ndim > 1 else d.reshape(-1)
@@ -97,10 +136,24 @@ def _coxph(cfg: DictConfig):
 
     metrics = {}
     all_ctd, all_brier = [], []
+    curves = {}  # event -> test survival on the full cut grid
+    per_event = {}
+    if cfg.get("per_event_horizons", False):
+        from sat.evaluate.survtrace_metrics import event_horizons
+
+        per_event = event_horizons(
+            f"{cfg.data.label_transform.save_dir}/transformed_train_labels.csv", num_events
+        )
     for event_idx in range(num_events):
+        ev_times, ev_horizons = (
+            (per_event[event_idx], [0.25, 0.5, 0.75])
+            if event_idx in per_event
+            else (times, horizons)
+        )
         m = _fit_one_event(
-            xy, event_idx, times, horizons, CoxPHSurvivalAnalysis,
-            concordance_index_ipcw, brier_score,
+            xy, event_idx, np.asarray(ev_times, dtype=float), ev_horizons,
+            CoxPHSurvivalAnalysis, concordance_index_ipcw, brier_score,
+            grid=cuts, curves=curves,
         )
         metrics.update(m)
         if f"ctd_{event_idx}th_event" in m:
@@ -114,6 +167,7 @@ def _coxph(cfg: DictConfig):
     metrics["brier_survtrace_weighted_avg"] = (
         float(np.mean(all_brier)) if all_brier else float("nan")
     )
+    metrics.update(_curve_metrics(cfg, xy, curves, num_events))
 
     out_dir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -128,9 +182,37 @@ def _coxph(cfg: DictConfig):
     return metrics
 
 
+def _curve_metrics(cfg, xy, curves, num_events):
+    """MAE and within-subject ordering from the Cox curves, with the very same modules
+    the neural models are scored with, so every row of a table has every column."""
+    from sat.evaluate.multievent_metrics import WithinSubjectOrdering
+    from sat.evaluate.survtrace_metrics import SurvivalMAEMetrics
+
+    if len(curves) != num_events:
+        return {}
+    surv = np.stack([curves[k] for k in range(num_events)], axis=1)  # (n, K, G)
+    predictions = np.stack([np.zeros_like(surv), 1.0 - surv, surv], axis=1)
+    references = np.zeros((surv.shape[0], 4 * num_events))
+    for k in range(num_events):
+        _, d, e = xy("test", k)
+        references[:, num_events + k] = e
+        references[:, 3 * num_events + k] = d
+    save = cfg.data.label_transform.save_dir
+    cuts_file, train = f"{save}/duration_cuts.csv", f"{save}/transformed_train_labels.csv"
+    out = {}
+    for module in (SurvivalMAEMetrics(cfg.data, cuts_file, train),
+                   WithinSubjectOrdering(cfg.data, cuts_file, train)):
+        try:
+            out.update(module.compute(predictions, references))
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"{type(module).__name__} unavailable for Cox: {e}")
+    return out
+
+
 def _fit_one_event(xy, event_idx, times, horizons, CoxPHSurvivalAnalysis,
-                   concordance_index_ipcw, brier_score):
-    """Fit and score a single cause-specific Cox model."""
+                   concordance_index_ipcw, brier_score, grid=None, curves=None):
+    """Fit and score a single cause-specific Cox model. If ``curves`` is given, the
+    test survival on ``grid`` is stored in it under ``event_idx``."""
     x_train, d_train, e_train = xy("train", event_idx)
     x_test, d_test, e_test = xy("test", event_idx)
     logger.info(f"train {x_train.shape}, test {x_test.shape}")
@@ -146,6 +228,11 @@ def _fit_one_event(xy, event_idx, times, horizons, CoxPHSurvivalAnalysis,
     surv_fns = model.predict_survival_function(x_test)
     surv = np.asarray([[fn(t) for t in times] for fn in surv_fns])
     risk = 1.0 - surv
+    if curves is not None and grid is not None:
+        lo, hi = surv_fns[0].domain
+        curves[event_idx] = np.asarray(
+            [[1.0 if t < lo else fn(min(t, hi)) for t in grid] for fn in surv_fns]
+        )
 
     metrics = {}
     cis, brs = [], []
@@ -154,7 +241,11 @@ def _fit_one_event(xy, event_idx, times, horizons, CoxPHSurvivalAnalysis,
 
     for i in usable:
         tau = float(times[i])
-        ci = concordance_index_ipcw(et_train, et_test, estimate=risk[:, i], tau=tau)[0]
+        try:
+            ci = concordance_index_ipcw(et_train, et_test, estimate=risk[:, i], tau=tau)[0]
+        except Exception as e:  # noqa: BLE001  e.g. no event before tau in the test split
+            logger.warning(f"C-index failed for event {event_idx} at tau={tau}: {e}")
+            continue
         cis.append(ci)
         metrics[f"ctd_{event_idx}th_event_{horizons[i]}"] = float(ci)
 

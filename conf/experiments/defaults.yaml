@@ -21,9 +21,26 @@ ranking_loss_margin: 0.05
 # null -> fall back to the largest duration cut. Datasets may override.
 survival_max_time: null
 
+# Multi-event metrics: score each event at the quantiles of its OWN observed times
+# (true) instead of the pooled duration cuts (false = SurvTRACE protocol).
+per_event_horizons: false
+
 # Margin-Mean-Variance loss (UniSurv, arXiv:2409.06209)
 mmv_loss_coeff: 1.0        # lambda_m in Eq. 10
 mmv_variance_weight: 0.01  # lambda_v in Eq. 10; paper grids {0.001, 0.01, 0.1, 1}
+
+# End-to-end LLM (paper §3, python -m sat.llm): answer = one token per duration cut
+llm_model: distilgpt2          # HF hub name (tokenizer always; weights if pretrained)
+llm_init: pretrained           # pretrained | scratch
+llm_epochs: 30
+llm_learning_rate: 5.0e-5      # use ~5e-4 for scratch
+llm_batch_size: 32
+llm_patience: 3                # epochs without validation improvement
+llm_max_prompt_tokens: 768
+llm_scratch_layers: 4
+llm_scratch_hidden: 128
+llm_scratch_heads: 4
+llm_scratch_vocab: 2000        # BPE fitted on the training records (scratch only)
 
 # ---------------------------------------------------------------------------
 # Baseline models (NOT part of the paper's method - used only for comparison
@@ -95,7 +112,9 @@ loss_balancing_adaptive_window_size: 100
 loss_balancing_adaptive_adaptation_rate: 0.005
 
 
-detect_anomalies: true
+# autograd anomaly detection is a debugging aid; it slows every step by ~40%.
+# Turn on with detect_anomalies=true when chasing NaNs.
+detect_anomalies: false
 
 brier_per_horizon: false
 nllpch_per_event: false
@@ -112,6 +131,8 @@ mtl_initializer_range: 0.02
 mtl_initializer: kaiming_normal
 
 transformer_layer_norm: false
+# must be >= the trained tokenizer's vocabulary (raise it for real ICD-code data)
+transformer_vocab_size: 1000
 transformer_initializer_range: 0.01
 transformer_hidden_size: 24
 transformer_intermediate_size: 96

@@ -1,0 +1,31 @@
+# @package _global_
+# Generic multi-event dataset: data/<dataset>/data.csv with
+#   id, x_* (numeric), c_* (categorical), event1..K, duration1..K
+# written by `python -m sat.data.simulate` or `python scripts/prepare_ebmt.py`.
+# me_num_events / me_num_features come from the dataset's meta.json
+# (scripts/nb_helpers.py reads it and passes them as overrides).
+data_source: ${base_dir}/data/${dataset}/data.csv
+
+data:
+  preprocess_data: false
+  perform_split: true
+  split_col: split
+  duration_col: durations
+  event_col: events
+  id_col: id
+  num_events: ${me_num_events}
+  validation_ratio: 0.1
+  test_ratio: 0.3
+  transformed_duration_cols:
+    - t
+    - f
+  splits:
+    - train
+    - valid
+    - test
+  load:
+    _target_: datasets.load_dataset
+    path: json
+    data_files:
+      - ${modelhub}/${dataset}/${dataset}.json
+    streaming: false

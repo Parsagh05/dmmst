@@ -1,0 +1,7 @@
+_target_: sat.data.dataset.parse_sequence.sequence
+source_dir: ${data_source}
+processed_dir: ${modelhub}
+name: ${dataset}
+num_events: ${data.num_events}
+representation: ${ehr_repr}
+max_tokens: ${ehr_max_tokens}

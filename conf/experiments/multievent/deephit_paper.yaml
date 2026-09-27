@@ -1,0 +1,16 @@
+# @package _global_
+# BASELINE: DeepHit as published (L1 + L2). Competing-risks likelihood, so it is
+# misspecified on non-competing data - reported as-is, like MENSA reports it.
+modelname: deephit_paper
+
+defaults:
+  - multievent/defaults
+  - override /data/load: multievent
+  - override /data/parse: multievent
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/losses: deephit_paper
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default

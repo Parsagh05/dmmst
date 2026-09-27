@@ -1,6 +1,17 @@
 # @package _global_
+# Shared settings for every model on a generic multi-event dataset
+# (simulator scenarios, EBMT). Architecture and optimiser follow hsa_synthetic.
 defaults:
   - ../defaults
+
+dataset: ???          # e.g. sim_base, ebmt  -> data/<dataset>/data.csv
+me_num_events: ???
+me_num_features: ???
+
+# Events on different time scales: score each at its own quantiles and give the
+# piecewise-constant hazard head a finer grid than SurvTRACE's 4 intervals.
+per_event_horizons: true
+label_transform_cuts: 10
 
 learning_rate: 0.01
 warmup_steps: 40
@@ -12,8 +23,7 @@ sentence_emb: 3
 token_emb: 2
 dropout: 0.1
 
-# from durations cut equivalent to the median time
-classification_event_time_thr: 60.5
+classification_event_time_thr: 0.5
 
 transformer_layer_norm: true
 transformer_hidden_size: 16
@@ -30,7 +40,14 @@ shared_bias: true
 shared_num_hidden_layers: 0
 shared_num_labels: 8
 
-survival_max_time: 150
+survival_intermediate_size: 16
+survival_batch_norm: false
+survival_hidden_dropout_prob: false
+survival_bias: true
+survival_num_hidden_layers: 0
+survival_loss_weight: 1.0
+survival_shared_intermediate_size: 32
+survival_shared_num_hidden_layers: 0
 
 # Select the checkpoint on the SurvTRACE-protocol C_td, not on the legacy
 # ipcw_weighted_avg (no tau truncation, IPCW fitted on the evaluated split).

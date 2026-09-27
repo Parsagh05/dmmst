@@ -34,6 +34,10 @@ class StreamingKFoldSplitter:
         Either "hash" (generate test set by hashing) or "existing" (use dataset's built-in test split).
     split_names : tuple(str), default=("train", "val", "test")
         Tuple of split names to use when combining for k-fold, if using "existing" test split.
+    split_seed : int or None, default=None
+        Salt mixed into every hash. None reproduces the original, fixed split; an
+        integer draws a different (but reproducible) train/val/test partition, which
+        is what repeated-split error bars (as in SurvTRACE) require.
 
     Methods:
     --------
@@ -67,6 +71,7 @@ class StreamingKFoldSplitter:
         test_ratio: float = 0.1,
         test_split_strategy: str = "hash",
         split_names: Tuple[str] = ("train", "val", "test"),
+        split_seed: int = None,
     ):
         self.id_field = id_field
         self.k = k
@@ -74,22 +79,32 @@ class StreamingKFoldSplitter:
         self.test_ratio = test_ratio
         self.test_split_strategy = test_split_strategy
         self.split_names = split_names
+        self.split_seed = split_seed
+
+    def _salted(self, s: str) -> bytes:
+        if self.split_seed is None:
+            return s.encode("utf-8")
+        return f"{self.split_seed}:{s}".encode("utf-8")
 
     def _normalize_hash(self, s: str) -> float:
-        h = hashlib.md5(s.encode("utf-8"), usedforsecurity=False).hexdigest()
+        h = hashlib.md5(self._salted(s), usedforsecurity=False).hexdigest()
         return int(h, 16) / 2**128
 
     def _fold(self, s: str) -> int:
-        h = hashlib.md5(s.encode("utf-8"), usedforsecurity=False).hexdigest()
+        h = hashlib.md5(self._salted(s), usedforsecurity=False).hexdigest()
         return int(h, 16) % self.k
 
     def _get_fold(self, example: Dict[str, Any]) -> int:
         """Get the fold assignment for a single example."""
         if self.k is None:
+            # Fold 0 is the validation fold (see is_val in load_split), so it must be
+            # the SMALL slice. This used to return 0 for hash < 1 - val_ratio, which
+            # silently swapped train and validation: every model trained on ~10% of
+            # the data and early-stopped on the other ~60%.
             return (
                 0
                 if self._normalize_hash(str(example[self.id_field]))
-                < (1 - self.val_ratio)
+                >= (1 - self.val_ratio)
                 else 1
             )
         return self._fold(str(example[self.id_field]))

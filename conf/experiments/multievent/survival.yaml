@@ -1,0 +1,16 @@
+# @package _global_
+# Our model: transformer + piecewise-constant-hazard head. Swap the loss recipe with
+# tasks/losses=<nllpch | nllpch_sample_ranking | nllpch_event_ranking |
+#               nllpch_sample_event_ranking | nllpch_mmv | nllpch_mmv_rank>
+modelname: survival
+
+defaults:
+  - multievent/defaults
+  - override /data/load: multievent
+  - override /data/parse: multievent
+  - override /data/transform: default
+  - override /tokenizers: multievent
+  - override /transformers: numeric_bert
+  - override /tasks: survival
+  - override /tasks/metrics: survtrace_within
+  - override /trainer: hsa_synthetic/default

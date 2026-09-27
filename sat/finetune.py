@@ -85,6 +85,7 @@ def _finetune(cfg: DictConfig) -> pd.DataFrame:
             test_ratio=cfg.data.test_ratio,
             test_split_strategy="hash",
             split_names=cfg.data.splits,
+            split_seed=cfg.get("split_seed"),
         )
         dataset = ds_splitter.load_split(cfg=cfg.data.load, fold_index=fold_index)
 

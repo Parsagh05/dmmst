@@ -29,11 +29,9 @@ def write_output(
             json.dump(metrics, f, ensure_ascii=False, indent=4)
 
     for i in range(cfg.data.num_events):
-        if isinstance(predictions, ModelOutput):
-            if "loss" in predictions:
-                idx = 2
-        else:
-            idx = 1
+        # (loss, logits, hazard, ...) when a loss is present, else (logits, hazard, ...).
+        # idx used to be left undefined for a ModelOutput without a loss.
+        idx = 2 if isinstance(predictions, ModelOutput) and "loss" in predictions else 1
 
         if model.is_survival:
             # Derive the width from the tensor rather than assuming cuts + 1.
@@ -102,11 +100,9 @@ def write_output(
 def write_interpolation(cfg, predictions, ids, output_dir, is_survival):
     logger.info(f"Write interpolations to {output_dir}")
     for i in range(cfg.data.num_events):
-        if isinstance(predictions, ModelOutput):
-            if "loss" in predictions:
-                idx = 2
-        else:
-            idx = 1
+        # (loss, logits, hazard, ...) when a loss is present, else (logits, hazard, ...).
+        # idx used to be left undefined for a ModelOutput without a loss.
+        idx = 2 if isinstance(predictions, ModelOutput) and "loss" in predictions else 1
         if is_survival:
             if cfg.interpolate:
                 df = pd.read_csv(
@@ -134,7 +130,7 @@ def write_interpolation(cfg, predictions, ids, output_dir, is_survival):
                         "survival": survival.flatten().cpu().numpy(),
                     }
                 )
-                interp_df.to_csv(Path(f"{output_dir}/interpolations.csv"), index=False)
+                interp_df.to_csv(Path(f"{output_dir}/interpolations{i}.csv"), index=False)
 
 
 def log_metrics(metrics, file_path=None):

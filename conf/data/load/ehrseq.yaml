@@ -1,0 +1,30 @@
+# @package _global_
+# Longitudinal coded records: data/<ehr_source>/{patients.csv, events.csv}
+# (sat.data.simulate_ehr, or any real EHR export in the same two-file format).
+# One source is parsed into several representations (sequence | bag | static); each
+# gets its own dataset name so they do not overwrite each other in the model hub.
+data_source: ${base_dir}/data/${ehr_source}
+
+data:
+  preprocess_data: false
+  perform_split: true
+  split_col: split
+  duration_col: durations
+  event_col: events
+  id_col: id
+  num_events: ${me_num_events}
+  validation_ratio: 0.1
+  test_ratio: 0.3
+  transformed_duration_cols:
+    - t
+    - f
+  splits:
+    - train
+    - valid
+    - test
+  load:
+    _target_: datasets.load_dataset
+    path: json
+    data_files:
+      - ${modelhub}/${dataset}/${dataset}.json
+    streaming: false

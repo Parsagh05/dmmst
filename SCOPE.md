@@ -63,6 +63,24 @@ paper's actual novelty rather than generic survival performance.
 | **Within-subject concordance** | [within_subject_concordance/](sat/evaluate/within_subject_concordance/) | **`L_mul` (Eq. 5)** |
 | **Mismatch** | [mismatch/](sat/evaluate/mismatch/) | **`L_MM` (Eq. 7)** |
 
+## Added 2026-09-26: multi-event evidence (paper §4.3)
+
+| Component | File |
+|---|---|
+| Simulator with known true CIFs (regimes, shared risk, frailty, non-linearity, event-order spread, censoring) | [simulate.py](sat/data/simulate.py) |
+| Oracle row (true CIFs, same split + metrics) | [oracle.py](sat/oracle.py) |
+| Within-subject concordance on exactly the Eq. 5 pairs, with population-KM reference | [multievent_metrics.py](sat/evaluate/multievent_metrics.py) |
+| Generic K-event parser (numeric + categorical tokens) and config group | [parse_multievent.py](sat/data/dataset/parse_multievent.py), [conf/experiments/multievent/](conf/experiments/multievent/) |
+| EBMT (real, 5 events) | [prepare_ebmt.py](scripts/prepare_ebmt.py) |
+| `L_PCH + L_mul` only | [nllpch_event_ranking.yaml](conf/tasks/losses/nllpch_event_ranking.yaml) |
+| Experiment runner, report, Kaggle notebooks | [scripts/](scripts/), [notebooks/new/](notebooks/new/README.md) |
+| §3 end-to-end LLM (answer tokens N/C/E_k, Eq. 8) | [llm.py](sat/llm.py) |
+| §4.2 coded, time-stamped histories: EHR simulator, sequence/bag/static parser, config group | [simulate_ehr.py](sat/data/simulate_ehr.py), [parse_sequence.py](sat/data/dataset/parse_sequence.py), [conf/experiments/ehrseq/](conf/experiments/ehrseq/) |
+
+The README in `notebooks/new/` lists the bugs fixed on this date (train/validation swap in
+the splitter, Cox ignoring categorical features, the "+L_mul" config without L_mul, …);
+every number produced before it is superseded.
+
 ## Removed, and why
 
 **Method components not in the paper.** Survival focal loss, SurvRNC, SOAP, ListMLE,
