@@ -56,6 +56,11 @@ def _oracle(cfg: DictConfig):
     rows = np.searchsorted(truth["ids"], np.asarray(test[cfg.data.id_col]))
     cif = true_cif(truth, regime, cuts, rows=rows)  # (n, K, len(cuts))
     predictions = np.stack([np.zeros_like(cif), cif, 1.0 - cif], axis=1)
+    out_dir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for k in range(cif.shape[1]):  # curves on the cut grid, for scripts/true_order.py
+        pd.DataFrame(1.0 - cif[:, k], columns=[f"t{j}" for j in range(cif.shape[2])]).assign(
+            id=np.asarray(test[cfg.data.id_col])).to_csv(out_dir / f"survival{k}.csv", index=False)
 
     events = np.asarray(test[cfg.data.event_col], dtype=float).reshape(len(rows), K)
     durations = np.asarray(test[cfg.data.duration_col], dtype=float).reshape(len(rows), K)

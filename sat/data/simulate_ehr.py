@@ -67,6 +67,12 @@ class EHRScenario:
     shapes: tuple = (0.9, 1.3)
     base_scale: float = 1500.0
     noise_codes_per_visit: float = 1.0
+    # "v1": levels and trends are correlated, so a bag of counts + last values recovers
+    # most of the temporal signal (sequence == bag in the first run). "v2": the current
+    # lab level is drawn independently of its trend, exacerbations are either a recent
+    # flare or long ago with the same count, and CKD-before-diabetes carries extra risk -
+    # information only the ordered, time-stamped history contains.
+    design: str = "v1"
     seed: int = 0
 
 
@@ -74,6 +80,9 @@ SCENARIOS = {
     "base": EHRScenario(),
     "static": EHRScenario(name="ehr_static", temporal_signal=0.0),
     "temporal": EHRScenario(name="ehr_temporal", temporal_signal=0.9),
+    "v2_level": EHRScenario(name="ehr_v2_level", temporal_signal=0.0, design="v2"),
+    "v2_mixed": EHRScenario(name="ehr_v2_mixed", temporal_signal=0.5, design="v2"),
+    "v2_order": EHRScenario(name="ehr_v2_order", temporal_signal=0.9, design="v2"),
 }
 
 
@@ -88,7 +97,8 @@ def _patients(sc: EHRScenario, rng):
     ckd = rng.random(n) < sig(-2.0 + 0.04 * (age - 60) + 0.9 * dm + 0.7 * htn)
     copd = rng.random(n) < sig(-2.4 + 0.03 * (age - 60) + 1.8 * smoker)
     W = sc.lookback_years
-    onset = {c: np.where(flag, -rng.uniform(0.3, W + 3.0, n), np.nan)  # may predate the window
+    hi = W - 0.3 if sc.design == "v2" else W + 3.0  # v2: onsets inside the window (order visible)
+    onset = {c: np.where(flag, -rng.uniform(0.3, hi, n), np.nan)  # v1: may predate the window
              for c, flag in [("htn", htn), ("dm", dm), ("ckd", ckd), ("copd", copd)]}
     p = pd.DataFrame(dict(age=age, sex=sex, smoker=smoker, htn=htn, dm=dm, ckd=ckd, copd=copd))
     for c, v in onset.items():
@@ -100,18 +110,30 @@ def _patients(sc: EHRScenario, rng):
     p["a1c_drift"] = np.where(dm, rng.normal(0.0, 0.45, n), 0.0)  # % per year
     p["copd_sev"] = np.where(copd, rng.gamma(2.0, 0.5, n), 0.0)
     p["exac_rate"] = np.where(copd, p["copd_sev"] * rng.gamma(2.0, 0.6, n), 0.0)  # per year
+    p["v2"] = sc.design == "v2"
+    if sc.design == "v2":  # current levels independent of the trends
+        p["egfr_now"] = np.where(ckd, np.clip(rng.normal(55, 15, n), 10, 110), np.clip(rng.normal(90, 10, n), 40, 130))
+        p["a1c_now"] = np.where(dm, rng.normal(7.6, 1.0, n), rng.normal(5.4, 0.3, n))
+        p["a1c0"] = p["a1c_now"]
+        p["flare"] = copd & (rng.random(n) < 0.5)
     return p
 
 
 def _egfr_at(r, t, W):
     """True eGFR at time t (years, 0 = index). CKD: egfr0 at onset, then declines at
-    egfr_slope per year; otherwise a slow age-related decline across the window."""
+    egfr_slope per year; otherwise a slow age-related decline across the window.
+    v2: anchored at the independent current value egfr_now and back-computed."""
+    if getattr(r, "v2", False):
+        t_eff = max(t, r.onset_ckd) if r.ckd else t
+        return float(np.clip(r.egfr_now - r.egfr_slope * t_eff, 5, 130))
     if r.ckd:
         return float(np.clip(r.egfr0 - r.egfr_slope * max(t - r.onset_ckd, 0.0), 5, 130))
     return float(np.clip(r.egfr0 - r.egfr_slope * (t + W), 5, 130))
 
 
 def _a1c_at(r, t):
+    if getattr(r, "v2", False):
+        return float(np.clip(r.a1c_now + r.a1c_drift * max(t, r.onset_dm), 4.5, 14)) if r.dm else float(r.a1c_now)
     if r.dm:
         return float(np.clip(r.a1c0 + r.a1c_drift * max(t - r.onset_dm, 0.0), 4.5, 14))
     return float(r.a1c0)
@@ -126,8 +148,14 @@ def _histories(p: pd.DataFrame, sc: EHRScenario, rng):
         rate = 2.0 + 1.5 * n_cond  # visits per year
         times = np.sort(rng.uniform(-W, 0.0, rng.poisson(rate * W) + 1))
         # COPD exacerbations: Poisson process over the window
-        exac = np.sort(rng.uniform(-W, 0.0, rng.poisson(r.exac_rate * W))) if r.copd else np.array([])
-        recent_exac[i] = np.sum(exac > -1.0)
+        n_exac = rng.poisson(r.exac_rate * W) if r.copd else 0
+        if sc.design == "v2":  # same count; a recent flare or long ago
+            lo_hi = (-0.5, 0.0) if r.flare else (-W, -0.5)
+            exac = np.sort(rng.uniform(*lo_hi, n_exac))
+            recent_exac[i] = np.sum(exac > -0.5)
+        else:
+            exac = np.sort(rng.uniform(-W, 0.0, n_exac))
+            recent_exac[i] = np.sum(exac > -1.0)
         last_t = -W
         for t in times:
             active = lambda c: bool(r[c]) and r[f"onset_{c}"] <= t  # noqa: E731
@@ -190,6 +218,14 @@ def _risk_scores(p, recent_exac, sc: EHRScenario):
         z(recent_exac) + 0.4 * z(copd_dur),
         0.6 * z(p.egfr_slope.values) + 0.6 * z(recent_exac),
     ]
+    if sc.design == "v2":
+        ckd_first = (p.ckd & p.dm & (p.onset_ckd < p.onset_dm)).astype(float).values
+        temporal = [
+            z(p.egfr_slope.values) * (p.ckd.values + 0.2) + 0.7 * z(ckd_first),
+            z(p.a1c_drift.values) * p.dm.values,
+            z(recent_exac),
+            0.6 * z(p.egfr_slope.values) + 0.6 * z(recent_exac),
+        ]
     w = sc.temporal_signal
     g = np.stack([np.sqrt(1 - w) * z(l) + np.sqrt(w) * z(t) for l, t in zip(level, temporal)], 1)
     g = (g - g.mean(0)) / (g.std(0) + 1e-12)

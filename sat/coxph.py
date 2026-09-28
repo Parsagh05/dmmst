@@ -168,6 +168,13 @@ def _coxph(cfg: DictConfig):
         float(np.mean(all_brier)) if all_brier else float("nan")
     )
     metrics.update(_curve_metrics(cfg, xy, curves, num_events))
+    if len(curves) == num_events:  # curves on the cut grid, for scripts/true_order.py
+        cdir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
+        cdir.mkdir(parents=True, exist_ok=True)
+        test_ids = dataset[cfg.data.splits[-1]][cfg.data.id_col]
+        for k in range(num_events):
+            pd.DataFrame(curves[k], columns=[f"t{j}" for j in range(curves[k].shape[1])]).assign(
+                id=test_ids).to_csv(cdir / f"survival{k}.csv", index=False)
 
     out_dir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
     out_dir.mkdir(parents=True, exist_ok=True)

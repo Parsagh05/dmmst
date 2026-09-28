@@ -10,7 +10,12 @@ bugs below; nothing from `dmmst_full_results_old.pdf` / `_new.pdf` should go in 
 | `03_single_event_benchmarks` | METABRIC + SUPPORT (paper §4.1): backbone tuning, then baselines + loss/MMV ablation, SurvTRACE layout | ~150 (≈ 140 trained) |
 | `05_llm_end_to_end` | §3: the end-to-end LLM (answer = one token per time unit, Eq. 8), pretrained DistilGPT2 and a GPT-2 from scratch, vs Cox / our transformer / oracle on sim_base, EBMT, METABRIC | ~45 (≈ 36 trained) |
 | `06_sequential_ehr` | §4.2: coded, time-stamped histories. Same model on the full sequence vs a bag-of-codes table vs static features, in 3 synthetic EHR cohorts where trends matter 0 % / 50 % / 90 % | ~96 (≈ 81 trained) |
-| `04_report` | All paper tables/figures from the outputs of 01–03, 05, 06 | — |
+| `07_rerun_failed` | The 9 runs of 01/05 that crashed (both bugs fixed) | 9 |
+| `08_true_order_and_tuning` | Does `L_mul` really order events better? Proper scores against the simulator's true event times; then `L_rank`/`L_mul` weight and σ tuned on validation and re-tested on 5 splits | ~150 |
+| `09_sequential_ehr_v2` | §4.2 again with EHR simulator v2, where order, trends and recency are not recoverable from counts / last values | ~96 |
+| `10_continuous_vs_discretised` | §2.2 / Fig. 2: numeric-value embedding vs 10 quantile bins, METABRIC + SUPPORT | 40 |
+| `11_extra_sweeps` | Simulator sweeps over non-linearity, number of events (2–8), sample size (500–10k) | ~250 |
+| `04_report` | All paper tables/figures from the outputs of the other notebooks (run last) | — |
 
 Priority: **01 → 03 → 02 → 06 → 05 → 04**. 01 decides the paper's central claim.
 Every notebook defaults to the real run (`SMOKE_TEST = False`).
@@ -93,6 +98,14 @@ first full session to estimate how many sessions a notebook needs.
 * Keep claims to what the paired table supports; the oracle row is the ceiling.
 * `within_ctd` is empty for the **competing** regime by construction: only the first event
   is observed and the others are censored at that same time, so no pair is orderable.
+* **`within_ctd` can be gamed**: in the semi-competing settings models trained with `L_mul`
+  scored above the oracle. For simulated data use the proper `true_order_*` scores
+  (`scripts/true_order.py`: predicted P(event a before event b) vs the latent event times,
+  added automatically to every run on a dataset with `truth.npz`); a model cannot beat
+  the oracle on `true_order_brier` / `true_order_logloss` in expectation.
+* **MAE-margin is unreliable on EBMT** (values > 7 000 days): with long follow-up and heavy
+  censoring the Kaplan–Meier best guess for censored patients extrapolates far past the
+  data. Report MAE only on METABRIC / SUPPORT / simulated data.
 * Read `within_ctd` against `within_ctd_km`: on EBMT the population order alone scores
   ≈ 0.84 (Cox 0.847), so real EBMT leaves little room for `L_mul`; the simulator sweeps
   (small `order_spread`) are where covariate-driven ordering can be shown.

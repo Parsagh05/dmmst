@@ -44,6 +44,9 @@ METRIC_NAMES = {
     "within_ctd_gain": "Within C gain over KM ↑",
     "mae_margin": "MAE-margin ↓",
     "mae_uncensored": "MAE-uncens. ↓",
+    "true_order_c": "True-order C ↑",
+    "true_order_brier": "True-order Brier ↓",
+    "true_order_logloss": "True-order log-loss ↓",
 }
 # fixed categorical order (validated palette); color follows the entity, never rank
 SERIES_STYLE = {
@@ -192,7 +195,7 @@ def representation_tables(df, out: Path, metrics):
                        "Sequence / static vs bag-of-codes input (paired on seed)")
 
 
-def sweep_figures(df, out: Path, metrics=("within_ctd", "ctd_weighted_avg", "within_ctd_gain")):
+def sweep_figures(df, out: Path, metrics=("within_ctd", "ctd_weighted_avg", "within_ctd_gain", "true_order_brier")):
     """One panel per metric and sweep: metric vs knob value, mean ± sd over seeds."""
     import matplotlib
 
@@ -256,7 +259,8 @@ def build(dirs, out, metrics=None):
     parts = [
         benchmark_tables(df[df.get("sweep").isna()] if "sweep" in df else df, out, metrics),
         ablation_tables(df[df.get("sweep").isna()] if "sweep" in df else df, out,
-                        [m for m in ("ctd_weighted_avg", "within_ctd", "within_ctd_gain",
+                        [m for m in ("ctd_weighted_avg", "within_ctd", "within_ctd_gain", "true_order_c",
+                                     "true_order_brier", "true_order_logloss",
                                      "brier_survtrace_weighted_avg", "mae_margin") if m in df]),
     ]
     parts.append(representation_tables(df, out, [m for m in ("ctd_weighted_avg", "within_ctd",

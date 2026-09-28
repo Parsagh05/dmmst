@@ -176,6 +176,7 @@ class Runner:
         out = self.repo / "data" / "model-hub" / r.dataset / r.tag
         if ok and (out / "metrics.json").is_file():
             shutil.copy2(out / "metrics.json", self.results_dir / f"{r.tag}.json")
+            self._true_order(r, out)
             meta = asdict(r) | {"seconds": dt}
             (self.results_dir / f"{r.tag}.meta.json").write_text(json.dumps(meta, indent=2))
             self._log(f"  ok   {r.tag} ({dt:.0f}s)")
@@ -186,6 +187,20 @@ class Runner:
             for ck in out.glob("checkpoint-*"):
                 shutil.rmtree(ck, ignore_errors=True)
         return ok
+
+    def _true_order(self, r: Run, out: Path):
+        """Simulated data: score within-subject ordering against the true event times."""
+        for name in (r.info.get("dataset"), r.dataset):
+            truth = self.repo / "data" / str(name) / "truth.npz"
+            if name and truth.is_file():
+                try:
+                    from scripts.true_order import add_to_metrics, score_run
+
+                    K = int(read_meta(str(name), str(self.repo))["num_events"])
+                    add_to_metrics(self.results_dir / f"{r.tag}.json", score_run(out, truth, K))
+                except Exception as e:  # noqa: BLE001  never lose a finished run over this
+                    self._log(f"  (true-order scoring skipped for {r.tag}: {e})")
+                return
 
     def run_many(self, runs: List[Run], time_budget_min: Optional[float] = None):
         """Run everything not yet done. Stops launching new runs after the budget."""
