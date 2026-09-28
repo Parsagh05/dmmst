@@ -228,6 +228,12 @@ class SurvTRACEMetrics:
                 brier.append(m[f"brier_{event}th_event"])
         if ctd:
             metrics["ctd_weighted_avg"] = float(np.mean(ctd))
+        else:
+            # Nothing was scorable (e.g. non-finite predictions early in training).
+            # Report the worst value instead of omitting the key: checkpoint selection on
+            # eval_ctd_weighted_avg would otherwise crash the whole run.
+            logger.warning("no C_td could be computed; reporting ctd_weighted_avg = 0")
+            metrics["ctd_weighted_avg"] = 0.0
         if brier:
             metrics["brier_survtrace_weighted_avg"] = float(np.mean(brier))
         return metrics

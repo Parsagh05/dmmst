@@ -55,8 +55,8 @@ def record_text(x: str, numerics, modality) -> str:
 
 def answer_tokens(events, durations, cuts):
     """One label per unit (cuts[t-1], cuts[t]]: sets of events, 'N', or 'C'."""
-    events = np.asarray(events, dtype=int)
-    durations = np.asarray(durations, dtype=float)
+    events = np.atleast_1d(np.asarray(events, dtype=int))  # single-event data: scalars
+    durations = np.atleast_1d(np.asarray(durations, dtype=float))
     end = durations.max()  # end of observation (censoring time or last event)
     out = []
     for t in range(1, len(cuts)):
