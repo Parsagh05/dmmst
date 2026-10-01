@@ -19,6 +19,12 @@
 \tableofcontents
 \bigskip
 
+\paragraph{Note on SUPPORT (found after these runs).} The numeric preprocessing used METABRIC's column
+layout for every dataset. On SUPPORT, five physiological measurements entered the models unscaled and mean
+blood pressure was reduced to a constant. This affects every SUPPORT number on the numeric path in
+Tables~\ref{tab:single} and~\ref{tab:disc} (all models alike, including Cox). The parser is fixed
+and the SUPPORT experiments are being re-run (notebook 12); METABRIC and all other datasets are unaffected.
+
 \section*{Summary of what we know}
 \begin{itemize}
   \item \textbf{The base model is strong.} The transformer with the piecewise-constant-hazard likelihood
@@ -112,7 +118,8 @@ contained \Lmul{}, checkpoints were selected with a broken C-index, and the spli
 \begin{table}[H]\centering\small
 \caption{C$_{td}$ (mean over the 25/50/75\,\% horizons) and Brier, 5 splits. ``published'' = SurvTRACE
 (Wang \& Sun, 2022) Table~2, averaged over the same three horizons (their 10 runs, different splits).
-MAE-unc.\ in months (METABRIC) and days (SUPPORT).}
+MAE-unc.\ in months (METABRIC) and days (SUPPORT). SUPPORT columns are affected by the preprocessing issue noted on
+page~1 and will be replaced.}
 \label{tab:single}
 \resizebox{\textwidth}{!}{\begin{tabular}{lcccc@{\hspace{1.2em}}cccc}
 \toprule
@@ -328,7 +335,8 @@ C$_{td}$ is similar across regimes ($\approx0.70$--$0.71$ for our model).
 \section{Continuous vs.\ discretised numeric input (notebook 10)}
 %=====================================================================
 \begin{table}[H]\centering\small
-\caption{Same model and splits, numeric features standardised (continuous) or cut into 10 quantile bins. C$_{td}$, 5 splits.}
+\caption{Same model and splits, numeric features standardised (continuous) or cut into 10 quantile bins. C$_{td}$, 5 splits.
+SUPPORT ``continuous'' is affected by the preprocessing issue noted on page~1 (the discretised path is not).}
 \label{tab:disc}
 \begin{tabular}{lcccc}
 \toprule
@@ -342,9 +350,10 @@ DeepHit & \best{0.675}\,$\pm$\,0.010 & 0.654\,$\pm$\,0.019 & 0.603\,$\pm$\,0.009
 \end{tabular}
 \end{table}
 \paragraph{Reading Table~\ref{tab:disc}.} Continuous input is better on METABRIC ($+0.023$) and discretised input
-is better on SUPPORT ($+0.012$ to $+0.022$), for both models, so the effect comes from the data, not the
-architecture. SUPPORT's physiological variables are skewed with outliers, which quantile bins absorb and plain
-standardisation does not. The paper should not claim continuous encoding is always better; a rank/quantile
+is better on SUPPORT ($+0.012$ to $+0.022$), for both models. Part or all of the SUPPORT difference is explained
+by the preprocessing issue noted on page~1: on the continuous path five SUPPORT measurements were unscaled and one
+was lost, while the discretised path was correct. The corrected comparison, including a quantile (rank) transform,
+is in notebook 12. The paper should not claim continuous encoding is always better; a rank/quantile
 transform before the value embedding is a cheap candidate to get both.
 
 %=====================================================================
@@ -428,6 +437,8 @@ ties. The pretrained model is unstable across splits (sd up to 0.06). It is best
 \section{Open items}
 Ordered by how much each could change the paper's claims.
 \begin{enumerate}
+  \item \textbf{Corrected SUPPORT results.} Re-run of the SUPPORT benchmark and of the
+        encoding comparison with the fixed preprocessing (notebook 12); this also re-opens the gap to SurvTRACE on SUPPORT.
   \item \textbf{Coded sequences (\S4.2).} The v2 cohorts show the information is in the history but our model does
         not extract it. Planned: a larger transformer, attention or \texttt{[CLS]} pooling instead of mean pooling,
         an explicit time encoding, and more training patients; then re-run notebook 09. This is the one negative

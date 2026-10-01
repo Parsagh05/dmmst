@@ -15,9 +15,11 @@ bugs below; nothing from `dmmst_full_results_old.pdf` / `_new.pdf` should go in 
 | `09_sequential_ehr_v2` | §4.2 again with EHR simulator v2, where order, trends and recency are not recoverable from counts / last values | ~96 |
 | `10_continuous_vs_discretised` | §2.2 / Fig. 2: numeric-value embedding vs 10 quantile bins, METABRIC + SUPPORT | 40 |
 | `11_extra_sweeps` | Simulator sweeps over non-linearity, number of events (2–8), sample size (500–10k) | ~250 |
+| **`12_final_support_and_encoding`** | **Final.** Corrected SUPPORT benchmark (the numeric parser had METABRIC's column layout hard-coded: five SUPPORT measurements unscaled, mean blood pressure lost) + continuous vs quantile vs binned input on METABRIC and SUPPORT | ~135 |
+| **`13_final_sequential_ehr`** | **Final.** §4.2 with an improved sequence model (hidden 64, 4 layers, `[CLS]` pooling) and recency on every code (`sequence_time`), vs bag-of-codes, Cox, oracle | ~105 |
 | `04_report` | All paper tables/figures from the outputs of the other notebooks (run last) | — |
 
-Priority: **01 → 03 → 02 → 06 → 05 → 04**. 01 decides the paper's central claim.
+Final runs: **12 and 13** (all other notebooks are already complete; SUPPORT results from 03/10 are superseded by 12). Original order: 01 → 03 → 02 → 06 → 05 → 04. 01 decides the paper's central claim.
 Every notebook defaults to the real run (`SMOKE_TEST = False`).
 
 Rough time per notebook on a Kaggle T4 (2 runs in parallel; estimated, ±2×): 01 5–9 h,

@@ -234,6 +234,11 @@ class Runner:
                     bar.update(1)
         if bar:
             bar.close()
+        if failed and not (time_budget_min and (time.time() - t0) / 60 > time_budget_min):
+            # one sequential retry: parallel runs can be killed for memory without any bug
+            self._log(f"retrying {len(failed)} failed run(s) one at a time")
+            by_tag = {r.tag: r for r in todo}
+            failed = [tag for tag in failed if not self.run(by_tag[tag])]
         self._log(f"finished in {(time.time() - t0) / 60:.1f} min; {len(failed)} failed: {failed}")
 
     # --------------------------------------------------------------- collecting

@@ -84,6 +84,11 @@ def load(dirs) -> pd.DataFrame:
             else BASELINE_NAMES.get(m, m)
             for m, r, lv in zip(df["model"], rec, lv)
         ]
+        if "stage" in df:  # notebook 08: tuned penalties must not merge with untuned runs
+            df["label"] = [lab + " [tuned]" if st == "tuned" else lab for lab, st in zip(df["label"], df["stage"])]
+            df["variant"] = [v + "@tuned" if st == "tuned" else v for v, st in zip(df["variant"], df["stage"])]
+        if "variant_tag" in df:  # final runs: model configuration (e.g. large+CLS) in the label
+            df["label"] = [lab if pd.isna(t) else f"{lab} ({t})" for lab, t in zip(df["label"], df["variant_tag"])]
         if "repr" in df:  # §4.2: same model on sequence / bag / static inputs
             df["label"] = [lab if pd.isna(rp) else f"{lab} [{rp}]" for lab, rp in zip(df["label"], df["repr"])]
     return df

@@ -20,6 +20,9 @@ Representations (``representation``), same patients and outcomes:
 * ``bag``      - classic tabular summary: count of every code, last value of every
   measured code, number of visits. What a non-sequential model would be given.
 * ``static``   - static columns only.
+* ``sequence_time`` - as ``sequence``, but plain codes also carry their recency
+  ``exp(t / 1 year)`` (1 at the index date, ~0.007 five years before) through the same
+  numeric-value embedding, so every token - not only ``VISIT`` - knows when it happened.
 
 The ``bag``/``static`` tables go through the generic tabular parser
 (``parse_multievent``), so the three differ only in what the model is shown.
@@ -45,7 +48,7 @@ from sat.utils import logging
 
 logger = logging.get_default_logger()
 
-REPRESENTATIONS = ("sequence", "bag", "static")
+REPRESENTATIONS = ("sequence", "sequence_time", "bag", "static")
 
 
 def _read(source_dir):
@@ -86,6 +89,7 @@ def describe(source_dir, max_tokens: int = 256) -> dict:
     return {
         "num_features": {
             "sequence": int(min(max_tokens, n_static + longest)),
+            "sequence_time": int(min(max_tokens, n_static + longest)),
             "bag": int(_bag(patients, events).shape[1] + n_static),
             "static": int(n_static),
         },
@@ -137,6 +141,10 @@ class sequence:
         ev["num"] = np.where(has, (ev["value"] - mu) / sd, 1.0)
         ev.loc[ev["code"] == "VISIT", "num"] = ev.loc[ev["code"] == "VISIT", "time"] / 365.25
         ev["mod"] = np.where(has | (ev["code"] == "VISIT"), 1, 0)
+        if self.representation == "sequence_time":
+            plain = ~has & (ev["code"] != "VISIT")
+            ev.loc[plain, "num"] = np.exp(ev.loc[plain, "time"] / 365.25)
+            ev.loc[plain, "mod"] = 1
         by_id = {i: g for i, g in ev.groupby("id", sort=False)}
 
         budget = self.max_tokens - len(num) - len(cat)

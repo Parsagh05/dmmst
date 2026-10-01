@@ -18,7 +18,7 @@ import h5py
 import numpy as np
 import pandas as pd
 from logdecorator import log_on_end, log_on_error, log_on_start
-from sklearn.preprocessing import MinMaxScaler, StandardScaler
+from sklearn.preprocessing import MinMaxScaler, QuantileTransformer, StandardScaler
 
 from sat.utils import logging
 
@@ -114,29 +114,36 @@ class metabric:
             df_features.columns = new_feature_columns
             df_targets.columns = new_target_columns
 
-            # min/max scaling of the numeric features
-            if self.scale_numerics:
+            # Numeric and categorical columns come from the modality layout. They used to be
+            # hard-coded to METABRIC's (numeric x0-x3, x8; categorical x4-x7): on SUPPORT that
+            # left wblc, sodium, creatinine, ... unscaled and turned the numeric x7 (mean blood
+            # pressure) into a categorical token whose value was lost.
+            cols_numeric = [f"x{i}" for i, m in enumerate(modality) if m == 1]
+            if self.scale_numerics and cols_numeric:
                 if self.scale_method == "min_max":
                     scaler = MinMaxScaler()
                     logger.debug("Perform min/max scaling of the numeric features")
-                    df_features[["x0", "x1", "x2", "x3", "x8"]] = (
-                        scaler.fit_transform(
-                            df_features[["x0", "x1", "x2", "x3", "x8"]]
-                        )
-                        + self.min_scale_numerics
+                    df_features[cols_numeric] = (
+                        scaler.fit_transform(df_features[cols_numeric]) + self.min_scale_numerics
                     )
                 elif self.scale_method == "standard":
                     scaler = StandardScaler()
                     logger.debug("Perform standard scaling of the numeric features")
-                    df_features[["x0", "x1", "x2", "x3", "x8"]] = scaler.fit_transform(
-                        df_features[["x0", "x1", "x2", "x3", "x8"]]
+                    df_features[cols_numeric] = scaler.fit_transform(df_features[cols_numeric])
+                elif self.scale_method == "quantile":
+                    # rank-based: robust to skew and outliers, keeps the value continuous
+                    scaler = QuantileTransformer(
+                        output_distribution="normal", n_quantiles=min(1000, len(df_features))
                     )
+                    logger.debug("Perform quantile (rank -> normal) scaling of the numeric features")
+                    df_features[cols_numeric] = scaler.fit_transform(df_features[cols_numeric])
                 else:
                     raise ValueError(
-                        f"scale_method {self.scale_method} not supported. Use 'min_max' or 'standard'"
+                        f"scale_method {self.scale_method} not supported. "
+                        "Use 'min_max', 'standard' or 'quantile'"
                     )
 
-            cols_categorical = ["x4", "x5", "x6", "x7"]
+            cols_categorical = [f"x{i}" for i, m in enumerate(modality) if m == 0]
 
             logger.debug("Prepend feature name to categorical values")
 
