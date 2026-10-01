@@ -1,0 +1,21 @@
+{
+  "tag": "sim_regime_semicompeting__mensa_paper__s2",
+  "script": "finetune",
+  "experiment": "multievent/mensa_paper",
+  "overrides": [
+    "dataset=sim_regime_semicompeting",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_regime_semicompeting",
+  "info": {
+    "dataset": "sim_regime_semicompeting",
+    "seed": 2,
+    "stage": "truth",
+    "model": "mensa_paper"
+  },
+  "seconds": 341.7674300670624
+}

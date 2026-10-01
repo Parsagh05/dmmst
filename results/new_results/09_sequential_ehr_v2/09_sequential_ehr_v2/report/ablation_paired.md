@@ -1,0 +1,76 @@
+### Paired differences vs L_PCH (same seed = same split and init)
+
+|                                                                                            | vs    |   n |    delta |   delta_sd | wins   |   p_ttest |   p_wilcoxon |
+|:-------------------------------------------------------------------------------------------|:------|----:|---------:|-----------:|:-------|----------:|-------------:|
+| ('ehrsim2_level', 'bag', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                       | L_PCH |   3 |   0.0009 |     0.0004 | 3/3    |  0.0603   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                  | L_PCH |   3 |  -0.0022 |     0.0047 | 1/3    |  0.512    |         0.75 |
+| ('ehrsim2_level', 'static', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                    | L_PCH |   3 |  -0.0028 |     0.0048 | 0/3    |  0.423    |         1    |
+| ('ehrsim2_mixed', 'bag', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                       | L_PCH |   3 |  -0.0021 |     0.0004 | 0/3    |  0.0123   |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                  | L_PCH |   3 |   0.0009 |     0.0043 | 2/3    |  0.754    |         0.75 |
+| ('ehrsim2_mixed', 'static', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                    | L_PCH |   3 |  -0.0021 |     0.0061 | 1/3    |  0.615    |         1    |
+| ('ehrsim2_order', 'bag', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                       | L_PCH |   3 |  -0.0063 |     0.0078 | 1/3    |  0.295    |         0.5  |
+| ('ehrsim2_order', 'sequence', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                  | L_PCH |   3 |  -0.0028 |     0.0078 | 2/3    |  0.598    |         1    |
+| ('ehrsim2_order', 'static', 'C_td ↑', 'L_PCH + L_rank + L_mul (paper)')                    | L_PCH |   3 |   0.0002 |     0.002  | 1/3    |  0.899    |         1    |
+| ('ehrsim2_level', 'bag', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')           | L_PCH |   3 |   0.136  |     0.036  | 3/3    |  0.0225   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.069  |     0.0218 | 3/3    |  0.0318   |         0.25 |
+| ('ehrsim2_level', 'static', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.1398 |     0.0143 | 3/3    |  0.00349  |         0.25 |
+| ('ehrsim2_mixed', 'bag', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')           | L_PCH |   3 |   0.1083 |     0.0602 | 3/3    |  0.0894   |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.071  |     0.0198 | 3/3    |  0.025    |         0.25 |
+| ('ehrsim2_mixed', 'static', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.1615 |     0.0568 | 3/3    |  0.0388   |         0.25 |
+| ('ehrsim2_order', 'bag', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')           | L_PCH |   3 |   0.0808 |     0.028  | 3/3    |  0.0377   |         0.25 |
+| ('ehrsim2_order', 'sequence', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.0777 |     0.0335 | 3/3    |  0.0567   |         0.25 |
+| ('ehrsim2_order', 'static', 'Within-subject C ↑', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0946 |     0.0065 | 3/3    |  0.00157  |         0.25 |
+| ('ehrsim2_level', 'bag', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.136  |     0.036  | 3/3    |  0.0225   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)') | L_PCH |   3 |   0.069  |     0.0218 | 3/3    |  0.0318   |         0.25 |
+| ('ehrsim2_level', 'static', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)')   | L_PCH |   3 |   0.1398 |     0.0143 | 3/3    |  0.00349  |         0.25 |
+| ('ehrsim2_mixed', 'bag', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.1083 |     0.0602 | 3/3    |  0.0894   |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)') | L_PCH |   3 |   0.071  |     0.0198 | 3/3    |  0.025    |         0.25 |
+| ('ehrsim2_mixed', 'static', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)')   | L_PCH |   3 |   0.1615 |     0.0568 | 3/3    |  0.0388   |         0.25 |
+| ('ehrsim2_order', 'bag', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.0808 |     0.028  | 3/3    |  0.0377   |         0.25 |
+| ('ehrsim2_order', 'sequence', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)') | L_PCH |   3 |   0.0777 |     0.0335 | 3/3    |  0.0567   |         0.25 |
+| ('ehrsim2_order', 'static', 'Within C gain over KM ↑', 'L_PCH + L_rank + L_mul (paper)')   | L_PCH |   3 |   0.0946 |     0.0065 | 3/3    |  0.00157  |         0.25 |
+| ('ehrsim2_level', 'bag', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')               | L_PCH |   3 |  -0.041  |     0.0126 | 0/3    |  0.0301   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')          | L_PCH |   3 |  -0.0268 |     0.0085 | 0/3    |  0.0318   |         0.25 |
+| ('ehrsim2_level', 'static', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')            | L_PCH |   3 |   0.0059 |     0.0111 | 2/3    |  0.453    |         0.5  |
+| ('ehrsim2_mixed', 'bag', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')               | L_PCH |   3 |  -0.0276 |     0.0092 | 0/3    |  0.0353   |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')          | L_PCH |   3 |  -0.041  |     0.0016 | 0/3    |  0.000527 |         0.25 |
+| ('ehrsim2_mixed', 'static', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')            | L_PCH |   3 |   0.0081 |     0.0103 | 2/3    |  0.305    |         0.5  |
+| ('ehrsim2_order', 'bag', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')               | L_PCH |   3 |  -0.0361 |     0.0175 | 0/3    |  0.0702   |         0.25 |
+| ('ehrsim2_order', 'sequence', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')          | L_PCH |   3 |  -0.0175 |     0.0091 | 0/3    |  0.08     |         0.25 |
+| ('ehrsim2_order', 'static', 'True-order C ↑', 'L_PCH + L_rank + L_mul (paper)')            | L_PCH |   3 |   0.0115 |     0.0127 | 3/3    |  0.259    |         0.25 |
+| ('ehrsim2_level', 'bag', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')           | L_PCH |   3 |   0.0146 |     0.0018 | 0/3    |  0.00486  |         0.25 |
+| ('ehrsim2_level', 'sequence', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.0149 |     0.0006 | 0/3    |  0.000517 |         0.25 |
+| ('ehrsim2_level', 'static', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0021 |     0.0006 | 0/3    |  0.0284   |         0.25 |
+| ('ehrsim2_mixed', 'bag', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')           | L_PCH |   3 |   0.0115 |     0.0012 | 0/3    |  0.00368  |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.0115 |     0.0006 | 0/3    |  0.000849 |         0.25 |
+| ('ehrsim2_mixed', 'static', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0008 |     0.0006 | 0/3    |  0.15     |         0.25 |
+| ('ehrsim2_order', 'bag', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')           | L_PCH |   3 |   0.011  |     0.0025 | 0/3    |  0.0169   |         0.25 |
+| ('ehrsim2_order', 'sequence', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')      | L_PCH |   3 |   0.0064 |     0.0017 | 0/3    |  0.0236   |         0.25 |
+| ('ehrsim2_order', 'static', 'True-order Brier ↓', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0011 |     0.0005 | 0/3    |  0.056    |         0.25 |
+| ('ehrsim2_level', 'bag', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0326 |     0.0044 | 0/3    |  0.0061   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')   | L_PCH |   3 |   0.0329 |     0.0022 | 0/3    |  0.00149  |         0.25 |
+| ('ehrsim2_level', 'static', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')     | L_PCH |   3 |   0.0043 |     0.0013 | 0/3    |  0.0285   |         0.25 |
+| ('ehrsim2_mixed', 'bag', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0253 |     0.0022 | 0/3    |  0.00248  |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')   | L_PCH |   3 |   0.0239 |     0.001  | 0/3    |  0.000562 |         0.25 |
+| ('ehrsim2_mixed', 'static', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')     | L_PCH |   3 |   0.0016 |     0.0012 | 0/3    |  0.147    |         0.25 |
+| ('ehrsim2_order', 'bag', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')        | L_PCH |   3 |   0.0232 |     0.0052 | 0/3    |  0.0166   |         0.25 |
+| ('ehrsim2_order', 'sequence', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')   | L_PCH |   3 |   0.0132 |     0.0039 | 0/3    |  0.0278   |         0.25 |
+| ('ehrsim2_order', 'static', 'True-order log-loss ↓', 'L_PCH + L_rank + L_mul (paper)')     | L_PCH |   3 |   0.0023 |     0.001  | 0/3    |  0.0539   |         0.25 |
+| ('ehrsim2_level', 'bag', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                      | L_PCH |   3 |   0.0163 |     0.0043 | 0/3    |  0.0229   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                 | L_PCH |   3 |   0.0175 |     0.0023 | 0/3    |  0.00581  |         0.25 |
+| ('ehrsim2_level', 'static', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                   | L_PCH |   3 |   0.0032 |     0.0004 | 0/3    |  0.00468  |         0.25 |
+| ('ehrsim2_mixed', 'bag', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                      | L_PCH |   3 |   0.0167 |     0.0011 | 0/3    |  0.00145  |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                 | L_PCH |   3 |   0.0101 |     0.0019 | 0/3    |  0.0113   |         0.25 |
+| ('ehrsim2_mixed', 'static', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                   | L_PCH |   3 |   0.002  |     0.0011 | 0/3    |  0.0911   |         0.25 |
+| ('ehrsim2_order', 'bag', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                      | L_PCH |   3 |   0.0111 |     0.0006 | 0/3    |  0.00105  |         0.25 |
+| ('ehrsim2_order', 'sequence', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                 | L_PCH |   3 |   0.0082 |     0.0005 | 0/3    |  0.00139  |         0.25 |
+| ('ehrsim2_order', 'static', 'Brier ↓', 'L_PCH + L_rank + L_mul (paper)')                   | L_PCH |   3 |   0.0013 |     0.0004 | 0/3    |  0.0229   |         0.25 |
+| ('ehrsim2_level', 'bag', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')                 | L_PCH |   3 |  91.0894 |    33.4579 | 0/3    |  0.0421   |         0.25 |
+| ('ehrsim2_level', 'sequence', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')            | L_PCH |   3 |  96.181  |    10.3476 | 0/3    |  0.00384  |         0.25 |
+| ('ehrsim2_level', 'static', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')              | L_PCH |   3 | -12.957  |    16.3508 | 2/3    |  0.304    |         0.5  |
+| ('ehrsim2_mixed', 'bag', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')                 | L_PCH |   3 |  68.6134 |     6.5009 | 0/3    |  0.00298  |         0.25 |
+| ('ehrsim2_mixed', 'sequence', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')            | L_PCH |   3 |  50.0931 |     8.8291 | 0/3    |  0.0102   |         0.25 |
+| ('ehrsim2_mixed', 'static', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')              | L_PCH |   3 | -22.2262 |    23.0998 | 2/3    |  0.238    |         0.5  |
+| ('ehrsim2_order', 'bag', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')                 | L_PCH |   3 |  51.1414 |     9.0086 | 0/3    |  0.0102   |         0.25 |
+| ('ehrsim2_order', 'sequence', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')            | L_PCH |   3 |  31.5914 |    14.82   | 0/3    |  0.0662   |         0.25 |
+| ('ehrsim2_order', 'static', 'MAE-margin ↓', 'L_PCH + L_rank + L_mul (paper)')              | L_PCH |   3 | -25.2685 |     3.7542 | 3/3    |  0.00728  |         0.25 |

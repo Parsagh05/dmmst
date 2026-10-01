@@ -1,0 +1,22 @@
+{
+  "tag": "sim_nonlin1p0__oracle__s1",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_nonlin1p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1201.821631103834",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_nonlin1p0",
+  "info": {
+    "dataset": "sim_nonlin1p0",
+    "seed": 1,
+    "sweep": "nonlin",
+    "value": 1.0,
+    "model": "oracle"
+  },
+  "seconds": 13.610067367553711
+}

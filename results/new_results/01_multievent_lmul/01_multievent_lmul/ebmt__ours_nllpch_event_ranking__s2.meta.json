@@ -1,0 +1,22 @@
+{
+  "tag": "ebmt__ours_nllpch_event_ranking__s2",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=ebmt",
+    "me_num_events=5",
+    "me_num_features=4",
+    "survival_max_time=6299.0",
+    "seed=2",
+    "split_seed=2",
+    "tasks/losses=nllpch_event_ranking"
+  ],
+  "dataset": "ebmt",
+  "info": {
+    "dataset": "ebmt",
+    "seed": 2,
+    "model": "ours",
+    "recipe": "nllpch_event_ranking"
+  },
+  "seconds": 59.04752850532532
+}

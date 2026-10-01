@@ -1,0 +1,23 @@
+{
+  "tag": "ehrsim_temporal_sequence__mensa_paper__s0",
+  "script": "finetune",
+  "experiment": "ehrseq/mensa_paper",
+  "overrides": [
+    "ehr_source=ehrsim_temporal",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4394.982380660582",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "ehrsim_temporal_sequence",
+  "info": {
+    "dataset": "ehrsim_temporal",
+    "seed": 0,
+    "repr": "sequence",
+    "model": "mensa_paper"
+  },
+  "seconds": 341.87781739234924
+}

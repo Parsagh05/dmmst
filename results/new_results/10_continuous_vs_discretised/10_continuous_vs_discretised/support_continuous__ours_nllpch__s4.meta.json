@@ -1,0 +1,20 @@
+{
+  "tag": "support_continuous__ours_nllpch__s4",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "dataset=support_numeric",
+    "seed=4",
+    "split_seed=4",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 4,
+    "repr": "continuous",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 99.33437657356262
+}

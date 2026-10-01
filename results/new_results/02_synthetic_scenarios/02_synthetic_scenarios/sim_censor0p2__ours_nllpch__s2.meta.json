@@ -1,0 +1,24 @@
+{
+  "tag": "sim_censor0p2__ours_nllpch__s2",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_censor0p2",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=2",
+    "split_seed=2",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "sim_censor0p2",
+  "info": {
+    "dataset": "sim_censor0p2",
+    "seed": 2,
+    "sweep": "censor",
+    "value": 0.2,
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 281.77656745910645
+}

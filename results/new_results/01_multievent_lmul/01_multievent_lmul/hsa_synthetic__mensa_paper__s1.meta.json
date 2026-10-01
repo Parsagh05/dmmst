@@ -1,0 +1,17 @@
+{
+  "tag": "hsa_synthetic__mensa_paper__s1",
+  "script": "finetune",
+  "experiment": "hsa_synthetic/mensa_paper",
+  "overrides": [
+    "per_event_horizons=true",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "hsa_synthetic",
+  "info": {
+    "dataset": "hsa_synthetic",
+    "seed": 1,
+    "model": "mensa_paper"
+  },
+  "seconds": 115.87060213088989
+}

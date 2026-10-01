@@ -1,0 +1,23 @@
+{
+  "tag": "ehrsim2_order_bag__coxph__s0",
+  "script": "coxph",
+  "experiment": "ehrseq/coxph",
+  "overrides": [
+    "ehr_source=ehrsim2_order",
+    "ehr_repr=bag",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=39",
+    "survival_max_time=4258.321532580605",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "ehrsim2_order_bag",
+  "info": {
+    "dataset": "ehrsim2_order",
+    "seed": 0,
+    "repr": "bag",
+    "model": "coxph"
+  },
+  "seconds": 20.339450120925903
+}

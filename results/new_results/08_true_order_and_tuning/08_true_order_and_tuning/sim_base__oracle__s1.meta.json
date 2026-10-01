@@ -1,0 +1,21 @@
+{
+  "tag": "sim_base__oracle__s1",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 1,
+    "stage": "truth",
+    "model": "oracle"
+  },
+  "seconds": 13.617829084396362
+}

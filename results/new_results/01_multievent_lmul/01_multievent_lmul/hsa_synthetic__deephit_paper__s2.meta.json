@@ -1,0 +1,17 @@
+{
+  "tag": "hsa_synthetic__deephit_paper__s2",
+  "script": "finetune",
+  "experiment": "hsa_synthetic/deephit_paper",
+  "overrides": [
+    "per_event_horizons=true",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "hsa_synthetic",
+  "info": {
+    "dataset": "hsa_synthetic",
+    "seed": 2,
+    "model": "deephit_paper"
+  },
+  "seconds": 78.02046608924866
+}

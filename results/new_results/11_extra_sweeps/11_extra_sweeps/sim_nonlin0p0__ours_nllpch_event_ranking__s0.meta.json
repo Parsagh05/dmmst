@@ -1,0 +1,24 @@
+{
+  "tag": "sim_nonlin0p0__ours_nllpch_event_ranking__s0",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_nonlin0p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1198.4566152732573",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch_event_ranking"
+  ],
+  "dataset": "sim_nonlin0p0",
+  "info": {
+    "dataset": "sim_nonlin0p0",
+    "seed": 0,
+    "sweep": "nonlin",
+    "value": 0.0,
+    "model": "ours",
+    "recipe": "nllpch_event_ranking"
+  },
+  "seconds": 171.80429005622864
+}

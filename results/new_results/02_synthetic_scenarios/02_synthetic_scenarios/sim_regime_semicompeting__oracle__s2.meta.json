@@ -1,0 +1,22 @@
+{
+  "tag": "sim_regime_semicompeting__oracle__s2",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_regime_semicompeting",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_regime_semicompeting",
+  "info": {
+    "dataset": "sim_regime_semicompeting",
+    "seed": 2,
+    "sweep": "regime",
+    "value": "semi-competing",
+    "model": "oracle"
+  },
+  "seconds": 13.387823104858398
+}

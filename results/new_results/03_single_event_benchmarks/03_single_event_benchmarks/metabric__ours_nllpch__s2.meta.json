@@ -1,0 +1,23 @@
+{
+  "tag": "metabric__ours_nllpch__s2",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 2,
+    "model": "ours",
+    "recipe": "nllpch",
+    "lambda_v": null
+  },
+  "seconds": 29.032801389694214
+}

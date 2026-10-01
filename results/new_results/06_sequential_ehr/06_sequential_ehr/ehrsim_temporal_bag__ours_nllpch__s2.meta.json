@@ -1,0 +1,25 @@
+{
+  "tag": "ehrsim_temporal_bag__ours_nllpch__s2",
+  "script": "finetune",
+  "experiment": "ehrseq/survival",
+  "overrides": [
+    "ehr_source=ehrsim_temporal",
+    "ehr_repr=bag",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=39",
+    "survival_max_time=4394.982380660582",
+    "seed=2",
+    "split_seed=2",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "ehrsim_temporal_bag",
+  "info": {
+    "dataset": "ehrsim_temporal",
+    "seed": 2,
+    "repr": "bag",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 224.47726321220398
+}

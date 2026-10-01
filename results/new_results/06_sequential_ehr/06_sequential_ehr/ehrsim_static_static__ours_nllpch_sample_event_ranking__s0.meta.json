@@ -1,0 +1,25 @@
+{
+  "tag": "ehrsim_static_static__ours_nllpch_sample_event_ranking__s0",
+  "script": "finetune",
+  "experiment": "ehrseq/survival",
+  "overrides": [
+    "ehr_source=ehrsim_static",
+    "ehr_repr=static",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=2",
+    "survival_max_time=4747.772892219548",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch_sample_event_ranking"
+  ],
+  "dataset": "ehrsim_static_static",
+  "info": {
+    "dataset": "ehrsim_static",
+    "seed": 0,
+    "repr": "static",
+    "model": "ours",
+    "recipe": "nllpch_sample_event_ranking"
+  },
+  "seconds": 115.0437822341919
+}

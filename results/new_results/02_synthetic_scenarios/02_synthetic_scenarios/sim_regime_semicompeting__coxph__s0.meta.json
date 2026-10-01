@@ -1,0 +1,22 @@
+{
+  "tag": "sim_regime_semicompeting__coxph__s0",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_regime_semicompeting",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "sim_regime_semicompeting",
+  "info": {
+    "dataset": "sim_regime_semicompeting",
+    "seed": 0,
+    "sweep": "regime",
+    "value": "semi-competing",
+    "model": "coxph"
+  },
+  "seconds": 17.938863277435303
+}

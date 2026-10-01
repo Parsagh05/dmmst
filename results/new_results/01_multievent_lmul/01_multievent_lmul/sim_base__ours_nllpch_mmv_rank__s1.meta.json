@@ -1,0 +1,24 @@
+{
+  "tag": "sim_base__ours_nllpch_mmv_rank__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch_mmv_rank",
+    "mmv_variance_weight=1.0"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 1,
+    "model": "ours",
+    "recipe": "nllpch_mmv_rank",
+    "lambda_v": 1.0
+  },
+  "seconds": 437.26395630836487
+}

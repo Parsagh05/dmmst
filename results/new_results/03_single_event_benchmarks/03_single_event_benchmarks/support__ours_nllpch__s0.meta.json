@@ -1,0 +1,23 @@
+{
+  "tag": "support__ours_nllpch__s0",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "seed=0",
+    "split_seed=0",
+    "transformer_num_hidden_layers=3",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 0,
+    "model": "ours",
+    "recipe": "nllpch",
+    "lambda_v": null
+  },
+  "seconds": 131.35270738601685
+}

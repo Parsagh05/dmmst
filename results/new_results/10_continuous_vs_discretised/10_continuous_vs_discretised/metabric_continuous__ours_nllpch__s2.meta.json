@@ -1,0 +1,20 @@
+{
+  "tag": "metabric_continuous__ours_nllpch__s2",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "dataset=metabric_numeric",
+    "seed=2",
+    "split_seed=2",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 2,
+    "repr": "continuous",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 27.958948373794556
+}

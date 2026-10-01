@@ -1,0 +1,22 @@
+{
+  "tag": "sim_events2__oracle__s0",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_events2",
+    "me_num_events=2",
+    "me_num_features=15",
+    "survival_max_time=1234.5754590785477",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "sim_events2",
+  "info": {
+    "dataset": "sim_events2",
+    "seed": 0,
+    "sweep": "events",
+    "value": 2,
+    "model": "oracle"
+  },
+  "seconds": 12.536852836608887
+}

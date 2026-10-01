@@ -1,0 +1,20 @@
+{
+  "tag": "ebmt__coxph__s4",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=ebmt",
+    "me_num_events=5",
+    "me_num_features=4",
+    "survival_max_time=6299.0",
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "ebmt",
+  "info": {
+    "dataset": "ebmt",
+    "seed": 4,
+    "model": "coxph"
+  },
+  "seconds": 13.97802209854126
+}

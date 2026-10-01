@@ -1,0 +1,24 @@
+{
+  "tag": "sim_order_spread2p0__ours_nllpch_event_ranking__s2",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_order_spread2p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=2940.4141786901687",
+    "seed=2",
+    "split_seed=2",
+    "tasks/losses=nllpch_event_ranking"
+  ],
+  "dataset": "sim_order_spread2p0",
+  "info": {
+    "dataset": "sim_order_spread2p0",
+    "seed": 2,
+    "sweep": "order_spread",
+    "value": 2.0,
+    "model": "ours",
+    "recipe": "nllpch_event_ranking"
+  },
+  "seconds": 387.9956855773926
+}

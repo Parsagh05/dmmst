@@ -1,0 +1,19 @@
+{
+  "tag": "tuned__metabric__ours_nllpch__s1",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 1,
+    "stage": "tuned",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 50.641592502593994
+}

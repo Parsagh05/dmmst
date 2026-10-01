@@ -1,0 +1,24 @@
+{
+  "tag": "sim_n500__ours_nllpch__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_n500",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1101.0345599386412",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "sim_n500",
+  "info": {
+    "dataset": "sim_n500",
+    "seed": 1,
+    "sweep": "n",
+    "value": 500,
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 76.81338906288147
+}

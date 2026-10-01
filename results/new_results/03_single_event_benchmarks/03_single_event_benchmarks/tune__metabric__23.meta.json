@@ -1,0 +1,25 @@
+{
+  "tag": "tune__metabric__23",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "model": "tune",
+    "grid_id": 23,
+    "transformer_num_hidden_layers": 4,
+    "transformer_hidden_size": 16,
+    "transformer_intermediate_size": 64,
+    "learning_rate": 0.0001
+  },
+  "seconds": 55.56017589569092
+}

@@ -1,0 +1,25 @@
+{
+  "tag": "ebmt__ours_nllpch_mmv_rank__s4",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=ebmt",
+    "me_num_events=5",
+    "me_num_features=4",
+    "survival_max_time=6299.0",
+    "seed=4",
+    "split_seed=4",
+    "tasks/losses=nllpch_mmv_rank",
+    "mmv_variance_weight=1.0"
+  ],
+  "dataset": "ebmt",
+  "info": {
+    "dataset": "ebmt",
+    "seed": 4,
+    "model": "ours",
+    "recipe": "nllpch_mmv_rank",
+    "source_notebook": "01",
+    "lambda_v": 1.0
+  },
+  "seconds": 65.84941363334656
+}

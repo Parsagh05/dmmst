@@ -1,0 +1,20 @@
+{
+  "tag": "support__mensa_paper__s4",
+  "script": "finetune",
+  "experiment": "survtrace_support/mensa_paper",
+  "overrides": [
+    "seed=4",
+    "split_seed=4",
+    "transformer_num_hidden_layers=3",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 4,
+    "model": "mensa_paper"
+  },
+  "seconds": 61.164472579956055
+}

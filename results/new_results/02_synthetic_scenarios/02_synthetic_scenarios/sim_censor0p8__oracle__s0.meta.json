@@ -1,0 +1,22 @@
+{
+  "tag": "sim_censor0p8__oracle__s0",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_censor0p8",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=656.8090605417366",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "sim_censor0p8",
+  "info": {
+    "dataset": "sim_censor0p8",
+    "seed": 0,
+    "sweep": "censor",
+    "value": 0.8,
+    "model": "oracle"
+  },
+  "seconds": 13.547515153884888
+}

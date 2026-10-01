@@ -1,0 +1,24 @@
+{
+  "tag": "sim_regime_competing__ours_nllpch_sample_event_ranking__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_regime_competing",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=635.2276503025419",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch_sample_event_ranking"
+  ],
+  "dataset": "sim_regime_competing",
+  "info": {
+    "dataset": "sim_regime_competing",
+    "seed": 1,
+    "sweep": "regime",
+    "value": "competing",
+    "model": "ours",
+    "recipe": "nllpch_sample_event_ranking"
+  },
+  "seconds": 238.3909866809845
+}

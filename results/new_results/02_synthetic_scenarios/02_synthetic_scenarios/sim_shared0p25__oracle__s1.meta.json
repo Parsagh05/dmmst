@@ -1,0 +1,22 @@
+{
+  "tag": "sim_shared0p25__oracle__s1",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_shared0p25",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1159.5981143001202",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_shared0p25",
+  "info": {
+    "dataset": "sim_shared0p25",
+    "seed": 1,
+    "sweep": "shared",
+    "value": 0.25,
+    "model": "oracle"
+  },
+  "seconds": 13.49212646484375
+}

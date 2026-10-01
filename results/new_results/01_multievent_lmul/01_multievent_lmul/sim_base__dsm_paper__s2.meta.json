@@ -1,0 +1,20 @@
+{
+  "tag": "sim_base__dsm_paper__s2",
+  "script": "finetune",
+  "experiment": "multievent/dsm_paper",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 2,
+    "model": "dsm_paper"
+  },
+  "seconds": 680.7300364971161
+}

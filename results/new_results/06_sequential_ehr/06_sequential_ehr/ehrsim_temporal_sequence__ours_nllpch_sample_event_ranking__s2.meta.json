@@ -1,0 +1,25 @@
+{
+  "tag": "ehrsim_temporal_sequence__ours_nllpch_sample_event_ranking__s2",
+  "script": "finetune",
+  "experiment": "ehrseq/survival",
+  "overrides": [
+    "ehr_source=ehrsim_temporal",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4394.982380660582",
+    "seed=2",
+    "split_seed=2",
+    "tasks/losses=nllpch_sample_event_ranking"
+  ],
+  "dataset": "ehrsim_temporal_sequence",
+  "info": {
+    "dataset": "ehrsim_temporal",
+    "seed": 2,
+    "repr": "sequence",
+    "model": "ours",
+    "recipe": "nllpch_sample_event_ranking"
+  },
+  "seconds": 187.56219363212585
+}

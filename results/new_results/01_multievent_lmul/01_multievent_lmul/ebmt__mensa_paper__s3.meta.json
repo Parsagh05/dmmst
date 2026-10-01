@@ -1,0 +1,20 @@
+{
+  "tag": "ebmt__mensa_paper__s3",
+  "script": "finetune",
+  "experiment": "multievent/mensa_paper",
+  "overrides": [
+    "dataset=ebmt",
+    "me_num_events=5",
+    "me_num_features=4",
+    "survival_max_time=6299.0",
+    "seed=3",
+    "split_seed=3"
+  ],
+  "dataset": "ebmt",
+  "info": {
+    "dataset": "ebmt",
+    "seed": 3,
+    "model": "mensa_paper"
+  },
+  "seconds": 62.90101337432861
+}

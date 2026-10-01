@@ -1,0 +1,24 @@
+{
+  "tag": "sim_base__llm_pretrained__s2",
+  "script": "llm",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=2",
+    "split_seed=2",
+    "llm_init=pretrained",
+    "llm_model=distilgpt2",
+    "llm_learning_rate=5e-5",
+    "llm_epochs=30"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 2,
+    "model": "llm_pretrained"
+  },
+  "seconds": 1296.4368324279785
+}

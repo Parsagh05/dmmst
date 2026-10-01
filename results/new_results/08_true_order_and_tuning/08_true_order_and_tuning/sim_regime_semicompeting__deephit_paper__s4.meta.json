@@ -1,0 +1,21 @@
+{
+  "tag": "sim_regime_semicompeting__deephit_paper__s4",
+  "script": "finetune",
+  "experiment": "multievent/deephit_paper",
+  "overrides": [
+    "dataset=sim_regime_semicompeting",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "sim_regime_semicompeting",
+  "info": {
+    "dataset": "sim_regime_semicompeting",
+    "seed": 4,
+    "stage": "truth",
+    "model": "deephit_paper"
+  },
+  "seconds": 641.2645864486694
+}

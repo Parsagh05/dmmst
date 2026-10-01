@@ -1,0 +1,20 @@
+{
+  "tag": "sim_base__coxph__s1",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 1,
+    "model": "coxph"
+  },
+  "seconds": 17.55886697769165
+}

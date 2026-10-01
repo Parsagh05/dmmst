@@ -1,0 +1,17 @@
+{
+  "tag": "hsa_synthetic__coxph__s4",
+  "script": "coxph",
+  "experiment": "hsa_synthetic/coxph",
+  "overrides": [
+    "per_event_horizons=true",
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "hsa_synthetic",
+  "info": {
+    "dataset": "hsa_synthetic",
+    "seed": 4,
+    "model": "coxph"
+  },
+  "seconds": 13.975670099258423
+}

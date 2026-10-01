@@ -1,0 +1,25 @@
+{
+  "tag": "tune_L_mul__sim_base__01",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "event_ranking_loss_sigma=0.1",
+    "event_ranking_loss_coeff=0.05",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch_event_ranking"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "model": "tune",
+    "penalty": "L_mul",
+    "event_ranking_loss_sigma": 0.1,
+    "event_ranking_loss_coeff": 0.05
+  },
+  "seconds": 406.03768658638
+}

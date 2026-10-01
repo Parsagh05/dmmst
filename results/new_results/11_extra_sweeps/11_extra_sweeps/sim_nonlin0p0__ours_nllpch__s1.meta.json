@@ -1,0 +1,24 @@
+{
+  "tag": "sim_nonlin0p0__ours_nllpch__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_nonlin0p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1198.4566152732573",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "sim_nonlin0p0",
+  "info": {
+    "dataset": "sim_nonlin0p0",
+    "seed": 1,
+    "sweep": "nonlin",
+    "value": 0.0,
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 307.8651177883148
+}

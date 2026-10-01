@@ -1,0 +1,22 @@
+{
+  "tag": "sim_regime_competing__coxph__s0",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_regime_competing",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=635.2276503025419",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "sim_regime_competing",
+  "info": {
+    "dataset": "sim_regime_competing",
+    "seed": 0,
+    "sweep": "regime",
+    "value": "competing",
+    "model": "coxph"
+  },
+  "seconds": 16.600584745407104
+}

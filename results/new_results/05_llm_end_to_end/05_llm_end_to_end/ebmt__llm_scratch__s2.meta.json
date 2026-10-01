@@ -1,0 +1,23 @@
+{
+  "tag": "ebmt__llm_scratch__s2",
+  "script": "llm",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=ebmt",
+    "me_num_events=5",
+    "me_num_features=4",
+    "survival_max_time=6299.0",
+    "seed=2",
+    "split_seed=2",
+    "llm_init=scratch",
+    "llm_learning_rate=5e-4",
+    "llm_epochs=30"
+  ],
+  "dataset": "ebmt",
+  "info": {
+    "dataset": "ebmt",
+    "seed": 2,
+    "model": "llm_scratch"
+  },
+  "seconds": 44.74081754684448
+}

@@ -1,0 +1,21 @@
+{
+  "tag": "metabric__llm_pretrained__s1",
+  "script": "llm",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "seed=1",
+    "split_seed=1",
+    "llm_epochs=30",
+    "llm_init=pretrained",
+    "llm_model=distilgpt2",
+    "llm_learning_rate=5e-5"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 1,
+    "model": "llm_pretrained",
+    "source_notebook": "05"
+  },
+  "seconds": 364.196005821228
+}

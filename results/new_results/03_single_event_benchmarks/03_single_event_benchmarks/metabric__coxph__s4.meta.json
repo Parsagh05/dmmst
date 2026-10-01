@@ -1,0 +1,16 @@
+{
+  "tag": "metabric__coxph__s4",
+  "script": "coxph",
+  "experiment": "survtrace_metabric/coxph",
+  "overrides": [
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 4,
+    "model": "coxph"
+  },
+  "seconds": 13.395618200302124
+}

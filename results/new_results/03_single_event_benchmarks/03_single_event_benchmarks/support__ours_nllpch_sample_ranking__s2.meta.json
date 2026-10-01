@@ -1,0 +1,23 @@
+{
+  "tag": "support__ours_nllpch_sample_ranking__s2",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=3",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch_sample_ranking"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 2,
+    "model": "ours",
+    "recipe": "nllpch_sample_ranking",
+    "lambda_v": null
+  },
+  "seconds": 242.75209784507751
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "sim_regime_semicompeting__ours_nllpch_sample_event_ranking__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_regime_semicompeting",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch_sample_event_ranking"
+  ],
+  "dataset": "sim_regime_semicompeting",
+  "info": {
+    "dataset": "sim_regime_semicompeting",
+    "seed": 1,
+    "stage": "truth",
+    "model": "ours",
+    "recipe": "nllpch_sample_event_ranking"
+  },
+  "seconds": 393.8570394515991
+}

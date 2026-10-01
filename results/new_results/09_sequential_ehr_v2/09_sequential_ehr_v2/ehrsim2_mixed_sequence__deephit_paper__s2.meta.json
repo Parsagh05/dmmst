@@ -1,0 +1,23 @@
+{
+  "tag": "ehrsim2_mixed_sequence__deephit_paper__s2",
+  "script": "finetune",
+  "experiment": "ehrseq/deephit_paper",
+  "overrides": [
+    "ehr_source=ehrsim2_mixed",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4481.952084606863",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "ehrsim2_mixed_sequence",
+  "info": {
+    "dataset": "ehrsim2_mixed",
+    "seed": 2,
+    "repr": "sequence",
+    "model": "deephit_paper"
+  },
+  "seconds": 245.85819792747498
+}

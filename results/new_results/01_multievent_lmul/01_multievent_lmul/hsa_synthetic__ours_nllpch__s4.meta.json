@@ -1,0 +1,19 @@
+{
+  "tag": "hsa_synthetic__ours_nllpch__s4",
+  "script": "finetune",
+  "experiment": "hsa_synthetic/survival",
+  "overrides": [
+    "per_event_horizons=true",
+    "seed=4",
+    "split_seed=4",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "hsa_synthetic",
+  "info": {
+    "dataset": "hsa_synthetic",
+    "seed": 4,
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 134.32361674308777
+}

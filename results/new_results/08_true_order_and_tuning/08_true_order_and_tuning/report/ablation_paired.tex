@@ -1,0 +1,61 @@
+\begin{tabular}{llllrrrlll}
+\toprule
+ &  &  & vs & n & delta & delta\_sd & wins & p\_ttest & p\_wilcoxon \\
+dataset & metric & recipe &  &  &  &  &  &  &  \\
+\midrule
+metabric & C\_td ↑ & L\_PCH + L\_rank & L\_PCH & 5 & 0.001300 & 0.011300 & 3/5 & 0.809 & 0.812 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{C\_td ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.005000 & 0.002500 & 0/5 & 0.0108 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.000700 & 0.003500 & 2/5 & 0.675 & 0.812 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{C\_td ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.011300 & 0.003000 & 0/5 & 0.00113 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.001200 & 0.004800 & 2/5 & 0.607 & 0.625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{Within-subject C ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.002200 & 0.008000 & 1/5 & 0.567 & 0.625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.013800 & 0.006100 & 0/5 & 0.00717 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{Within-subject C ↑} & L\_PCH + L\_mul & L\_PCH & 5 & 0.049100 & 0.019200 & 5/5 & 0.00467 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.043800 & 0.016100 & 5/5 & 0.00365 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{Within C gain over KM ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.002200 & 0.008000 & 1/5 & 0.567 & 0.625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.013800 & 0.006100 & 0/5 & 0.00717 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{Within C gain over KM ↑} & L\_PCH + L\_mul & L\_PCH & 5 & 0.049100 & 0.019200 & 5/5 & 0.00467 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.043800 & 0.016100 & 5/5 & 0.00365 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{True-order C ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.002500 & 0.003400 & 1/5 & 0.181 & 0.188 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.005700 & 0.005100 & 0/5 & 0.066 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{True-order C ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.024600 & 0.010500 & 0/5 & 0.00637 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.040000 & 0.010300 & 0/5 & 0.00095 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{True-order Brier ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.005400 & 0.001100 & 0/5 & 0.000444 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.015800 & 0.000800 & 0/5 & 1.94e-06 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{True-order Brier ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.013400 & 0.001200 & 0/5 & 1.35e-05 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.017500 & 0.002500 & 0/5 & 9.46e-05 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{True-order log-loss ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.012500 & 0.002600 & 0/5 & 0.000438 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.035400 & 0.001900 & 0/5 & 2.14e-06 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{True-order log-loss ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.029800 & 0.002100 & 0/5 & 6.14e-06 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.038700 & 0.005300 & 0/5 & 8.29e-05 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+metabric & Brier ↓ & L\_PCH + L\_rank & L\_PCH & 5 & -0.003300 & 0.006700 & 3/5 & 0.324 & 0.312 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{Brier ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.001700 & 0.002100 & 2/5 & 0.15 & 0.312 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.014800 & 0.002500 & 0/5 & 0.000192 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{Brier ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.003900 & 0.001400 & 0/5 & 0.00391 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.015200 & 0.003800 & 0/5 & 0.000838 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+metabric & MAE-margin ↓ & L\_PCH + L\_rank & L\_PCH & 5 & -0.854600 & 2.136600 & 4/5 & 0.422 & 0.438 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_base} & \multirow[t]{2}{*}{MAE-margin ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.402900 & 10.324800 & 3/5 & 0.935 & 0.812 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 20.018500 & 8.109900 & 0/5 & 0.00526 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{2}{*}{sim\_regime\_semicompeting} & \multirow[t]{2}{*}{MAE-margin ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 7.797400 & 7.563500 & 1/5 & 0.0825 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 25.350200 & 9.975700 & 0/5 & 0.00473 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\bottomrule
+\end{tabular}

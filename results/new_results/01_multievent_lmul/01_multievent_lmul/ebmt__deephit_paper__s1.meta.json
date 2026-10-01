@@ -1,0 +1,20 @@
+{
+  "tag": "ebmt__deephit_paper__s1",
+  "script": "finetune",
+  "experiment": "multievent/deephit_paper",
+  "overrides": [
+    "dataset=ebmt",
+    "me_num_events=5",
+    "me_num_features=4",
+    "survival_max_time=6299.0",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "ebmt",
+  "info": {
+    "dataset": "ebmt",
+    "seed": 1,
+    "model": "deephit_paper"
+  },
+  "seconds": 206.88797163963318
+}

@@ -1,0 +1,21 @@
+{
+  "tag": "hsa_synthetic__ours_nllpch_mmv_rank__s4",
+  "script": "finetune",
+  "experiment": "hsa_synthetic/survival",
+  "overrides": [
+    "per_event_horizons=true",
+    "seed=4",
+    "split_seed=4",
+    "tasks/losses=nllpch_mmv_rank",
+    "mmv_variance_weight=1.0"
+  ],
+  "dataset": "hsa_synthetic",
+  "info": {
+    "dataset": "hsa_synthetic",
+    "seed": 4,
+    "model": "ours",
+    "recipe": "nllpch_mmv_rank",
+    "lambda_v": 1.0
+  },
+  "seconds": 116.21380686759949
+}

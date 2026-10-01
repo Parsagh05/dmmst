@@ -1,0 +1,22 @@
+{
+  "tag": "sim_order_spread0p5__coxph__s0",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_order_spread0p5",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1242.7365995302682",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "sim_order_spread0p5",
+  "info": {
+    "dataset": "sim_order_spread0p5",
+    "seed": 0,
+    "sweep": "order_spread",
+    "value": 0.5,
+    "model": "coxph"
+  },
+  "seconds": 16.82000994682312
+}

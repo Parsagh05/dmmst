@@ -1,0 +1,21 @@
+{
+  "tag": "tune_L_rank__metabric__02",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "ranking_loss_sigma=0.1",
+    "ranking_loss_coeff=0.2",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch_sample_ranking"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "model": "tune",
+    "penalty": "L_rank",
+    "ranking_loss_sigma": 0.1,
+    "ranking_loss_coeff": 0.2
+  },
+  "seconds": 37.367981910705566
+}

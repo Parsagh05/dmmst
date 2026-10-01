@@ -1,0 +1,22 @@
+{
+  "tag": "ehrsim_base__oracle__s2",
+  "script": "oracle",
+  "experiment": "ehrseq/survival",
+  "overrides": [
+    "ehr_source=ehrsim_base",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4539.714058911221",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "ehrsim_base_sequence",
+  "info": {
+    "dataset": "ehrsim_base",
+    "seed": 2,
+    "model": "oracle"
+  },
+  "seconds": 15.142763376235962
+}

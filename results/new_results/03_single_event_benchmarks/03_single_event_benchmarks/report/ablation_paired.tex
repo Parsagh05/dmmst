@@ -1,0 +1,43 @@
+\begin{tabular}{llllrrrlll}
+\toprule
+ &  &  & vs & n & delta & delta\_sd & wins & p\_ttest & p\_wilcoxon \\
+dataset & metric & recipe &  &  &  &  &  &  &  \\
+\midrule
+\multirow[t]{5}{*}{metabric} & \multirow[t]{5}{*}{C\_td ↑} & L\_PCH + MMV [λv=0.01] & L\_PCH & 5 & -0.008300 & 0.020300 & 1/5 & 0.414 & 0.438 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.01] & L\_PCH & 5 & -0.016400 & 0.016400 & 1/5 & 0.09 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.1] & L\_PCH & 5 & -0.007700 & 0.009100 & 1/5 & 0.132 & 0.188 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.005800 & 0.012800 & 2/5 & 0.37 & 0.438 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.010300 & 0.008500 & 0/5 & 0.0534 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{5}{*}{support} & \multirow[t]{5}{*}{C\_td ↑} & L\_PCH + MMV [λv=0.01] & L\_PCH & 5 & -0.015500 & 0.028400 & 0/5 & 0.289 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.01] & L\_PCH & 5 & -0.000200 & 0.006500 & 3/5 & 0.957 & 1 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.1] & L\_PCH & 5 & -0.001100 & 0.007100 & 3/5 & 0.75 & 1 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 0.000300 & 0.004700 & 1/5 & 0.91 & 0.625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.000100 & 0.004700 & 3/5 & 0.971 & 1 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{5}{*}{metabric} & \multirow[t]{5}{*}{Brier ↓} & L\_PCH + MMV [λv=0.01] & L\_PCH & 5 & 0.013200 & 0.015700 & 2/5 & 0.134 & 0.312 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.01] & L\_PCH & 5 & 0.019200 & 0.011700 & 0/5 & 0.0215 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.1] & L\_PCH & 5 & 0.012300 & 0.004400 & 0/5 & 0.00333 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 0.066700 & 0.008900 & 0/5 & 7.33e-05 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 0.008300 & 0.002100 & 0/5 & 0.000923 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{5}{*}{support} & \multirow[t]{5}{*}{Brier ↓} & L\_PCH + MMV [λv=0.01] & L\_PCH & 5 & 0.002400 & 0.003000 & 0/5 & 0.149 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.01] & L\_PCH & 5 & 0.004900 & 0.000800 & 0/5 & 0.000153 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.1] & L\_PCH & 5 & 0.005200 & 0.001200 & 0/5 & 0.000556 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 0.005800 & 0.001100 & 0/5 & 0.000251 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 0.004800 & 0.000500 & 0/5 & 4.14e-05 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{5}{*}{metabric} & \multirow[t]{5}{*}{MAE-margin ↓} & L\_PCH + MMV [λv=0.01] & L\_PCH & 5 & 0.913800 & 1.843200 & 2/5 & 0.33 & 0.312 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.01] & L\_PCH & 5 & 3.279200 & 2.465800 & 1/5 & 0.041 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.1] & L\_PCH & 5 & 3.647300 & 2.470300 & 1/5 & 0.0299 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 11.394500 & 2.811400 & 0/5 & 0.000822 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 3.970600 & 1.122100 & 0/5 & 0.00138 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{5}{*}{support} & \multirow[t]{5}{*}{MAE-margin ↓} & L\_PCH + MMV [λv=0.01] & L\_PCH & 5 & -1.516700 & 35.578300 & 2/5 & 0.929 & 1 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.01] & L\_PCH & 5 & 26.389400 & 18.695600 & 0/5 & 0.0343 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=0.1] & L\_PCH & 5 & 17.881500 & 19.648900 & 1/5 & 0.112 & 0.188 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -7.831400 & 9.188000 & 4/5 & 0.129 & 0.188 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 31.012200 & 18.458400 & 0/5 & 0.0198 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\bottomrule
+\end{tabular}

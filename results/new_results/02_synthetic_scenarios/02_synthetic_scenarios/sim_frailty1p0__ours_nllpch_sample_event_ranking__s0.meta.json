@@ -1,0 +1,24 @@
+{
+  "tag": "sim_frailty1p0__ours_nllpch_sample_event_ranking__s0",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_frailty1p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=3504.303672023065",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch_sample_event_ranking"
+  ],
+  "dataset": "sim_frailty1p0",
+  "info": {
+    "dataset": "sim_frailty1p0",
+    "seed": 0,
+    "sweep": "frailty",
+    "value": 1.0,
+    "model": "ours",
+    "recipe": "nllpch_sample_event_ranking"
+  },
+  "seconds": 300.6093912124634
+}

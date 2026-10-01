@@ -1,0 +1,24 @@
+{
+  "tag": "metabric__ours_nllpch_mmv_lv0.01__s2",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch_mmv",
+    "mmv_variance_weight=0.01"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 2,
+    "model": "ours",
+    "recipe": "nllpch_mmv",
+    "lambda_v": 0.01
+  },
+  "seconds": 27.499059200286865
+}

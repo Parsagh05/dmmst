@@ -1,0 +1,17 @@
+{
+  "tag": "hsa_synthetic__dsm_paper__s4",
+  "script": "finetune",
+  "experiment": "hsa_synthetic/dsm_paper",
+  "overrides": [
+    "per_event_horizons=true",
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "hsa_synthetic",
+  "info": {
+    "dataset": "hsa_synthetic",
+    "seed": 4,
+    "model": "dsm_paper"
+  },
+  "seconds": 106.59696078300476
+}

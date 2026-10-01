@@ -1,0 +1,20 @@
+{
+  "tag": "sim_base__deephit_paper__s4",
+  "script": "finetune",
+  "experiment": "multievent/deephit_paper",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 4,
+    "model": "deephit_paper"
+  },
+  "seconds": 393.3186535835266
+}

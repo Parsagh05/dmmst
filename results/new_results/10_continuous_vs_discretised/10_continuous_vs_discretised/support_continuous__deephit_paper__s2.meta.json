@@ -1,0 +1,18 @@
+{
+  "tag": "support_continuous__deephit_paper__s2",
+  "script": "finetune",
+  "experiment": "survtrace_support/deephit_paper",
+  "overrides": [
+    "dataset=support_numeric",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 2,
+    "repr": "continuous",
+    "model": "deephit_paper"
+  },
+  "seconds": 117.34923529624939
+}

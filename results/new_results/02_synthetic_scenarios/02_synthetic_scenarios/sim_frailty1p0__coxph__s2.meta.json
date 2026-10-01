@@ -1,0 +1,22 @@
+{
+  "tag": "sim_frailty1p0__coxph__s2",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_frailty1p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=3504.303672023065",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_frailty1p0",
+  "info": {
+    "dataset": "sim_frailty1p0",
+    "seed": 2,
+    "sweep": "frailty",
+    "value": 1.0,
+    "model": "coxph"
+  },
+  "seconds": 16.999197959899902
+}

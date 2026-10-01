@@ -1,0 +1,23 @@
+{
+  "tag": "ehrsim2_order_sequence__mensa_paper__s1",
+  "script": "finetune",
+  "experiment": "ehrseq/mensa_paper",
+  "overrides": [
+    "ehr_source=ehrsim2_order",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4258.321532580605",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "ehrsim2_order_sequence",
+  "info": {
+    "dataset": "ehrsim2_order",
+    "seed": 1,
+    "repr": "sequence",
+    "model": "mensa_paper"
+  },
+  "seconds": 247.31173157691956
+}

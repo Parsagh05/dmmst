@@ -1,0 +1,23 @@
+{
+  "tag": "metabric_discretised__ours_nllpch__s3",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "data/load=metabric",
+    "data/parse=metabric",
+    "tokenizers=metabric",
+    "dataset=metabric",
+    "seed=3",
+    "split_seed=3",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 3,
+    "repr": "discretised",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 28.392465114593506
+}

@@ -1,0 +1,20 @@
+{
+  "tag": "support__deephit_paper__s2",
+  "script": "finetune",
+  "experiment": "survtrace_support/deephit_paper",
+  "overrides": [
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=3",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 2,
+    "model": "deephit_paper"
+  },
+  "seconds": 130.2645857334137
+}

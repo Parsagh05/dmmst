@@ -1,0 +1,20 @@
+{
+  "tag": "metabric__mensa_paper__s2",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/mensa_paper",
+  "overrides": [
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 2,
+    "model": "mensa_paper"
+  },
+  "seconds": 47.95359826087952
+}

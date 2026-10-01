@@ -1,0 +1,22 @@
+{
+  "tag": "sim_censor0p8__coxph__s2",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_censor0p8",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=656.8090605417366",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_censor0p8",
+  "info": {
+    "dataset": "sim_censor0p8",
+    "seed": 2,
+    "sweep": "censor",
+    "value": 0.8,
+    "model": "coxph"
+  },
+  "seconds": 16.44167137145996
+}

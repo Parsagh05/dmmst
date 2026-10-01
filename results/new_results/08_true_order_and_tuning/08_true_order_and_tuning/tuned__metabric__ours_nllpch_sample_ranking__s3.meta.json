@@ -1,0 +1,22 @@
+{
+  "tag": "tuned__metabric__ours_nllpch_sample_ranking__s3",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "seed=3",
+    "split_seed=3",
+    "tasks/losses=nllpch_sample_ranking",
+    "ranking_loss_sigma=0.5",
+    "ranking_loss_coeff=0.01"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 3,
+    "stage": "tuned",
+    "model": "ours",
+    "recipe": "nllpch_sample_ranking",
+    "tuned": "ranking_loss_sigma=0.5 ranking_loss_coeff=0.01"
+  },
+  "seconds": 47.387314319610596
+}

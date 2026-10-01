@@ -1,0 +1,21 @@
+{
+  "tag": "sim_base__mensa_paper__s1",
+  "script": "finetune",
+  "experiment": "multievent/mensa_paper",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 1,
+    "stage": "truth",
+    "model": "mensa_paper"
+  },
+  "seconds": 417.8685715198517
+}

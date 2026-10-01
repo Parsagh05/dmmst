@@ -1,0 +1,23 @@
+{
+  "tag": "tuned__sim_base__ours_nllpch__s3",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_base",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=3",
+    "split_seed=3",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "sim_base",
+  "info": {
+    "dataset": "sim_base",
+    "seed": 3,
+    "stage": "tuned",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 454.15137577056885
+}

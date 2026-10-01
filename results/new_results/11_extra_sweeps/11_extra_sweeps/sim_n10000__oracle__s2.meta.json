@@ -1,0 +1,22 @@
+{
+  "tag": "sim_n10000__oracle__s2",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_n10000",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1184.447590194122",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_n10000",
+  "info": {
+    "dataset": "sim_n10000",
+    "seed": 2,
+    "sweep": "n",
+    "value": 10000,
+    "model": "oracle"
+  },
+  "seconds": 15.917716979980469
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "ehrsim_static_sequence__deephit_paper__s0",
+  "script": "finetune",
+  "experiment": "ehrseq/deephit_paper",
+  "overrides": [
+    "ehr_source=ehrsim_static",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4747.772892219548",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "ehrsim_static_sequence",
+  "info": {
+    "dataset": "ehrsim_static",
+    "seed": 0,
+    "repr": "sequence",
+    "model": "deephit_paper"
+  },
+  "seconds": 237.46106815338135
+}

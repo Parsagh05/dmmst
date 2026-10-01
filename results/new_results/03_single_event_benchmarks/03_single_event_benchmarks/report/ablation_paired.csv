@@ -1,0 +1,31 @@
+dataset,metric,recipe,vs,n,delta,delta_sd,wins,p_ttest,p_wilcoxon
+metabric,C_td ↑,L_PCH + MMV [λv=0.01],L_PCH,5,-0.0083,0.0203,1/5,0.414,0.438
+metabric,C_td ↑,L_PCH + L_rank + L_mul + MMV [λv=0.01],L_PCH,5,-0.0164,0.0164,1/5,0.09,0.125
+metabric,C_td ↑,L_PCH + L_rank + L_mul + MMV [λv=0.1],L_PCH,5,-0.0077,0.0091,1/5,0.132,0.188
+metabric,C_td ↑,L_PCH + L_rank + L_mul + MMV [λv=1],L_PCH,5,-0.0058,0.0128,2/5,0.37,0.438
+metabric,C_td ↑,L_PCH + L_rank,L_PCH,5,-0.0103,0.0085,0/5,0.0534,0.0625
+support,C_td ↑,L_PCH + MMV [λv=0.01],L_PCH,5,-0.0155,0.0284,0/5,0.289,0.0625
+support,C_td ↑,L_PCH + L_rank + L_mul + MMV [λv=0.01],L_PCH,5,-0.0002,0.0065,3/5,0.957,1
+support,C_td ↑,L_PCH + L_rank + L_mul + MMV [λv=0.1],L_PCH,5,-0.0011,0.0071,3/5,0.75,1
+support,C_td ↑,L_PCH + L_rank + L_mul + MMV [λv=1],L_PCH,5,0.0003,0.0047,1/5,0.91,0.625
+support,C_td ↑,L_PCH + L_rank,L_PCH,5,-0.0001,0.0047,3/5,0.971,1
+metabric,Brier ↓,L_PCH + MMV [λv=0.01],L_PCH,5,0.0132,0.0157,2/5,0.134,0.312
+metabric,Brier ↓,L_PCH + L_rank + L_mul + MMV [λv=0.01],L_PCH,5,0.0192,0.0117,0/5,0.0215,0.0625
+metabric,Brier ↓,L_PCH + L_rank + L_mul + MMV [λv=0.1],L_PCH,5,0.0123,0.0044,0/5,0.00333,0.0625
+metabric,Brier ↓,L_PCH + L_rank + L_mul + MMV [λv=1],L_PCH,5,0.0667,0.0089,0/5,7.33e-05,0.0625
+metabric,Brier ↓,L_PCH + L_rank,L_PCH,5,0.0083,0.0021,0/5,0.000923,0.0625
+support,Brier ↓,L_PCH + MMV [λv=0.01],L_PCH,5,0.0024,0.003,0/5,0.149,0.0625
+support,Brier ↓,L_PCH + L_rank + L_mul + MMV [λv=0.01],L_PCH,5,0.0049,0.0008,0/5,0.000153,0.0625
+support,Brier ↓,L_PCH + L_rank + L_mul + MMV [λv=0.1],L_PCH,5,0.0052,0.0012,0/5,0.000556,0.0625
+support,Brier ↓,L_PCH + L_rank + L_mul + MMV [λv=1],L_PCH,5,0.0058,0.0011,0/5,0.000251,0.0625
+support,Brier ↓,L_PCH + L_rank,L_PCH,5,0.0048,0.0005,0/5,4.14e-05,0.0625
+metabric,MAE-margin ↓,L_PCH + MMV [λv=0.01],L_PCH,5,0.9138,1.8432,2/5,0.33,0.312
+metabric,MAE-margin ↓,L_PCH + L_rank + L_mul + MMV [λv=0.01],L_PCH,5,3.2792,2.4658,1/5,0.041,0.125
+metabric,MAE-margin ↓,L_PCH + L_rank + L_mul + MMV [λv=0.1],L_PCH,5,3.6473,2.4703,1/5,0.0299,0.125
+metabric,MAE-margin ↓,L_PCH + L_rank + L_mul + MMV [λv=1],L_PCH,5,11.3945,2.8114,0/5,0.000822,0.0625
+metabric,MAE-margin ↓,L_PCH + L_rank,L_PCH,5,3.9706,1.1221,0/5,0.00138,0.0625
+support,MAE-margin ↓,L_PCH + MMV [λv=0.01],L_PCH,5,-1.5167,35.5783,2/5,0.929,1
+support,MAE-margin ↓,L_PCH + L_rank + L_mul + MMV [λv=0.01],L_PCH,5,26.3894,18.6956,0/5,0.0343,0.0625
+support,MAE-margin ↓,L_PCH + L_rank + L_mul + MMV [λv=0.1],L_PCH,5,17.8815,19.6489,1/5,0.112,0.188
+support,MAE-margin ↓,L_PCH + L_rank + L_mul + MMV [λv=1],L_PCH,5,-7.8314,9.188,4/5,0.129,0.188
+support,MAE-margin ↓,L_PCH + L_rank,L_PCH,5,31.0122,18.4584,0/5,0.0198,0.0625

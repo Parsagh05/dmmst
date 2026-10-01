@@ -1,0 +1,23 @@
+{
+  "tag": "ehrsim_static_sequence__mensa_paper__s2",
+  "script": "finetune",
+  "experiment": "ehrseq/mensa_paper",
+  "overrides": [
+    "ehr_source=ehrsim_static",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4747.772892219548",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "ehrsim_static_sequence",
+  "info": {
+    "dataset": "ehrsim_static",
+    "seed": 2,
+    "repr": "sequence",
+    "model": "mensa_paper"
+  },
+  "seconds": 464.776816368103
+}

@@ -1,0 +1,24 @@
+{
+  "tag": "sim_n1000__ours_nllpch_sample_event_ranking__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_n1000",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1143.885620679976",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch_sample_event_ranking"
+  ],
+  "dataset": "sim_n1000",
+  "info": {
+    "dataset": "sim_n1000",
+    "seed": 1,
+    "sweep": "n",
+    "value": 1000,
+    "model": "ours",
+    "recipe": "nllpch_sample_event_ranking"
+  },
+  "seconds": 81.07134199142456
+}

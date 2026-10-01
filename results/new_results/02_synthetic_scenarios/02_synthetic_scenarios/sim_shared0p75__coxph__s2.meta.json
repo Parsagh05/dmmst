@@ -1,0 +1,22 @@
+{
+  "tag": "sim_shared0p75__coxph__s2",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_shared0p75",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1169.4142473841198",
+    "seed=2",
+    "split_seed=2"
+  ],
+  "dataset": "sim_shared0p75",
+  "info": {
+    "dataset": "sim_shared0p75",
+    "seed": 2,
+    "sweep": "shared",
+    "value": 0.75,
+    "model": "coxph"
+  },
+  "seconds": 16.90285563468933
+}

@@ -1,0 +1,22 @@
+{
+  "tag": "sim_frailty0p5__oracle__s1",
+  "script": "oracle",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_frailty0p5",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1880.6668304946973",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_frailty0p5",
+  "info": {
+    "dataset": "sim_frailty0p5",
+    "seed": 1,
+    "sweep": "frailty",
+    "value": 0.5,
+    "model": "oracle"
+  },
+  "seconds": 13.411209106445312
+}

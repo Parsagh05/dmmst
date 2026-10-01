@@ -1,0 +1,16 @@
+{
+  "tag": "support__coxph__s1",
+  "script": "coxph",
+  "experiment": "survtrace_support/coxph",
+  "overrides": [
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 1,
+    "model": "coxph"
+  },
+  "seconds": 14.956709146499634
+}

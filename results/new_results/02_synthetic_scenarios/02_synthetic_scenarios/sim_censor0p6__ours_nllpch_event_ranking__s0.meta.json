@@ -1,0 +1,24 @@
+{
+  "tag": "sim_censor0p6__ours_nllpch_event_ranking__s0",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_censor0p6",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1165.6147969324895",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch_event_ranking"
+  ],
+  "dataset": "sim_censor0p6",
+  "info": {
+    "dataset": "sim_censor0p6",
+    "seed": 0,
+    "sweep": "censor",
+    "value": 0.6,
+    "model": "ours",
+    "recipe": "nllpch_event_ranking"
+  },
+  "seconds": 361.988160610199
+}

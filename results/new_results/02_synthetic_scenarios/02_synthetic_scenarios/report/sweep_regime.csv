@@ -1,0 +1,18 @@
+,,within_ctd,within_ctd,ctd_weighted_avg,ctd_weighted_avg,within_ctd_gain,within_ctd_gain
+,,mean,std,mean,std,mean,std
+value,label,,,,,,
+0,Cox PH (cause-specific),,,0.6827,0.0071,,
+0,L_PCH,,,0.6842,0.0024,,
+0,L_PCH + L_mul,,,0.6858,0.0133,,
+0,L_PCH + L_rank + L_mul (paper),,,0.6871,0.0069,,
+0,Oracle (true CIF),,,0.7356,0.0107,,
+1,Cox PH (cause-specific),0.7176,0.0052,0.6757,0.0008,0.0391,0.002
+1,L_PCH,0.7437,0.0044,0.7112,0.002,0.0652,0.008
+1,L_PCH + L_mul,0.7958,0.0034,0.7004,0.0035,0.1174,0.0063
+1,L_PCH + L_rank + L_mul (paper),0.8015,0.0114,0.71,0.0029,0.123,0.0082
+1,Oracle (true CIF),0.7422,0.0056,0.7312,0.0041,0.0638,0.0076
+2,Cox PH (cause-specific),0.6499,0.0056,0.6764,0.0025,0.0678,0.0053
+2,L_PCH,0.6792,0.0008,0.714,0.0015,0.0971,0.007
+2,L_PCH + L_mul,0.6627,0.0087,0.6989,0.0033,0.0806,0.0026
+2,L_PCH + L_rank + L_mul (paper),0.6663,0.0064,0.711,0.0032,0.0842,0.0096
+2,Oracle (true CIF),0.6987,0.0073,0.7338,0.004,0.1167,0.0111

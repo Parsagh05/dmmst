@@ -1,0 +1,21 @@
+{
+  "tag": "metabric_discretised__deephit_paper__s3",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/deephit_paper",
+  "overrides": [
+    "data/load=metabric",
+    "data/parse=metabric",
+    "tokenizers=metabric",
+    "dataset=metabric",
+    "seed=3",
+    "split_seed=3"
+  ],
+  "dataset": "metabric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 3,
+    "repr": "discretised",
+    "model": "deephit_paper"
+  },
+  "seconds": 29.395531177520752
+}

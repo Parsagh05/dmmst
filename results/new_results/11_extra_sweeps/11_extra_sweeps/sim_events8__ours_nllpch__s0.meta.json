@@ -1,0 +1,24 @@
+{
+  "tag": "sim_events8__ours_nllpch__s0",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_events8",
+    "me_num_events=8",
+    "me_num_features=15",
+    "survival_max_time=1165.413624687763",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "sim_events8",
+  "info": {
+    "dataset": "sim_events8",
+    "seed": 0,
+    "sweep": "events",
+    "value": 8,
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 883.5989031791687
+}

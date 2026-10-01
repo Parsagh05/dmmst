@@ -1,0 +1,21 @@
+{
+  "tag": "support_discretised__deephit_paper__s4",
+  "script": "finetune",
+  "experiment": "survtrace_support/deephit_paper",
+  "overrides": [
+    "data/load=support",
+    "data/parse=support",
+    "tokenizers=support",
+    "dataset=support",
+    "seed=4",
+    "split_seed=4"
+  ],
+  "dataset": "support",
+  "info": {
+    "dataset": "support",
+    "seed": 4,
+    "repr": "discretised",
+    "model": "deephit_paper"
+  },
+  "seconds": 64.29956436157227
+}

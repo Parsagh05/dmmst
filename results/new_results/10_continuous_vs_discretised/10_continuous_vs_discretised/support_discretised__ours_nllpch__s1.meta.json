@@ -1,0 +1,23 @@
+{
+  "tag": "support_discretised__ours_nllpch__s1",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "data/load=support",
+    "data/parse=support",
+    "tokenizers=support",
+    "dataset=support",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "support",
+  "info": {
+    "dataset": "support",
+    "seed": 1,
+    "repr": "discretised",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 88.56736302375793
+}

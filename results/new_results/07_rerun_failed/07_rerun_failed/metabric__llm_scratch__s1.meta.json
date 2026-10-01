@@ -1,0 +1,20 @@
+{
+  "tag": "metabric__llm_scratch__s1",
+  "script": "llm",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "seed=1",
+    "split_seed=1",
+    "llm_epochs=30",
+    "llm_init=scratch",
+    "llm_learning_rate=5e-4"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric",
+    "seed": 1,
+    "model": "llm_scratch",
+    "source_notebook": "05"
+  },
+  "seconds": 31.386755228042603
+}

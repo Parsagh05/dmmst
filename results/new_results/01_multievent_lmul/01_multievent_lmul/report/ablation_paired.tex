@@ -1,0 +1,82 @@
+\begin{tabular}{llllrrrlll}
+\toprule
+ &  &  & vs & n & delta & delta\_sd & wins & p\_ttest & p\_wilcoxon \\
+dataset & metric & recipe &  &  &  &  &  &  &  \\
+\midrule
+\multirow[t]{4}{*}{ebmt} & \multirow[t]{4}{*}{C\_td ↑} & L\_PCH + L\_mul & L\_PCH & 4 & -0.011900 & 0.011100 & 0/4 & 0.122 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 3 & -0.002400 & 0.023000 & 2/3 & 0.874 & 1 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.007800 & 0.009000 & 0/5 & 0.125 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.002300 & 0.006300 & 1/5 & 0.459 & 0.438 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{hsa\_synthetic} & \multirow[t]{4}{*}{C\_td ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.021400 & 0.005400 & 0/5 & 0.000905 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.009400 & 0.006400 & 0/5 & 0.0298 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.003000 & 0.005000 & 2/5 & 0.256 & 0.438 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 0.000700 & 0.004600 & 3/5 & 0.75 & 1 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{sim\_base} & \multirow[t]{4}{*}{C\_td ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.012900 & 0.003700 & 0/5 & 0.00152 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.001300 & 0.009300 & 3/5 & 0.776 & 0.812 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.000400 & 0.006800 & 2/5 & 0.896 & 1 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 0.000400 & 0.006400 & 3/5 & 0.896 & 0.812 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{ebmt} & \multirow[t]{4}{*}{Within-subject C ↑} & L\_PCH + L\_mul & L\_PCH & 4 & 0.041400 & 0.005800 & 4/4 & 0.000743 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 3 & 0.051800 & 0.012800 & 3/3 & 0.0198 & 0.25 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.039500 & 0.007900 & 5/5 & 0.000369 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.001400 & 0.003000 & 2/5 & 0.344 & 0.438 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{hsa\_synthetic} & \multirow[t]{4}{*}{Within-subject C ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.009000 & 0.052600 & 2/5 & 0.721 & 0.812 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.001800 & 0.037800 & 1/5 & 0.92 & 0.625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.006600 & 0.039200 & 1/5 & 0.726 & 0.625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.005300 & 0.047400 & 2/5 & 0.815 & 0.812 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{sim\_base} & \multirow[t]{4}{*}{Within-subject C ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.007900 & 0.007600 & 1/5 & 0.0805 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.000400 & 0.009800 & 2/5 & 0.932 & 1 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.015800 & 0.011100 & 0/5 & 0.034 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.034900 & 0.010200 & 0/5 & 0.0016 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{ebmt} & \multirow[t]{4}{*}{Within C gain over KM ↑} & L\_PCH + L\_mul & L\_PCH & 4 & 0.041400 & 0.005800 & 4/4 & 0.000743 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 3 & 0.051800 & 0.012800 & 3/3 & 0.0198 & 0.25 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.039500 & 0.007900 & 5/5 & 0.000369 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.001400 & 0.003000 & 2/5 & 0.344 & 0.438 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{hsa\_synthetic} & \multirow[t]{4}{*}{Within C gain over KM ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.009000 & 0.052600 & 2/5 & 0.721 & 0.812 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.001800 & 0.037800 & 1/5 & 0.92 & 0.625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.006600 & 0.039200 & 1/5 & 0.726 & 0.625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.005300 & 0.047400 & 2/5 & 0.815 & 0.812 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{sim\_base} & \multirow[t]{4}{*}{Within C gain over KM ↑} & L\_PCH + L\_mul & L\_PCH & 5 & -0.007900 & 0.007600 & 1/5 & 0.0805 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -0.000400 & 0.009800 & 2/5 & 0.932 & 1 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -0.015800 & 0.011100 & 0/5 & 0.034 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.034900 & 0.010200 & 0/5 & 0.0016 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{ebmt} & \multirow[t]{4}{*}{Brier ↓} & L\_PCH + L\_mul & L\_PCH & 4 & 0.005000 & 0.002600 & 0/4 & 0.0308 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 3 & 0.028600 & 0.005300 & 0/3 & 0.0114 & 0.25 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.005200 & 0.001600 & 0/5 & 0.00196 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -0.000200 & 0.001100 & 3/5 & 0.734 & 0.812 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{hsa\_synthetic} & \multirow[t]{4}{*}{Brier ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.033300 & 0.029700 & 1/5 & 0.066 & 0.125 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 0.108300 & 0.033700 & 0/5 & 0.002 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.075900 & 0.032400 & 0/5 & 0.00638 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 0.081900 & 0.028400 & 0/5 & 0.00299 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{sim\_base} & \multirow[t]{4}{*}{Brier ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 0.005500 & 0.001500 & 0/5 & 0.00112 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 0.046600 & 0.004500 & 0/5 & 2.12e-05 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 0.015400 & 0.001000 & 0/5 & 4.46e-06 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 0.013800 & 0.002000 & 0/5 & 9.38e-05 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{ebmt} & \multirow[t]{4}{*}{MAE-margin ↓} & L\_PCH + L\_mul & L\_PCH & 4 & 50.320000 & 60.815700 & 1/4 & 0.197 & 0.25 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 3 & -128.724300 & 48.362100 & 3/3 & 0.044 & 0.25 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 46.381900 & 37.624200 & 0/5 & 0.051 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 12.727100 & 38.297500 & 2/5 & 0.499 & 0.438 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{hsa\_synthetic} & \multirow[t]{4}{*}{MAE-margin ↓} & L\_PCH + L\_mul & L\_PCH & 5 & -12.675500 & 20.970000 & 4/5 & 0.248 & 0.312 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & -30.615700 & 15.086400 & 5/5 & 0.0105 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & -23.195300 & 13.311100 & 5/5 & 0.0176 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & -24.887800 & 18.004000 & 5/5 & 0.0365 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\multirow[t]{4}{*}{sim\_base} & \multirow[t]{4}{*}{MAE-margin ↓} & L\_PCH + L\_mul & L\_PCH & 5 & 3.564400 & 8.003400 & 2/5 & 0.376 & 0.438 \\
+ &  & L\_PCH + L\_rank + L\_mul + MMV [λv=1] & L\_PCH & 5 & 18.303700 & 6.944300 & 0/5 & 0.00414 & 0.0625 \\
+ &  & L\_PCH + L\_rank + L\_mul (paper) & L\_PCH & 5 & 21.564600 & 5.546600 & 0/5 & 0.000964 & 0.0625 \\
+ &  & L\_PCH + L\_rank & L\_PCH & 5 & 20.960800 & 6.103300 & 0/5 & 0.00155 & 0.0625 \\
+\cline{1-10} \cline{2-10}
+\bottomrule
+\end{tabular}

@@ -1,0 +1,22 @@
+{
+  "tag": "sim_n2500__coxph__s1",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_n2500",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1141.1119772145294",
+    "seed=1",
+    "split_seed=1"
+  ],
+  "dataset": "sim_n2500",
+  "info": {
+    "dataset": "sim_n2500",
+    "seed": 1,
+    "sweep": "n",
+    "value": 2500,
+    "model": "coxph"
+  },
+  "seconds": 15.211282968521118
+}

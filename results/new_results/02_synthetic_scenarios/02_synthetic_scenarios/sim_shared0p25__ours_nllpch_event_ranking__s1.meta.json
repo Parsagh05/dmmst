@@ -1,0 +1,24 @@
+{
+  "tag": "sim_shared0p25__ours_nllpch_event_ranking__s1",
+  "script": "finetune",
+  "experiment": "multievent/survival",
+  "overrides": [
+    "dataset=sim_shared0p25",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1159.5981143001202",
+    "seed=1",
+    "split_seed=1",
+    "tasks/losses=nllpch_event_ranking"
+  ],
+  "dataset": "sim_shared0p25",
+  "info": {
+    "dataset": "sim_shared0p25",
+    "seed": 1,
+    "sweep": "shared",
+    "value": 0.25,
+    "model": "ours",
+    "recipe": "nllpch_event_ranking"
+  },
+  "seconds": 399.84417724609375
+}

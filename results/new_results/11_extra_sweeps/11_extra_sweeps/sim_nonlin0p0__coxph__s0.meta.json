@@ -1,0 +1,22 @@
+{
+  "tag": "sim_nonlin0p0__coxph__s0",
+  "script": "coxph",
+  "experiment": "multievent/coxph",
+  "overrides": [
+    "dataset=sim_nonlin0p0",
+    "me_num_events=4",
+    "me_num_features=15",
+    "survival_max_time=1198.4566152732573",
+    "seed=0",
+    "split_seed=0"
+  ],
+  "dataset": "sim_nonlin0p0",
+  "info": {
+    "dataset": "sim_nonlin0p0",
+    "seed": 0,
+    "sweep": "nonlin",
+    "value": 0.0,
+    "model": "coxph"
+  },
+  "seconds": 18.084486722946167
+}
