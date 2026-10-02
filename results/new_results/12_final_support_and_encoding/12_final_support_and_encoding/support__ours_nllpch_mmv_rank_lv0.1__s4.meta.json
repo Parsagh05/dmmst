@@ -1,0 +1,26 @@
+{
+  "tag": "support__ours_nllpch_mmv_rank_lv0.1__s4",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "dataset=support_numeric",
+    "seed=4",
+    "split_seed=4",
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001",
+    "tasks/losses=nllpch_mmv_rank",
+    "mmv_variance_weight=0.1"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 4,
+    "stage": "benchmark",
+    "model": "ours",
+    "recipe": "nllpch_mmv_rank",
+    "lambda_v": 0.1
+  },
+  "seconds": 216.0854959487915
+}

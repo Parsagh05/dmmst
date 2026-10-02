@@ -1,0 +1,33 @@
+{
+  "tag": "ehrsim2_mixed_sequence__ours_nllpch_large__s3",
+  "script": "finetune",
+  "experiment": "ehrseq/survival",
+  "overrides": [
+    "ehr_source=ehrsim2_mixed",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=257",
+    "survival_max_time=4481.952084606863",
+    "transformer_hidden_size=64",
+    "transformer_num_hidden_layers=4",
+    "transformer_num_attention_heads=4",
+    "transformer_intermediate_size=128",
+    "token_emb=5",
+    "sentence_emb=1",
+    "learning_rate=0.001",
+    "seed=3",
+    "split_seed=3",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "ehrsim2_mixed_sequence",
+  "info": {
+    "dataset": "ehrsim2_mixed",
+    "seed": 3,
+    "model": "ours",
+    "recipe": "nllpch",
+    "repr": "sequence",
+    "variant_tag": "large"
+  },
+  "seconds": 303.9681725502014
+}

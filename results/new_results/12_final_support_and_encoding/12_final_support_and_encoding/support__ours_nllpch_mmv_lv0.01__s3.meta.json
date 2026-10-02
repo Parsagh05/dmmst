@@ -1,0 +1,26 @@
+{
+  "tag": "support__ours_nllpch_mmv_lv0.01__s3",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "dataset=support_numeric",
+    "seed=3",
+    "split_seed=3",
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001",
+    "tasks/losses=nllpch_mmv",
+    "mmv_variance_weight=0.01"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 3,
+    "stage": "benchmark",
+    "model": "ours",
+    "recipe": "nllpch_mmv",
+    "lambda_v": 0.01
+  },
+  "seconds": 166.44009041786194
+}

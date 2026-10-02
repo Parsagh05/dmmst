@@ -1,0 +1,28 @@
+{
+  "tag": "enc__metabric_discretised__ours_nllpch__s3",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "data/load=metabric",
+    "data/parse=metabric",
+    "tokenizers=metabric",
+    "dataset=metabric",
+    "seed=3",
+    "split_seed=3",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric",
+  "info": {
+    "dataset": "metabric_encoding",
+    "seed": 3,
+    "repr": "discretised",
+    "stage": "encoding",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 24.9701566696167
+}

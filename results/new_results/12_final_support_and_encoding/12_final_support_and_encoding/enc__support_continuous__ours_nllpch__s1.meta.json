@@ -1,0 +1,25 @@
+{
+  "tag": "enc__support_continuous__ours_nllpch__s1",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "dataset=support_numeric",
+    "seed=1",
+    "split_seed=1",
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support_encoding",
+    "seed": 1,
+    "repr": "continuous",
+    "stage": "encoding",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 99.68860411643982
+}

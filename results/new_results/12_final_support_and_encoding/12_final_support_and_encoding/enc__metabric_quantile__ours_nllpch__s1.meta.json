@@ -1,0 +1,26 @@
+{
+  "tag": "enc__metabric_quantile__ours_nllpch__s1",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "dataset=metabric_quantile",
+    "data.parse.scale_method=quantile",
+    "seed=1",
+    "split_seed=1",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric_quantile",
+  "info": {
+    "dataset": "metabric_encoding",
+    "seed": 1,
+    "repr": "quantile",
+    "stage": "encoding",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 35.11869192123413
+}

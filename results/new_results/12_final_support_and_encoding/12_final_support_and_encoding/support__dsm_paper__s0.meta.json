@@ -1,0 +1,22 @@
+{
+  "tag": "support__dsm_paper__s0",
+  "script": "finetune",
+  "experiment": "survtrace_support/dsm_paper",
+  "overrides": [
+    "dataset=support_numeric",
+    "seed=0",
+    "split_seed=0",
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "seed": 0,
+    "stage": "benchmark",
+    "model": "dsm_paper"
+  },
+  "seconds": 104.03597569465637
+}

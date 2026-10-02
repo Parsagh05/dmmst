@@ -1,0 +1,26 @@
+{
+  "tag": "ehrsim2_order_sequence__ours_nllpch_small__s4",
+  "script": "finetune",
+  "experiment": "ehrseq/survival",
+  "overrides": [
+    "ehr_source=ehrsim2_order",
+    "ehr_repr=sequence",
+    "ehr_max_tokens=256",
+    "me_num_events=4",
+    "me_num_features=256",
+    "survival_max_time=4258.321532580605",
+    "seed=4",
+    "split_seed=4",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "ehrsim2_order_sequence",
+  "info": {
+    "dataset": "ehrsim2_order",
+    "seed": 4,
+    "model": "ours",
+    "recipe": "nllpch",
+    "repr": "sequence",
+    "variant_tag": "small"
+  },
+  "seconds": 299.146919965744
+}

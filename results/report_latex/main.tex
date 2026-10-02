@@ -9,167 +9,218 @@
 \newcommand{\Lpch}{$\mathcal{L}_{\mathrm{PCH}}$}
 \newcommand{\Lrank}{$\mathcal{L}_{\mathrm{rank}}$}
 \newcommand{\Lmul}{$\mathcal{L}_{\mathrm{mul}}$}
+\newcommand{\Ctd}{C$_{td}$}
 
-\title{DMMST: Experimental Results\\[2pt]\large Dynamic Multi-modal Multi-event Survival Transformer}
-\date{Results of notebooks 01--11 \quad(\today)}
+\title{DMMST: Experimental Results\\[2pt]
+\large Dynamic Multi-modal Multi-event Survival Transformer --- complete results report}
+\date{\today}
 \author{}
 
 \begin{document}
+\sloppy
 \maketitle
+
+\begin{abstract}
+\noindent
+This report collects every experiment run for the paper: two single-event benchmarks (METABRIC, SUPPORT), three
+multi-event datasets (a simulator with known truth, hsa\_synthetic, EBMT), simulator sweeps over eight properties of
+the data, an evaluation of within-patient event ordering against true event times, tuning of the loss penalties, a
+continuous vs.\ quantile vs.\ discretised input comparison, three generations of experiments on coded visit
+histories (\S4.2 of the paper) and the end-to-end language model (\S3). The transformer trained with the
+piecewise-constant-hazard likelihood (\Lpch{}) is the best or tied-best of the models we ran on every benchmark
+dataset, is the most accurate learned model at ordering events within a patient, and needs about 5\,000 patients
+to beat Cox; it remains below the published SurvTRACE. The ranking penalties \Lrank{} and \Lmul{} never improve a
+proper score, and the within-subject C-index is shown to be gameable. The coded-sequence claim (\S4.2) is not
+supported by our experiments, and the end-to-end language model works but is clearly weaker.
+\end{abstract}
+
 \tableofcontents
-\bigskip
-
-\paragraph{Note on SUPPORT (found after these runs).} The numeric preprocessing used METABRIC's column
-layout for every dataset. On SUPPORT, five physiological measurements entered the models unscaled and mean
-blood pressure was reduced to a constant. This affects every SUPPORT number on the numeric path in
-Tables~\ref{tab:single} and~\ref{tab:disc} (all models alike, including Cox). The parser is fixed
-and the SUPPORT experiments are being re-run (notebook 12); METABRIC and all other datasets are unaffected.
-
-\section*{Summary of what we know}
-\begin{itemize}
-  \item \textbf{The base model is strong.} The transformer with the piecewise-constant-hazard likelihood
-        (\Lpch{}) is the best or tied-best model among those we ran on METABRIC, SUPPORT, hsa\_synthetic, EBMT and
-        the simulator, with the best calibration among neural models. On METABRIC it matches the published
-        PC-Hazard and Cox values; it remains below the published SurvTRACE (0.675 vs.\ 0.691 on METABRIC,
-        0.608 vs.\ 0.640 on SUPPORT).
-  \item \textbf{It orders events within a patient best among learned models}, measured against the
-        simulator's true event times. DeepHit (a competing-risk model) ranks patients well but orders events within
-        a patient badly, which supports the paper's general multi-event formulation.
-  \item \textbf{The penalty terms do not help.} \Lrank{} and \Lmul{} never improve discrimination, calibration or
-        true event ordering; tuned, they become neutral; with the original sharpness ($\sigma=0.1$) they hurt.
-  \item \textbf{The within-subject C-index can be gamed.} \Lmul{} raises it above the oracle while making the true
-        ordering worse. Proper scores against the true event order are needed to evaluate multi-event models.
-  \item \textbf{When a neural model pays off}: Cox is optimal for linear signal and collapses for non-linear
-        signal; with few patients ($\le$\,2\,500) Cox and the transformer are comparable, from $\approx$\,5\,000 patients
-        the transformer leads clearly.
-  \item \textbf{Open}: coded sequences (\S4.2) do not yet beat a bag-of-codes table, the end-to-end LLM (\S3)
-        works but is clearly weaker, and continuous vs.\ discretised input is dataset-dependent.
-\end{itemize}
 
 %=====================================================================
-\section{Setup}
+\section*{Summary of findings}
+\addcontentsline{toc}{section}{Summary of findings}
+\begin{enumerate}
+  \item \textbf{The base model is strong.} Our transformer with \Lpch{} has the best or tied-best \Ctd{} and the
+        best calibration among neural models we ran on METABRIC (0.675), SUPPORT (0.619), hsa\_synthetic (0.867), EBMT
+        (0.545; all models 0.50--0.55) and the simulator (0.713), and matches the published PC-Hazard, DeepHit and Cox values (Section~\ref{sec:single}).
+  \item \textbf{It remains below the published SurvTRACE}: 0.675 vs.\ 0.691 (METABRIC) and 0.619 vs.\ 0.640 (SUPPORT).
+  \item \textbf{It orders events within a patient best among learned models}, measured against the simulator's true
+        event times; DeepHit, a competing-risk model, ranks patients well but orders events badly
+        (Section~\ref{sec:true}). This supports the paper's general multi-event formulation.
+  \item \textbf{\Lrank{} and \Lmul{} do not help.} Untuned they lower calibration and true ordering; tuned on
+        validation they become indistinguishable from \Lpch{} (Section~\ref{sec:tune}).
+  \item \textbf{The within-subject C-index can be gamed.} \Lmul{} raises it above the oracle while every true-order
+        score gets worse (Section~\ref{sec:true}).
+  \item \textbf{When a neural model pays off.} Cox matches the oracle for linear risk and collapses for non-linear
+        risk; from $\approx$5\,000 patients the transformer leads clearly; it scales to 8 events (Section~\ref{sec:sweeps}).
+  \item \textbf{MMV} cuts the error of predicted event times on observed patients (SUPPORT $-21\,\%$, METABRIC
+        $-22\,\%$) at a cost in calibration (Section~\ref{sec:single}).
+  \item \textbf{Numeric encoding.} With correct preprocessing, continuous and quantile encodings are equal and both
+        beat 10-bin discretisation on METABRIC; on SUPPORT all three are equal (Section~\ref{sec:enc}).
+  \item \textbf{Coded sequences (\S4.2) are not supported.} Even when the outcome depends on order and trends that a
+        bag-of-codes table cannot see, no sequence model --- including a larger model with \texttt{[CLS]} pooling
+        and recency encoding --- beats the table (Section~\ref{sec:ehr}).
+  \item \textbf{The end-to-end LLM (\S3)} works end to end but trails our transformer by 0.06--0.09 \Ctd{}
+        (Section~\ref{sec:llm}).
+\end{enumerate}
+
+%=====================================================================
+\section{Setup}\label{sec:setup}
 %=====================================================================
 
 \subsection{Datasets}
-\begin{center}\small
-\resizebox{\textwidth}{!}{\begin{tabular}{lrrll}
+\begin{table}[H]\centering\small
+\caption{Datasets. ``Regime'': which events can be observed together.}
+\resizebox{\textwidth}{!}{\begin{tabular}{lrrlll}
 \toprule
-Dataset & $n$ & events & regime & features \\
+Dataset & $n$ & events & regime & features & time unit \\
 \midrule
-METABRIC & 1\,904 & 1 & single event & 9 (5 numeric, 4 categorical) \\
-SUPPORT & 8\,873 & 1 & single event & 14 (8 numeric, 6 categorical) \\
-hsa\_synthetic & 5\,000 & 2 & non-competing & 15 numeric \\
-EBMT & 2\,279 & 5 & semi-competing (death censors others) & 4 categorical \\
-sim\_* (simulator) & 500--10\,000 & 2--8 & any & 15 numeric, true CIFs known \\
-ehrsim / ehrsim2 & 5\,000 & 4 & semi-competing & coded visit histories (age, sex + $\approx$70--80 codes) \\
+METABRIC & 1\,904 & 1 & single event & 9 (5 numeric, 4 categorical) & months \\
+SUPPORT & 8\,873 & 1 & single event & 14 (8 numeric, 6 categorical) & days \\
+hsa\_synthetic & 5\,000 & 2 & non-competing & 15 numeric & days \\
+EBMT (bone-marrow transplant) & 2\,279 & 5 & semi-competing (death censors others) & 4 categorical & days \\
+Simulator (\texttt{sim\_*}) & 500--10\,000 & 2--8 & any (default non-competing) & 15 numeric, true CIFs known & arbitrary \\
+EHR simulator v1 / v2 & 5\,000 & 4 & semi-competing & age, sex + coded visit history ($\approx$70--80 codes) & days \\
 \bottomrule
 \end{tabular}}
-\end{center}
-The simulator (\texttt{sat/data/simulate.py}) draws Weibull proportional-hazard event times with controllable
-event-order spread, shared risk, frailty, non-linearity, censoring and regime; its true cumulative incidence
-functions (CIFs) give an \emph{oracle} row. The EHR simulator (\texttt{sat/data/simulate\_ehr.py}) generates
-diagnosis, medication, lab and noise codes over 5 years of visits; v2 removes shortcuts so that part of the
-risk is only visible in the order, trend and recency of the history.
+\end{table}
+\begin{itemize}
+  \item \textbf{Simulator} (\texttt{sat/data/simulate.py}): Weibull proportional hazards per event with a risk that
+        mixes shared and event-specific parts, optional non-linearity, unobserved frailty, per-event timescales
+        (``order spread'') and calibrated censoring, in the competing, semi-competing or non-competing regime. Its
+        true cumulative incidence functions (CIFs), verified against Monte Carlo, give an \emph{oracle} row.
+  \item \textbf{EHR simulator} (\texttt{sat/data/simulate\_ehr.py}): five years of visits with diagnosis codes
+        (hypertension, diabetes, CKD, COPD), medications, labs with values (eGFR, HbA1c, FEV$_1$), exacerbations and
+        noise codes; four outcomes (CKD progression, diabetic complication, COPD hospitalisation, death). A
+        ``temporal share'' controls how much risk depends on order, trends and recency rather than current levels.
+        In v1 the trend information was recoverable from counts and last values; v2 removes that shortcut.
+\end{itemize}
 
 \subsection{Models}
 \begin{itemize}
-  \item \textbf{Ours}: numeric-value-embedding transformer + piecewise-constant-hazard head. Loss variants:
-        \Lpch{}; $+$\Lrank{} (across patients, Eq.~4); $+$\Lmul{} (within patient, Eq.~5); the paper recipe
-        \Lpch{}$+$\Lrank{}$+$\Lmul{}; and $+$MMV (UniSurv mean/variance loss, weight $\lambda_v$).
-  \item \textbf{Baselines}: cause-specific Cox PH; DeepHit, DSM and MENSA as published (same transformer
-        backbone, their own heads/losses); the oracle (true CIFs) on simulated data.
-  \item \textbf{End-to-end LLM} (\S3): DistilGPT2 (pretrained) or a small GPT-2 (from scratch) answering with one
-        token per time unit (\texttt{N}, \texttt{C}, \texttt{E}$k$); curves derived from token probabilities.
+  \item \textbf{Ours}: numeric-value-embedding transformer (\S2.2, Fig.~2 of the paper) $\to$ shared MLP $\to$
+        piecewise-constant-hazard head. Loss variants: \Lpch{}; $+$\Lrank{} (across patients, Eq.~4); $+$\Lmul{} (within
+        patient, Eq.~5); the paper recipe \Lpch{}$+$\Lrank{}$+$\Lmul{}; $+$MMV (UniSurv mean/variance loss with weight
+        $\lambda_v$); ``full'' = all four.
+  \item \textbf{Baselines}: cause-specific Cox PH; DeepHit, DSM and MENSA as published, sharing our transformer backbone
+        and using their own heads and losses; the oracle on simulated data.
+  \item \textbf{End-to-end LLM} (\S3): DistilGPT2 (pretrained) or a 4-layer GPT-2 trained from scratch that reads
+        the record as text and answers one token per time interval (\texttt{N}, \texttt{C}, \texttt{E}$k$);
+        per-event curves are derived from the token probabilities.
 \end{itemize}
 
 \subsection{Metrics}
-\begin{center}\small
-\begin{tabular}{p{3.4cm}p{11.6cm}}
+\begin{table}[H]\centering\small
+\begin{tabular}{p{3.6cm}p{11.4cm}}
 \toprule
-C$_{td}$ $\uparrow$ & Time-dependent concordance across patients, per event, at the 25/50/75\,\% quantiles
-                     (SurvTRACE protocol; multi-event: each event at its own quantiles), averaged. \\
+\Ctd{} $\uparrow$ & Time-dependent concordance across patients (IPCW, $\tau$-truncated, as in SurvTRACE) at the
+                     25/50/75\,\% quantiles of observed event times; multi-event data use each event's own
+                     quantiles; averaged over horizons and events. \\
 Brier $\downarrow$ & Calibration at the same horizons. \\
 Within-subject C $\uparrow$ & Eq.~5 pairs: at the time an event happened, was it ranked more likely than the
-                     patient's later or censored events? \emph{Can be gamed} (Section~\ref{sec:true}). \\
-True-order C / Brier / log-loss & Simulated data only: predicted $P(T_a<T_b\mid x)$ from each model's curves scored
-                     against the true (latent) event times; Brier and log-loss are proper scores (the oracle
-                     cannot be beaten in expectation). \\
-MAE (uncensored / margin) & Error of the predicted event time in the dataset's unit (METABRIC: months; SUPPORT,
-                     EBMT: days; simulator: arbitrary); margin also scores censored patients via a Kaplan--Meier best
-                     guess (unreliable on EBMT). \\
+                     patient's later or censored events? Shown to be gameable (Section~\ref{sec:true}). \\
+True-order C / Brier / log-loss & Simulated data only: predicted $P(T_a<T_b\mid x)$, computed from each model's
+                     per-event curves, scored against the true latent event times. Brier and log-loss are proper
+                     scores; no model can beat the oracle on them in expectation. \\
+MAE (uncensored / margin) & Error of the predicted event time; ``margin'' also scores censored patients via a
+                     Kaplan--Meier best guess (unreliable on EBMT, see Section~\ref{sec:limits}). \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
 
 \subsection{Protocol}
-Each configuration is run with 3--5 seeds; seed $s$ uses initialisation $s$ \emph{and} train/validation/test split
-$s$ (60/10/30\,\%). Checkpoints are selected on validation C$_{td}$. Tables report mean $\pm$ sd over seeds;
-``paired'' comparisons use the same seed (same split) for both models and give the number of wins and a paired
-$t$-test $p$-value. With 5 seeds the smallest attainable Wilcoxon $p$ is 0.0625, so we quote the $t$-test.
-
-\paragraph{Earlier results are superseded.} Before these runs, five bugs were fixed: train/validation were swapped
-(models trained on $\approx$10\,\% of the data), Cox ignored categorical features, the ``$+$\Lmul{}'' run never
-contained \Lmul{}, checkpoints were selected with a broken C-index, and the split never changed across seeds.
+Seed $s$ sets both the initialisation and the train/validation/test split $s$ (60/10/30\,\%); single-event and
+multi-event benchmarks use 5 seeds, sweeps and the LLM 3. Checkpoints are selected on validation \Ctd{} with early
+stopping. Tables report mean $\pm$ sd over seeds. ``Paired'' comparisons use the same seed for both models and report
+the mean difference, the number of seeds on which the difference is positive, and a paired $t$-test $p$-value
+(with 5 seeds the smallest Wilcoxon $p$ is 0.0625, so it is not used). All runs were executed on Kaggle (T4 GPU) from
+the public repository; hyper-parameters are listed in Appendix~\ref{app:hparams}, and the corrections made before the
+reported runs in Appendix~\ref{app:fixes}.
 
 %=====================================================================
-\section{Single-event benchmarks: METABRIC and SUPPORT (notebook 03)}
+\section{Single-event benchmarks: METABRIC and SUPPORT}\label{sec:single}
 %=====================================================================
 
 \begin{table}[H]\centering\small
-\caption{C$_{td}$ (mean over the 25/50/75\,\% horizons) and Brier, 5 splits. ``published'' = SurvTRACE
-(Wang \& Sun, 2022) Table~2, averaged over the same three horizons (their 10 runs, different splits).
-MAE-unc.\ in months (METABRIC) and days (SUPPORT). SUPPORT columns are affected by the preprocessing issue noted on
-page~1 and will be replaced.}
-\label{tab:single}
-\resizebox{\textwidth}{!}{\begin{tabular}{lcccc@{\hspace{1.2em}}cccc}
+\caption{\Ctd{} at the 25/50/75\,\% horizons, 5 splits, next to SurvTRACE (Wang \& Sun, 2022) Table~2 (10 runs on their
+own splits). SUPPORT is the corrected run (notebook 12, Appendix~\ref{app:fixes}). Backbones tuned per dataset on
+validation.}
+\label{tab:horizons}
+\resizebox{\textwidth}{!}{\begin{tabular}{lccc|c@{\hspace{1.2em}}ccc|c}
 \toprule
- & \multicolumn{4}{c}{METABRIC} & \multicolumn{4}{c}{SUPPORT}\\
+ & \multicolumn{4}{c}{METABRIC} & \multicolumn{4}{c}{SUPPORT} \\
 \cmidrule(lr){2-5}\cmidrule(lr){6-9}
-Model & C$_{td}$ & Brier & MAE-unc. & published & C$_{td}$ & Brier & MAE-unc. & published \\
+Model & 25\,\% & 50\,\% & 75\,\% & mean & 25\,\% & 50\,\% & 75\,\% & mean \\
 \midrule
-Cox PH & 0.625\,$\pm$\,0.027 & 0.180 & 62.2 & 0.629 & 0.555\,$\pm$\,0.004 & 0.203 & 608 & 0.566 \\
-DeepHit & 0.670\,$\pm$\,0.013 & 0.189 & 75.4 & 0.657 & 0.599\,$\pm$\,0.005 & 0.218 & 545 & 0.609 \\
-DSM & 0.649\,$\pm$\,0.048 & 0.206 & 70.1 & 0.669 & 0.542\,$\pm$\,0.042 & 0.253 & 578 & 0.615 \\
-MENSA & 0.650\,$\pm$\,0.027 & 0.188 & 69.2 & -- & 0.581\,$\pm$\,0.026 & 0.212 & 535 & -- \\
-SurvTRACE (published only) & -- & -- & -- & 0.691 & -- & -- & -- & 0.640 \\
+\multicolumn{9}{l}{\emph{Ours (5 splits)}}\\
+Cox PH & 0.629 & 0.616 & 0.630 & 0.625 & 0.544 & 0.559 & 0.584 & 0.562 \\
+DeepHit & 0.697 & 0.667 & 0.645 & 0.670 & 0.637 & 0.601 & 0.591 & 0.610 \\
+DSM & 0.678 & 0.644 & 0.626 & 0.649 & 0.600 & 0.577 & 0.572 & 0.583 \\
+MENSA & 0.681 & 0.648 & 0.621 & 0.650 & 0.557 & 0.532 & 0.521 & 0.536 \\
+Ours \Lpch{} & \best{0.700} & \best{0.675} & \best{0.649} & \best{0.675} & \best{0.650} & \best{0.610} & \best{0.599} & \best{0.619} \\
 \midrule
-Ours \Lpch{} & \best{0.675}\,$\pm$\,0.014 & \best{0.177} & 69.6 & 0.679$^\dagger$ & \best{0.608}\,$\pm$\,0.005 & \best{0.199} & 573 & 0.626$^\dagger$ \\
-Ours $+$\Lrank{} & 0.664\,$\pm$\,0.008 & 0.185 & 66.8 & & 0.608\,$\pm$\,0.009 & 0.204 & 585 & \\
-Ours $+$MMV ($\lambda_v{=}0.01$) & 0.666\,$\pm$\,0.011 & 0.190 & 59.0 & & 0.593\,$\pm$\,0.026 & 0.202 & 557 & \\
-Ours full, $\lambda_v{=}0.01$ & 0.658\,$\pm$\,0.015 & 0.196 & 57.4 & & 0.608\,$\pm$\,0.007 & 0.204 & 577 & \\
-Ours full, $\lambda_v{=}0.1$ & 0.667\,$\pm$\,0.012 & 0.189 & 56.6 & & 0.607\,$\pm$\,0.012 & 0.204 & 556 & \\
-Ours full, $\lambda_v{=}1$ & 0.669\,$\pm$\,0.012 & 0.244 & \best{54.1} & & 0.608\,$\pm$\,0.004 & 0.205 & \best{494} & \\
+\multicolumn{9}{l}{\emph{Published (SurvTRACE Table 2)}}\\
+Cox PH & 0.628 & 0.627 & 0.632 & 0.629 & 0.549 & 0.564 & 0.586 & 0.566 \\
+DeepHit & 0.712 & 0.657 & 0.603 & 0.657 & 0.650 & 0.602 & 0.574 & 0.609 \\
+DSM & 0.707 & 0.663 & 0.636 & 0.669 & 0.640 & 0.609 & 0.596 & 0.615 \\
+PC-Hazard & 0.713 & 0.680 & 0.644 & 0.679 & 0.652 & 0.620 & 0.607 & 0.626 \\
+SurvTRACE w/o multi-task & 0.722 & 0.686 & 0.649 & 0.686 & 0.665 & 0.630 & 0.614 & 0.636 \\
+SurvTRACE & 0.728 & 0.690 & 0.655 & 0.691 & 0.670 & 0.633 & 0.617 & 0.640 \\
 \bottomrule
-\multicolumn{9}{l}{\footnotesize $^\dagger$published PC-Hazard (the same head without our transformer); ``full'' = \Lpch{}$+$\Lrank{}$+$\Lmul{}$+$MMV.}
 \end{tabular}}
 \end{table}
 
-\paragraph{Reading Table~\ref{tab:single}.}
-Among the models we ran, our \Lpch{} model is the best on both datasets in discrimination and calibration. On
-METABRIC it matches the published PC-Hazard value (0.675 vs.\ 0.679) and Cox matches its published value (0.625
-vs.\ 0.629), which validates the evaluation pipeline. On SUPPORT every model sits 0.01--0.02 below its published
-value, consistent with different splits. The published SurvTRACE remains ahead (0.691 and 0.640; 0.686 and 0.636
-without its multi-task head): our backbone was tuned per dataset on validation over SurvTRACE's own grid (METABRIC: 2 layers,
-SUPPORT: 3 layers; hidden size 16, lr \(10^{-3}\)), but our model has no multi-task head and is evaluated
-on different splits, so parity with SurvTRACE is not shown. DSM is unstable (sd up to 0.048). Adding \Lrank{} never helps (METABRIC $-0.010$, 0/5
-wins; SUPPORT $\pm0$) and worsens Brier in 5/5 splits on both datasets. MMV does what it targets: the error on
-observed patients falls from 69.6 to 54.1 months (METABRIC) and 573 to 494 days (SUPPORT) at $\lambda_v=1$, but on
-METABRIC Brier rises from 0.177 to 0.244. On SUPPORT, $\lambda_v=1$ is the best trade-off (same C$_{td}$, $-14\,\%$
-MAE, $+0.006$ Brier).
+\paragraph{Reading Table~\ref{tab:horizons}.} Our reproduced baselines match their published values closely: Cox
+(0.625 vs.\ 0.629; 0.562 vs.\ 0.566) and DeepHit on SUPPORT (0.610 vs.\ 0.609); DeepHit on METABRIC is higher than
+published (0.670 vs.\ 0.657). This validates the evaluation pipeline. Our \Lpch{} model is the best of the models we
+ran on both datasets and at every horizon, and is at the level of the published PC-Hazard (0.675 vs.\ 0.679; 0.619
+vs.\ 0.626). The published SurvTRACE remains 0.016 (METABRIC) and 0.021 (SUPPORT) ahead; its multi-task head accounts
+for 0.004--0.005 of that in its own ablation. DSM is unstable across splits (sd 0.048--0.049) and MENSA is weak on
+SUPPORT (0.536), as expected for a multi-event model on single-event data.
+
+\begin{table}[H]\centering\small
+\caption{Loss ablation for our model: \Ctd{}, Brier and event-time error (METABRIC: months; SUPPORT: days), 5 splits.
+``full'' = \Lpch{}$+$\Lrank{}$+$\Lmul{}$+$MMV (\Lmul{} is inactive with one event).}
+\label{tab:single}
+\resizebox{\textwidth}{!}{\begin{tabular}{lcccc@{\hspace{1.2em}}cccc}
+\toprule
+ & \multicolumn{4}{c}{METABRIC} & \multicolumn{4}{c}{SUPPORT} \\
+\cmidrule(lr){2-5}\cmidrule(lr){6-9}
+Loss & \Ctd{} & Brier & MAE-unc. & MAE-margin & \Ctd{} & Brier & MAE-unc. & MAE-margin \\
+\midrule
+\Lpch{} & \best{0.675}\,$\pm$\,0.014 & \best{0.177} & 69.6 & \best{80.4} & \best{0.619}\,$\pm$\,0.008 & \best{0.197} & 591 & 793 \\
+$+$\Lrank{} & 0.664\,$\pm$\,0.008 & 0.185 & 66.8 & 84.3 & \best{0.619}\,$\pm$\,0.006 & 0.203 & 572 & 812 \\
+$+$MMV ($\lambda_v{=}0.01$) & 0.666\,$\pm$\,0.011 & 0.190 & 59.0 & 81.3 & 0.608\,$\pm$\,0.008 & 0.199 & 568 & 780 \\
+full, $\lambda_v{=}0.01$ & 0.658\,$\pm$\,0.015 & 0.196 & 57.4 & 83.7 & 0.613\,$\pm$\,0.008 & 0.204 & 555 & 803 \\
+full, $\lambda_v{=}0.1$ & 0.667\,$\pm$\,0.012 & 0.189 & 56.6 & 84.0 & 0.612\,$\pm$\,0.005 & 0.203 & 546 & 800 \\
+full, $\lambda_v{=}1$ & 0.669\,$\pm$\,0.012 & 0.244 & \best{54.1} & 91.8 & 0.616\,$\pm$\,0.011 & 0.204 & \best{469} & \best{768} \\
+\midrule
+DeepHit (reference) & 0.670\,$\pm$\,0.013 & 0.189 & 75.4 & 86.5 & 0.610\,$\pm$\,0.003 & 0.216 & 543 & 802 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\paragraph{Reading Table~\ref{tab:single}.} \Lrank{} never improves \Ctd{} (METABRIC $-0.010$, 0/5 seeds positive,
+$p=0.05$; SUPPORT $-0.0003$, $p=0.91$) and worsens Brier in 5/5 splits on both datasets. MMV does what it is designed
+for: at $\lambda_v=1$ the error on observed patients falls from 69.6 to 54.1 months on METABRIC and from 591 to 469 days
+on SUPPORT ($-122$ days, 5/5, $p<10^{-4}$), with \Ctd{} unchanged ($p=0.47$ on SUPPORT). The cost is calibration: Brier
+rises by 0.067 on METABRIC and by 0.007 on SUPPORT. The censoring-aware MAE-margin improves on SUPPORT ($-25$ days,
+5/5, $p=0.007$) but worsens on METABRIC ($+11$ months). MMV is therefore useful when the predicted time itself matters,
+not for ranking or calibration.
 
 %=====================================================================
-\section{Multi-event benchmarks (notebook 01, reruns in 07)}
+\section{Multi-event benchmarks}\label{sec:multi}
 %=====================================================================
 
 \begin{table}[H]\centering\small
-\caption{Multi-event datasets, 5 splits (EBMT: 3--5, see text). Within-C = within-subject C-index (gameable);
-KM = the same score from population Kaplan--Meier curves (no patient information).}
+\caption{Multi-event datasets, 5 splits (three EBMT runs that crashed were re-run separately and agree with the table).
+Within-C = within-subject C-index; KM = the same score from population Kaplan--Meier curves (no patient information).}
 \label{tab:multi}
 \begin{tabular}{lcccccc}
 \toprule
- & \multicolumn{3}{c}{sim\_base (4 events)} & hsa (2 events) & \multicolumn{2}{c}{EBMT (5 events)} \\
+ & \multicolumn{3}{c}{simulator, base (4 events)} & hsa (2 events) & \multicolumn{2}{c}{EBMT (5 events)} \\
 \cmidrule(lr){2-4}\cmidrule(lr){5-5}\cmidrule(lr){6-7}
-Model & C$_{td}$ & Brier & Within-C & C$_{td}$ & C$_{td}$ & Within-C \\
+Model & \Ctd{} & Brier & Within-C & \Ctd{} & \Ctd{} & Within-C \\
 \midrule
 Oracle & 0.736 & 0.156 & 0.696 & -- & -- & -- \\
 Population KM & -- & -- & 0.580 & -- & -- & 0.837 \\
@@ -183,35 +234,33 @@ Ours \Lpch{} & \best{0.713} & \best{0.166} & 0.674 & \best{0.867} & \best{0.545}
 Ours $+$\Lmul{} & 0.700 & 0.172 & 0.666 & 0.846 & 0.535 & 0.880 \\
 Ours $+$\Lrank{} & \best{0.713} & 0.180 & 0.639 & 0.868 & 0.543 & 0.838 \\
 Ours paper recipe & \best{0.713} & 0.182 & 0.658 & 0.864 & 0.537 & 0.879 \\
-Ours full ($+$MMV, $\lambda_v{=}1$) & 0.712 & 0.213 & 0.673 & 0.858 & 0.550 & \best{0.894} \\
+Ours full ($\lambda_v{=}1$) & 0.712 & 0.213 & 0.673 & 0.858 & 0.550 & \best{0.894} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Reading Table~\ref{tab:multi}.}
-On the simulator our \Lpch{} model is the closest learned model to the oracle (C$_{td}$ 0.713 vs.\ 0.736) with
-the best Brier; DeepHit and DSM tie on C$_{td}$ but are worse calibrated. On hsa\_synthetic the signal is purely
-non-linear: Cox is at chance (0.49) while all neural models reach $\approx$0.865. On EBMT the four categorical
-covariates carry little signal (C$_{td}\approx0.53$--$0.55$ for every model) and the population order of events
-is already very predictable (KM within-C 0.837). Adding \Lmul{} lowers C$_{td}$ on sim\_base ($-0.013$, 0/5 wins,
-$p=0.002$) and hsa ($-0.021$, 0/5, $p<0.001$). On EBMT it raises within-C from 0.84 to 0.88 (5/5 wins) --- but
-EBMT is semi-competing, exactly the setting where Section~\ref{sec:true} shows this metric is gamed. The three
-EBMT runs that crashed (fixed, notebook 07) agree with the table (\Lpch{}$+$\Lmul{}: C$_{td}$ 0.537, within-C 0.887;
-full: 0.525, 0.901).
+\paragraph{Reading Table~\ref{tab:multi}.} On the simulator our \Lpch{} model is the closest learned model to the
+oracle (\Ctd{} 0.713 vs.\ 0.736) with the best Brier; DeepHit and DSM tie on \Ctd{} but are worse calibrated. On
+hsa\_synthetic the signal is entirely non-linear: Cox is at chance (0.49) while every neural model reaches
+$\approx$0.865. EBMT's four categorical covariates carry little signal (\Ctd{} 0.50--0.55 for every model), and the
+population order of events is already highly predictable (KM within-C 0.837). Adding \Lmul{} lowers \Ctd{} on the
+simulator ($-0.013$, 0/5, $p=0.002$) and on hsa ($-0.021$, 0/5, $p<0.001$). On EBMT it raises within-C from 0.84 to
+0.88 --- but EBMT is semi-competing, exactly the setting in which Section~\ref{sec:true} shows this metric is gamed.
+DSM and MENSA order EBMT's events worse than the population (0.19 and 0.47).
 
 %=====================================================================
-\section{Is within-subject ordering really improved? (notebook 08)}\label{sec:true}
+\section{Within-patient event ordering against the true event times}\label{sec:true}
 %=====================================================================
 
 \begin{table}[H]\centering\small
-\caption{Within-subject ordering scored against the simulator's \emph{true} event times, 5 splits.
-True-order Brier and log-loss are proper scores: no model can beat the oracle in expectation.}
+\caption{Ordering scored against the simulator's true event times, 5 splits. TO = true order; TO-Brier and TO-log-loss
+are proper scores.}
 \label{tab:true}
 \resizebox{\textwidth}{!}{\begin{tabular}{lccccc@{\hspace{1.2em}}cccc}
 \toprule
- & \multicolumn{5}{c}{sim\_base (non-competing)} & \multicolumn{4}{c}{semi-competing} \\
+ & \multicolumn{5}{c}{non-competing (base)} & \multicolumn{4}{c}{semi-competing} \\
 \cmidrule(lr){2-6}\cmidrule(lr){7-10}
-Model & C$_{td}$ & Within-C & TO-C & TO-Brier & TO-logloss & C$_{td}$ & Within-C & TO-C & TO-Brier \\
+Model & \Ctd{} & Within-C & TO-C & TO-Brier & TO-log-loss & \Ctd{} & Within-C & TO-C & TO-Brier \\
 \midrule
 Oracle & 0.736 & 0.696 & 0.685 & 0.203 & 0.592 & 0.734 & 0.739 & 0.673 & 0.210 \\
 \midrule
@@ -223,150 +272,156 @@ Ours \Lpch{} & \best{0.714} & 0.673 & \best{0.659} & \best{0.215} & \best{0.618}
 Ours $+$\Lmul{} & 0.709 & 0.671 & 0.657 & 0.220 & 0.630 & 0.703 & \textcolor{red!70!black}{0.787} & 0.633 & 0.228 \\
 Ours paper recipe & 0.715 & 0.659 & 0.653 & 0.230 & 0.653 & 0.713 & \textcolor{red!70!black}{0.781} & 0.618 & 0.232 \\
 \bottomrule
-\multicolumn{10}{l}{\footnotesize TO = true order. Red: above the oracle on the gameable metric while worse on every true-order score.}
+\multicolumn{10}{l}{\footnotesize Red: above the oracle on the gameable within-C while worse than \Lpch{} on every true-order score.}
 \end{tabular}}
 \end{table}
 
-\paragraph{Reading Table~\ref{tab:true}.}
-This is the decisive test for \Lmul{}. On true-order scores our \Lpch{} model is the best learned model in both
-regimes, ahead of MENSA, Cox and DeepHit. Adding \Lmul{} or using the paper recipe makes every true-order score
-worse (TO-Brier: 0/5 wins in all four comparisons, $p<0.001$). In the semi-competing regime \Lmul{} raises the
-gameable within-C to 0.787 --- \emph{above the oracle's} 0.739 --- while its true-order C falls by 0.025. The loss is
-trained on the same pairs the metric counts and learns to reshape the event curves around the terminal event,
-which wins those pairs without predicting better. DeepHit has a good C$_{td}$ but the worst true ordering (0.552):
-its likelihood assumes one event per patient (competing risks) and is misspecified when events co-occur.
+\paragraph{Reading Table~\ref{tab:true}.} Measured against the true event times, our \Lpch{} model is the best learned
+model in both regimes, ahead of MENSA, Cox and DeepHit. Adding \Lmul{} or using the paper recipe makes every true-order
+score worse (TO-Brier: 0/5 improvements in all four comparisons, $p<0.001$). In the semi-competing regime \Lmul{} lifts
+the within-subject C-index to 0.787 --- above the oracle's 0.739 --- while its true-order C falls by 0.025. The penalty
+is trained on the same pairs the metric counts and learns to reshape the event curves around the terminal event,
+which wins those pairs without predicting better. DeepHit has a good \Ctd{} but the worst true ordering (0.552): its
+likelihood assumes one event per patient and is misspecified when events co-occur, which is the case for our
+general multi-event formulation.
 
-\subsection*{Tuning the penalties}
+\subsection{Tuning the penalties}\label{sec:tune}
 \begin{table}[H]\centering\small
-\caption{Penalty weight and sharpness $\sigma$ tuned on validation C$_{td}$ (split 0), then tested on 5 splits.}
+\caption{Penalty weight and sharpness $\sigma$ chosen on validation \Ctd{} (grid $\sigma\in\{0.1,0.5,1\}$,
+weight $\in\{0.01,0.05,0.2\}$, split 0), then tested on 5 splits.}
 \label{tab:tune}
 \begin{tabular}{llcccc}
 \toprule
-Penalty (data) & chosen setting & & C$_{td}$ & Brier & TO-Brier \\
+Penalty (data) & chosen setting & model & \Ctd{} & Brier & TO-Brier \\
 \midrule
 \Lrank{} (METABRIC) & $\sigma{=}0.5$, weight 0.01 & \Lpch{} & 0.6705 & 0.1810 & -- \\
  & & tuned \Lrank{} & 0.6718 & 0.1776 & -- \\
-\Lmul{} (sim\_base) & $\sigma{=}0.5$, weight 0.2 & \Lpch{} & 0.7152 & 0.1662 & 0.2148 \\
+\Lmul{} (simulator) & $\sigma{=}0.5$, weight 0.2 & \Lpch{} & 0.7152 & 0.1662 & 0.2148 \\
  & & tuned \Lmul{} & 0.7139 & 0.1661 & 0.2145 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\paragraph{Reading Table~\ref{tab:tune}.}
-The validation grids ($\sigma\in\{0.1,0.5,1\}$, weight $\in\{0.01,0.05,0.2\}$) both ranked $\sigma=0.1$ --- the
-value used everywhere before --- last. With the best setting each penalty becomes indistinguishable from \Lpch{}
-(METABRIC 3/5 wins, $p=0.81$). Tuning removes the harm but adds no benefit. Our reading: \Lpch{} is the full
-likelihood of the event times, so it already learns the ranking and the order the model can represent; a ranking
-penalty can only pull the curves away from that optimum.
+\paragraph{Reading Table~\ref{tab:tune}.} Both validation grids ranked $\sigma=0.1$ --- the value used in all
+untuned runs --- last. At the best setting each penalty is indistinguishable from \Lpch{} (METABRIC: 3/5, $p=0.81$).
+Tuning removes the harm but adds no benefit. Our interpretation: \Lpch{} is the full likelihood of the event times,
+so it already learns the ranking and the within-patient order the model can represent; a ranking penalty can only pull
+the predicted curves away from that optimum.
 
 %=====================================================================
-\section{Simulator sweeps (notebooks 02 and 11)}
+\section{Simulator sweeps}\label{sec:sweeps}
 %=====================================================================
-Each figure varies one simulator setting around the base scenario (3 splits; error bars = sd). The dashed grey
-line is the oracle. Panels: within-subject C, C$_{td}$, within-C gain over population KM (and, for notebook 11,
-true-order Brier). Notebook 02 ran before the true-order score existed.
+Each figure varies one property of the simulated data around the base scenario (3 splits; error bars: sd). The
+dashed grey line is the oracle. Panels: within-subject C, \Ctd{}, within-C gain over population KM, and (sweeps of
+notebook 11 only) true-order Brier.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_nonlin.pdf}
 \caption{Non-linearity of the risk (0 = linear, 1 = fully non-linear).}\label{fig:nonlin}
 \end{figure}
-\paragraph{Figure~\ref{fig:nonlin}.} With a linear signal Cox equals the oracle (C$_{td}$ 0.741) and our model
-loses little (0.736). As the signal becomes non-linear Cox collapses (0.613) while ours stays at 0.709 (oracle
-0.741). This is the clearest argument for a neural model.
+\paragraph{Figure~\ref{fig:nonlin}.} For a linear risk Cox equals the oracle (\Ctd{} 0.741) and our model loses little
+(0.736). As the risk becomes non-linear Cox collapses (0.613) while ours stays at 0.709 (oracle 0.741). This is the
+clearest argument for a neural model.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_n.pdf}
 \caption{Training-set size (500 to 10\,000 subjects).}\label{fig:n}
 \end{figure}
 \paragraph{Figure~\ref{fig:n}.} The gap of our model to the oracle shrinks from 0.058 ($n{=}500$) to 0.011
-($n{=}10\,000$); Cox's gap stays 0.05--0.07. Below 5\,000 subjects the two are comparable (Cox ahead at
-$n=500$ and $2\,500$, the transformer at $n=1\,000$); from $\approx5\,000$ subjects the transformer leads clearly. Each $n$ is a different random dataset, so the small-$n$ points are noisy.
+($n{=}10\,000$); Cox's gap stays 0.05--0.07. Below 5\,000 subjects the two are comparable (Cox ahead at $n=500$ and
+2\,500, the transformer at 1\,000); from $\approx$5\,000 subjects the transformer leads clearly. Each $n$ is a different
+random dataset, so the small-$n$ points are noisy.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_events.pdf}
 \caption{Number of events $K$ (2 to 8).}\label{fig:events}
 \end{figure}
-\paragraph{Figure~\ref{fig:events}.} Our model stays $\approx0.02$ below the oracle for every $K$ while Cox stays
-0.05--0.07 below: the framework scales with the number of events. \Lmul{} and the paper recipe are below \Lpch{}
-on true-order Brier at every $K$ (e.g.\ 0.226 / 0.230 vs.\ 0.213 at $K{=}4$).
+\paragraph{Figure~\ref{fig:events}.} Our model stays $\approx$0.02 below the oracle at every $K$, Cox 0.05--0.07 below:
+the framework scales with the number of events. \Lmul{} and the paper recipe are worse than \Lpch{} on true-order
+Brier at every $K$ (e.g.\ 0.226 and 0.230 vs.\ 0.213 at $K{=}4$).
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_order_spread.pdf}
-\caption{Spread of the events' typical timing (0 = the patient's covariates decide the order, 2 = nearly the same
-order for everybody).}\label{fig:spread}
+\caption{Spread of the events' typical timing (0: the covariates decide the order; 2: nearly the same order for every patient).}\label{fig:spread}
 \end{figure}
-\paragraph{Figure~\ref{fig:spread}.} When the order is population-wide (spread 2) every model reaches the oracle's
-within-C ($\approx0.89$--$0.90$) and there is nothing patient-specific to learn (gain $\approx0$). When the order is
-patient-specific (spread 0) the oracle reaches 0.699, \Lpch{} 0.679 and \Lmul{} 0.663 --- \Lmul{} is lower exactly
-where it was meant to help.
+\paragraph{Figure~\ref{fig:spread}.} When the order is the same for everybody (spread 2) every model reaches the
+oracle's within-C ($\approx$0.89--0.90) and there is nothing patient-specific to learn. When the order is
+patient-specific (spread 0) the oracle reaches 0.699, \Lpch{} 0.679 and \Lmul{} 0.663: \Lmul{} is lowest exactly where it
+was meant to help.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_shared.pdf}
 \caption{Share of the risk common to all events (``shared disease pathway'').}\label{fig:shared}
 \end{figure}
-\paragraph{Figure~\ref{fig:shared}.} With more shared risk there is less patient-specific ordering to learn; at
-shared $=1$ even the oracle gains nothing over population ordering (0.000), confirming the metric behaves as
-intended in the non-competing regime. Our model tracks the oracle at every level; \Lmul{} is never above \Lpch{}.
+\paragraph{Figure~\ref{fig:shared}.} The more risk the events share, the less patient-specific ordering there is to
+learn; at a share of 1 even the oracle gains nothing over population ordering. Our model tracks the oracle at every
+level, and \Lmul{} is never above \Lpch{}.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_frailty.pdf}
-\caption{Unobserved shared frailty (dependence covariates cannot explain).}\label{fig:frailty}
+\caption{Unobserved shared frailty (dependence that the covariates cannot explain).}\label{fig:frailty}
 \end{figure}
-\paragraph{Figure~\ref{fig:frailty}.} Frailty lowers every model and the oracle together (C$_{td}$ of \Lpch{} 0.714
-$\to$ 0.642 at variance 2); no loss variant is more robust than \Lpch{}.
+\paragraph{Figure~\ref{fig:frailty}.} Frailty lowers every model and the oracle together (\Lpch{} \Ctd{} 0.714 $\to$
+0.642 at frailty variance 2); no loss variant is more robust than \Lpch{}.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_censor.pdf}
-\caption{Fraction of unobserved event slots (censoring).}\label{fig:censor}
+\caption{Fraction of unobserved event slots (censoring, 20--80\,\%).}\label{fig:censor}
 \end{figure}
-\paragraph{Figure~\ref{fig:censor}.} Performance is stable from 20\,\% to 80\,\% censoring (\Lpch{} C$_{td}$
-0.700--0.714); the ordering of models does not change.
+\paragraph{Figure~\ref{fig:censor}.} Performance is stable across censoring levels (\Lpch{} \Ctd{} 0.700--0.714) and
+the ranking of the models does not change.
 
 \begin{figure}[H]\centering
 \includegraphics[width=\textwidth]{figures/sweep_regime.pdf}
-\caption{Observation regime.}\label{fig:regime}
+\caption{Observation regime: competing, semi-competing, non-competing.}\label{fig:regime}
 \end{figure}
-\paragraph{Figure~\ref{fig:regime}.} Under competing risks only the first event is observed, so there are no
-orderable pairs and within-C is undefined. Under semi-competing risks \Lmul{} and the paper recipe reach within-C
-0.796--0.802, far above the oracle's 0.742: the first sign of the gaming confirmed in Table~\ref{tab:true}.
-C$_{td}$ is similar across regimes ($\approx0.70$--$0.71$ for our model).
+\paragraph{Figure~\ref{fig:regime}.} Under competing risks only the first event is observed, so no within-patient pairs
+exist and within-C is undefined. Under semi-competing risks \Lmul{} and the paper recipe reach within-C 0.796--0.802,
+far above the oracle's 0.742 --- the effect explained in Section~\ref{sec:true}. \Ctd{} of our model is similar across
+regimes ($\approx$0.70--0.71).
 
 %=====================================================================
-\section{Continuous vs.\ discretised numeric input (notebook 10)}
+\section{Numeric encoding: continuous, quantile and discretised input}\label{sec:enc}
 %=====================================================================
 \begin{table}[H]\centering\small
-\caption{Same model and splits, numeric features standardised (continuous) or cut into 10 quantile bins. C$_{td}$, 5 splits.
-SUPPORT ``continuous'' is affected by the preprocessing issue noted on page~1 (the discretised path is not).}
-\label{tab:disc}
-\begin{tabular}{lcccc}
+\caption{Same model, backbone and splits; numeric features standardised (continuous), rank-transformed to a normal
+distribution (quantile) or cut into 10 quantile bins (discretised). \Ctd{}, 5 splits (notebook 12, corrected
+preprocessing).}
+\label{tab:enc}
+\begin{tabular}{lcccccc}
 \toprule
- & \multicolumn{2}{c}{METABRIC} & \multicolumn{2}{c}{SUPPORT} \\
-\cmidrule(lr){2-3}\cmidrule(lr){4-5}
-Model & continuous & discretised & continuous & discretised \\
+ & \multicolumn{3}{c}{METABRIC} & \multicolumn{3}{c}{SUPPORT} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Model & continuous & quantile & discretised & continuous & quantile & discretised \\
 \midrule
-Ours \Lpch{} & \best{0.675}\,$\pm$\,0.011 & 0.652\,$\pm$\,0.018 & 0.609\,$\pm$\,0.009 & \best{0.621}\,$\pm$\,0.010 \\
-DeepHit & \best{0.675}\,$\pm$\,0.010 & 0.654\,$\pm$\,0.019 & 0.603\,$\pm$\,0.009 & \best{0.625}\,$\pm$\,0.005 \\
+Ours \Lpch{} & \best{0.669}\,$\pm$\,0.008 & \best{0.669}\,$\pm$\,0.010 & 0.651\,$\pm$\,0.019 & 0.618\,$\pm$\,0.007 & 0.619\,$\pm$\,0.006 & 0.621\,$\pm$\,0.005 \\
+DeepHit & 0.663\,$\pm$\,0.018 & 0.655\,$\pm$\,0.027 & 0.650\,$\pm$\,0.020 & 0.607\,$\pm$\,0.004 & 0.609\,$\pm$\,0.005 & 0.615\,$\pm$\,0.009 \\
 \bottomrule
 \end{tabular}
 \end{table}
-\paragraph{Reading Table~\ref{tab:disc}.} Continuous input is better on METABRIC ($+0.023$) and discretised input
-is better on SUPPORT ($+0.012$ to $+0.022$), for both models. Part or all of the SUPPORT difference is explained
-by the preprocessing issue noted on page~1: on the continuous path five SUPPORT measurements were unscaled and one
-was lost, while the discretised path was correct. The corrected comparison, including a quantile (rank) transform,
-is in notebook 12. The paper should not claim continuous encoding is always better; a rank/quantile
-transform before the value embedding is a cheap candidate to get both.
+\paragraph{Reading Table~\ref{tab:enc}.} On METABRIC continuous and quantile encodings are equal (0.669) and both beat
+discretisation ($-0.018$, 0/5, $p=0.03$ for our model). On SUPPORT, after the preprocessing correction, the three
+encodings are statistically indistinguishable for both models (all $p\ge0.2$); the earlier apparent advantage of
+discretisation on SUPPORT was caused by the preprocessing issue (Appendix~\ref{app:fixes}). The paper can therefore
+state that the numeric-value embedding is at least as good as discretisation and better on METABRIC, but not that it
+always helps. Our METABRIC continuous value here (0.669) differs from Table~\ref{tab:horizons} (0.675) only by run-to-run
+variation (sd 0.008--0.014).
 
 %=====================================================================
-\section{Coded visit histories, \S4.2 (notebooks 06 and 09)}
+\section{Coded visit histories (\S4.2)}\label{sec:ehr}
 %=====================================================================
+Three generations of experiments test whether the transformer can use the order, trends and recency of a coded
+history: v1 (notebook 06), v2 (notebook 09, removes the shortcut through counts and last values) and the final runs on
+v2 with improved sequence models (notebook 13). In every case the same patients are given to the model as the full
+time-stamped sequence or as a bag-of-codes table (counts per code, last value per lab, number of visits).
+
 \begin{table}[H]\centering\small
-\caption{The same patients given to our model as the full time-stamped sequence, a bag-of-codes table (counts, last
-lab values, number of visits) or static features only. C$_{td}$, 3 splits. ``temporal'' = share of risk carried by
-order, trend and recency.}
-\label{tab:ehr}
+\caption{v1 and v2 cohorts with the small model (hidden 16, 2 layers, mean pooling). \Ctd{}, 3 splits.
+``temporal'' = share of the risk carried by order, trends and recency.}
+\label{tab:ehr12}
 \resizebox{\textwidth}{!}{\begin{tabular}{llcccccc}
 \toprule
-Design & cohort & Oracle & Cox [bag] & Ours [bag] & Ours [sequence] & MENSA [seq.] & Ours [static] \\
+Design & cohort (temporal) & Oracle & Cox [bag] & Ours [bag] & Ours [sequence] & MENSA [sequence] & Ours [static] \\
 \midrule
 v1 & static (0.0) & 0.735 & 0.725 & 0.710 & 0.708 & 0.712 & 0.502 \\
 v1 & base (0.5) & 0.723 & 0.708 & 0.705 & 0.700 & 0.690 & 0.500 \\
@@ -378,24 +433,63 @@ v2 & order (0.9) & 0.696 & 0.653 & 0.655 & 0.647 & 0.645 & 0.502 \\
 \bottomrule
 \end{tabular}}
 \end{table}
-\paragraph{Reading Table~\ref{tab:ehr}.} In v1 the temporal signal could be recovered from counts and last values
-(a linear model on the bag recovers 66--86\,\% of the true risk), so sequence and bag tie. v2 removes this shortcut
-(the bag recovers only 12--41\,\% for three of four outcomes), and the oracle's lead over every model grows with
-the temporal share (0.010 $\to$ 0.043): the extra information is there. No model extracts it: our sequence model
-stays at the bag level (0.647 vs.\ 0.655 in the ``order'' cohort). Likely causes are the very small transformer
-(hidden size 16, 2 layers), mean pooling over up to 256 mostly-noise tokens, time entering only as the value of a
-\texttt{VISIT} token, and $\approx$3\,000 training patients. Static input (age and sex) is at chance, as designed.
-\S4.2 is therefore not supported yet. On these data DeepHit again orders events badly (within-C 0.41--0.47).
+
+\begin{table}[H]\centering\small
+\caption{Final runs on the v2 cohorts, 5 splits. ``large'' = hidden 64, 4 layers, \texttt{[CLS]} pooling, lr
+$10^{-3}$; \texttt{sequence\_time} adds the recency $\exp(t/1\,\text{year})$ to every code.}
+\label{tab:ehrfinal}
+\resizebox{\textwidth}{!}{\begin{tabular}{lccc@{\hspace{1.2em}}ccc}
+\toprule
+ & \multicolumn{3}{c}{\Ctd{}} & \multicolumn{3}{c}{True-order Brier $\downarrow$} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Model [input] & level (0.0) & mixed (0.5) & order (0.9) & level & mixed & order \\
+\midrule
+Oracle & 0.743 & 0.721 & 0.692 & 0.209 & 0.218 & 0.223 \\
+Cox PH [bag] & \best{0.730} & \best{0.692} & \best{0.648} & \best{0.210} & \best{0.226} & \best{0.235} \\
+\midrule
+Ours small [bag] & 0.711 & 0.686 & \best{0.648} & 0.221 & 0.229 & \best{0.235} \\
+Ours large [bag] & 0.693 & 0.668 & 0.630 & 0.227 & 0.235 & 0.238 \\
+Ours small [sequence] & 0.721 & 0.685 & 0.645 & 0.217 & 0.230 & \best{0.235} \\
+Ours large [sequence] & 0.688 & 0.663 & 0.630 & 0.234 & 0.240 & 0.244 \\
+Ours large [sequence\_time] & 0.686 & 0.657 & 0.627 & 0.233 & 0.240 & 0.242 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+\begin{figure}[H]\centering
+\includegraphics[width=\textwidth]{figures/ehr_final.pdf}
+\caption{Final \S4.2 runs (Table~\ref{tab:ehrfinal}): \Ctd{} of each input/model variant, mean $\pm$ sd over 5 splits.
+Dashed: oracle; dotted: Cox on the bag table.}\label{fig:ehr}
+\end{figure}
+
+\paragraph{Reading Tables~\ref{tab:ehr12}--\ref{tab:ehrfinal} and Figure~\ref{fig:ehr}.}
+\begin{itemize}
+  \item \textbf{v1}: sequence and bag tie because the trend information could be recovered from counts and last values
+        (a linear model on the bag recovers 66--86\,\% of the true risk).
+  \item \textbf{v2} removes this shortcut (the bag recovers only 12--41\,\% for three of the four outcomes), and the
+        oracle's lead over the best learned model grows with the temporal share: 0.013 (level), 0.029 (mixed),
+        0.044 (order). The information is present in the history.
+  \item \textbf{No sequence model extracts it.} The small sequence model beats the bag only in the level-only cohort
+        ($+0.010$, 5/5, $p=0.046$), where no temporal information exists, and ties it elsewhere ($-0.001$, $-0.003$,
+        $p\ge0.09$).
+  \item \textbf{The larger model is worse}, for both inputs and in all cohorts ($-0.015$ to $-0.033$ \Ctd{}, 0/5,
+        $p\le0.04$), most likely overfitting $\approx$3\,000 training patients. Recency encoding adds nothing
+        ($p\ge0.18$).
+  \item Cox on the bag table is the best learned model on these cohorts, consistent with their near-linear risk in
+        the bag features.
+\end{itemize}
+\textbf{Conclusion}: under the conditions tested --- 5\,000 patients, up to 256 tokens, small and medium transformers ---
+the \S4.2 claim that modelling the coded sequence improves prediction over a summary table is not supported.
 
 %=====================================================================
-\section{End-to-end LLM, \S3 (notebooks 05 and 07)}
+\section{End-to-end language model (\S3)}\label{sec:llm}
 %=====================================================================
 \begin{table}[H]\centering\small
-\caption{The \S3 language model vs.\ Cox and our transformer on the same splits. C$_{td}$, 3 splits.}
+\caption{The \S3 language model vs.\ Cox and our transformer on the same splits. \Ctd{}, 3 splits.}
 \label{tab:llm}
 \begin{tabular}{lccc}
 \toprule
-Model & sim\_base & EBMT & METABRIC \\
+Model & simulator (base) & EBMT & METABRIC \\
 \midrule
 Oracle & 0.734 & -- & -- \\
 Cox PH & 0.676 & 0.538 & 0.624 \\
@@ -406,76 +500,140 @@ LLM, GPT-2 from scratch & 0.654\,$\pm$\,0.012 & 0.538 & 0.544\,$\pm$\,0.055 \\
 \bottomrule
 \end{tabular}
 \end{table}
-\paragraph{Reading Table~\ref{tab:llm}.} The LLM formulation works end to end and is clearly above chance, but it is
-weaker than our transformer by 0.06--0.08 on sim\_base and METABRIC; on EBMT, where every model is near 0.54, it
-ties. The pretrained model is unstable across splits (sd up to 0.06). It is best presented as a proof of concept.
+\paragraph{Reading Table~\ref{tab:llm}.} The language-model formulation trains end to end and produces valid per-event
+risk curves, clearly above chance. It trails our transformer by 0.06--0.09 on the simulator and METABRIC; on EBMT,
+where every model is near 0.54, it ties. The pretrained model is unstable across splits (sd up to 0.06). It is best
+presented as a proof of concept.
 
 %=====================================================================
-\section{What we know now}
+\section{What the results support for the paper}\label{sec:claims}
+%=====================================================================
+\begin{table}[H]\centering\small
+\begin{tabular}{p{5.8cm}p{2.7cm}p{6.3cm}}
+\toprule
+Claim & Status & Evidence \\
+\midrule
+Transformer with the \Lpch{} likelihood is competitive on tabular survival benchmarks & supported & best of the
+models we ran on METABRIC and SUPPORT; at the level of published PC-Hazard (Table~\ref{tab:horizons}) \\
+\dots and matches or beats SurvTRACE & not supported & 0.016--0.021 below published SurvTRACE \\
+General multi-event formulation (non-, semi-, competing) & supported & best learned model on the simulator, hsa, EBMT;
+best true ordering; competing-risk DeepHit orders events worst (Tables~\ref{tab:multi}, \ref{tab:true}) \\
+Neural model needed for non-linear risk & supported & Figure~\ref{fig:nonlin}; hsa (Cox at chance) \\
+\Lrank{} improves prediction & not supported & neutral when tuned, harmful otherwise (Tables~\ref{tab:single}, \ref{tab:tune}) \\
+\Lmul{} improves within-patient ordering & not supported & worse on every proper true-order score
+(Table~\ref{tab:true}); gains only on a gameable metric \\
+MMV improves predicted event times & partly supported & lower MAE on observed patients, worse calibration
+(Table~\ref{tab:single}) \\
+Continuous numeric embedding is preferable to discretisation & partly supported & better on METABRIC, equal on
+SUPPORT (Table~\ref{tab:enc}) \\
+Coded sequences beat static summaries (\S4.2) & not supported & Tables~\ref{tab:ehr12}, \ref{tab:ehrfinal} \\
+End-to-end LLM (\S3) & proof of concept & works, weaker than the transformer (Table~\ref{tab:llm}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+A further, methodological contribution follows from Section~\ref{sec:true}: the within-subject C-index rewards a loss
+trained on it beyond the oracle, so multi-event models should be evaluated with proper scores against true event order
+where it is available (simulation) and with this caveat elsewhere.
+
+%=====================================================================
+\section{Limitations}\label{sec:limits}
+%=====================================================================
+\begin{itemize}
+  \item \textbf{Real multi-event data}: only EBMT, whose four categorical covariates carry little signal (\Ctd{}
+        $\approx$0.54 for every model); MIMIC requires credentialed access and the paper's CKD/COPD/diabetes cohorts
+        were not available.
+  \item \textbf{Comparison with SurvTRACE} uses published numbers on different splits; our model has no multi-task
+        head.
+  \item \textbf{Number of splits}: 5 for benchmarks, 3 for sweeps and the LLM; small effects ($<0.005$) are not
+        resolvable.
+  \item \textbf{MAE-margin is unreliable on EBMT} (values above 7\,000 days): with long follow-up and heavy
+        censoring the Kaplan--Meier best guess extrapolates far beyond the data. MAE is reported only on METABRIC,
+        SUPPORT and simulated data.
+  \item \textbf{True-order scores} assume independent events given the covariates when converting marginal curves into
+        $P(T_a<T_b)$; this is exact for the simulator's non-competing regime and an approximation for semi-competing data.
+  \item \textbf{\S4.2 sequences} were tested only on simulated records with up to 256 tokens and $\approx$3\,000
+        training patients; larger real cohorts or pre-trained clinical models may behave differently.
+\end{itemize}
+
+%=====================================================================
+\section{Open items}\label{sec:open}
 %=====================================================================
 \begin{enumerate}
-  \item The transformer with the \Lpch{} likelihood is the best or tied-best of the models we ran on METABRIC,
-        SUPPORT, hsa\_synthetic, EBMT and the simulator, with the best calibration among neural models
-        (Tables~\ref{tab:single}, \ref{tab:multi}); it is below the published SurvTRACE on METABRIC and SUPPORT. On the
-        synthetic EHR cohorts, whose risk is close to linear in the bag-of-codes features, Cox on the bag table is
-        equal or better (Table~\ref{tab:ehr}).
-  \item Measured against the true event order, it orders events within a patient better than every other learned
-        model; the competing-risk DeepHit is worst (Table~\ref{tab:true}). This supports the general multi-event
-        formulation.
-  \item \Lrank{} and \Lmul{} do not improve any proper score, tuned or not (Tables~\ref{tab:true}, \ref{tab:tune};
-        Figures~\ref{fig:events} and~\ref{fig:spread}).
-  \item The within-subject C-index rewards a loss trained on it beyond the oracle (Table~\ref{tab:true},
-        Figure~\ref{fig:regime}); proper true-order scores are needed to evaluate multi-event models.
-  \item The neural model pays off for non-linear signal and clearly from $\approx$5\,000 subjects; it scales to 8 events
-        (Figures~\ref{fig:nonlin}--\ref{fig:events}).
-  \item MMV trades calibration for lower error on observed event times; useful only when time accuracy matters.
-  \item Continuous vs.\ discretised input is dataset-dependent (Table~\ref{tab:disc}).
-  \item Coded sequences do not yet beat a bag of codes although the signal is present (Table~\ref{tab:ehr}).
-  \item The end-to-end LLM works but is weaker (Table~\ref{tab:llm}).
-\end{enumerate}
-
-\section{Open items}
-Ordered by how much each could change the paper's claims.
-\begin{enumerate}
-  \item \textbf{Corrected SUPPORT results.} Re-run of the SUPPORT benchmark and of the
-        encoding comparison with the fixed preprocessing (notebook 12); this also re-opens the gap to SurvTRACE on SUPPORT.
-  \item \textbf{Coded sequences (\S4.2).} The v2 cohorts show the information is in the history but our model does
-        not extract it. Planned: a larger transformer, attention or \texttt{[CLS]} pooling instead of mean pooling,
-        an explicit time encoding, and more training patients; then re-run notebook 09. This is the one negative
-        result that could still turn into support for the paper.
-  \item \textbf{Gap to the published SurvTRACE.} Our model is 0.016 (METABRIC) and 0.032 (SUPPORT) below it.
-        The backbone is already tuned per dataset; what remains is SurvTRACE's multi-task head (worth
-        0.004--0.005 in their own ablation) and a comparison on identical splits before claiming parity.
-  \item \textbf{Numeric encoding.} Continuous input wins on METABRIC and quantile bins win on SUPPORT; a
-        rank/quantile transform before the value embedding may give both.
-  \item \textbf{Role of \Lrank{}/\Lmul{} in the paper.} The evidence says they are neutral when tuned and harmful
-        when sharp. The paper should either present them as optional penalties with this ablation, or drop the claim
-        that they improve prediction.
-  \item \textbf{Evaluation of multi-event models.} The within-subject C-index is gameable; the true-order scores
-        (Section~\ref{sec:true}) should replace it in the paper, which is also a methodological contribution.
-  \item \textbf{Real multi-event data with richer covariates.} EBMT has only four categorical covariates. MIMIC needs
-        PhysioNet credentialing; the \S4.2 CKD/COPD/diabetes cohorts can be loaded through \texttt{patients.csv} and
-        \texttt{events.csv} once available.
-  \item \textbf{Manuscript corrections.} The sign of $\eta$ in Eqs.~4--5 (the code is correct), a MENSA row in
-        Table~1 of the paper, and the end-to-end LLM presented as a proof of concept.
+  \item \textbf{Manuscript}: correct the sign of $\eta$ in Eqs.~4--5 (the code is correct), add MENSA to Table~1 of
+        the paper, present \Lrank{}/\Lmul{} as optional penalties with this ablation, replace the within-subject
+        C-index with true-order scores, and present the \S3 language model as a proof of concept.
+  \item \textbf{\S4.2}: decide between removing the claim, reporting the negative result, or testing on a real
+        longitudinal cohort (MIMIC or the CKD/COPD/diabetes cohorts, loadable through \texttt{patients.csv} and
+        \texttt{events.csv}), possibly with a pre-trained clinical encoder.
+  \item \textbf{Gap to SurvTRACE}: add a multi-task head or compare on identical splits.
+  \item \textbf{Real multi-event data with richer covariates} (MIMIC after credentialing).
 \end{enumerate}
 
 \appendix
-\section{Where the numbers come from}
-\begin{center}\small
-\begin{tabular}{ll}
+%=====================================================================
+\section{Hyper-parameters}\label{app:hparams}
+%=====================================================================
+\begin{table}[H]\centering\small
+\resizebox{\textwidth}{!}{\begin{tabular}{lll}
 \toprule
-Table / figure & source (\texttt{results/new\_results/}) \\
+Setting & single-event (METABRIC / SUPPORT) & multi-event, EHR \\
 \midrule
-Table~\ref{tab:single} & \texttt{03\_single\_event\_benchmarks/report} \\
-Table~\ref{tab:multi} & \texttt{01\_multievent\_lmul/report}, \texttt{07\_rerun\_failed/report} \\
-Tables~\ref{tab:true}, \ref{tab:tune} & \texttt{08\_true\_order\_and\_tuning} (tuned and untuned runs separated by tag) \\
-Figures~\ref{fig:spread}--\ref{fig:regime} & \texttt{02\_synthetic\_scenarios/report/sweep\_*} \\
-Figures~\ref{fig:nonlin}--\ref{fig:events} & \texttt{11\_extra\_sweeps/report/sweep\_*} \\
-Table~\ref{tab:disc} & \texttt{10\_continuous\_vs\_discretised/report} \\
-Table~\ref{tab:ehr} & \texttt{06\_sequential\_ehr/report}, \texttt{09\_sequential\_ehr\_v2/report} \\
-Table~\ref{tab:llm} & \texttt{05\_llm\_end\_to\_end/report}, \texttt{07\_rerun\_failed/report} \\
+Transformer & tuned on validation over SurvTRACE's grid: & hidden 16, 2 layers, 4 heads, intermediate 16 \\
+ & METABRIC 2 layers, hidden 16, intermediate 32, lr $10^{-3}$ & (\S4.2 ``large'': hidden 64, 4 layers, intermediate 128) \\
+ & SUPPORT 4 layers, hidden 16, intermediate 64, lr $10^{-4}$ & \\
+Pooling & sum of layers, max over tokens & sum of layers, mean over tokens (``large'': \texttt{[CLS]}) \\
+Optimiser & AdamW, batch 64, weight decay $10^{-4}$, $\le$100 epochs & AdamW, lr $10^{-2}$, weight decay 0.1, batch 256 (accum.\ 2), $\le$200 epochs \\
+Early stopping & 10 evaluations without improvement on validation \Ctd{} & same \\
+Time grid & 4 intervals (quantiles 25/50/75\,\%) & 10 intervals (quantiles of observed times) \\
+Loss weights (fixed) & \Lpch{} 0.5, \Lrank{} 0.2 ($\sigma=0.1$) & \Lpch{} 0.5, \Lrank{} 0.2, \Lmul{} 0.1 ($\sigma=0.1$) \\
+MMV & scale balancing, $\lambda_v\in\{0.01,0.1,1\}$ & $\lambda_v=1$ \\
+LLM & -- & 30 epochs, early stopping 3; lr $5\cdot10^{-5}$ (pretrained), $5\cdot10^{-4}$ (scratch) \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+%=====================================================================
+\section{Corrections made before the reported runs}\label{app:fixes}
+%=====================================================================
+All numbers in this report were produced after the following corrections; results obtained before them are superseded.
+\begin{table}[H]\centering\small
+\begin{tabular}{p{5.2cm}p{9.8cm}}
+\toprule
+Issue & Effect and fix \\
+\midrule
+Train/validation split swapped & models trained on $\approx$10\,\% of the data and early-stopped on $\approx$60\,\%; fixed, with a regression test \\
+Cox PH ignored categorical features & 4 of 9 METABRIC and 6 of 14 SUPPORT features were constant; now one-hot encoded \\
+SUPPORT numeric preprocessing & METABRIC's column layout was hard-coded: five SUPPORT measurements unscaled, mean blood pressure lost; columns now follow each dataset's layout (all SUPPORT results re-run in notebook 12) \\
+``$+$\Lmul{}'' configuration & did not contain \Lmul{}; fixed \\
+Checkpoint selection & used a C-index without $\tau$-truncation and with IPCW fitted on the evaluated split; now selects on the SurvTRACE-protocol \Ctd{} \\
+Error bars & seeds varied only the initialisation; each seed now uses its own split \\
+Multi-event horizons & pooled across events, so late events were scored before they occurred; now per event \\
+MENSA & an inspired re-implementation was reported under MENSA's name; replaced by the published model \\
+Prediction for new patients & numeric values never reached the model; fixed and verified against test predictions \\
 \bottomrule
 \end{tabular}
-\end{center}
+\end{table}
+
+%=====================================================================
+\section{Where the numbers come from}\label{app:sources}
+%=====================================================================
+All result files are in the repository under \texttt{results/new\_results/<notebook>/}; every run has a
+\texttt{<tag>.json} with its metrics and a \texttt{<tag>.meta.json} with its full configuration.
+\begin{table}[H]\centering\small
+\begin{tabular}{ll}
+\toprule
+Table / figure & notebook \\
+\midrule
+Table~\ref{tab:horizons}, \ref{tab:single} & 03 (METABRIC), 12 (SUPPORT) \\
+Table~\ref{tab:multi} & 01, 07 (re-runs) \\
+Tables~\ref{tab:true}, \ref{tab:tune} & 08 \\
+Figures~\ref{fig:spread}--\ref{fig:regime} & 02 \\
+Figures~\ref{fig:nonlin}--\ref{fig:events} & 11 \\
+Table~\ref{tab:enc} & 12 \\
+Table~\ref{tab:ehr12} & 06, 09 \\
+Table~\ref{tab:ehrfinal}, Figure~\ref{fig:ehr} & 13 \\
+Table~\ref{tab:llm} & 05, 07 \\
+\bottomrule
+\end{tabular}
+\end{table}
 \end{document}

@@ -1,0 +1,26 @@
+{
+  "tag": "enc__support_discretised__deephit_paper__s2",
+  "script": "finetune",
+  "experiment": "survtrace_support/deephit_paper",
+  "overrides": [
+    "data/load=support",
+    "data/parse=support",
+    "tokenizers=support",
+    "dataset=support",
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001"
+  ],
+  "dataset": "support",
+  "info": {
+    "dataset": "support_encoding",
+    "seed": 2,
+    "repr": "discretised",
+    "stage": "encoding",
+    "model": "deephit_paper"
+  },
+  "seconds": 106.09363913536072
+}

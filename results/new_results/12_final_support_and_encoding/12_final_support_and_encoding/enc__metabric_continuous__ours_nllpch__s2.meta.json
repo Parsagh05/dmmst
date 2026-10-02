@@ -1,0 +1,25 @@
+{
+  "tag": "enc__metabric_continuous__ours_nllpch__s2",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/survival",
+  "overrides": [
+    "dataset=metabric_numeric",
+    "seed=2",
+    "split_seed=2",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric_encoding",
+    "seed": 2,
+    "repr": "continuous",
+    "stage": "encoding",
+    "model": "ours",
+    "recipe": "nllpch"
+  },
+  "seconds": 30.596577882766724
+}

@@ -1,0 +1,23 @@
+{
+  "tag": "enc__metabric_continuous__deephit_paper__s4",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/deephit_paper",
+  "overrides": [
+    "dataset=metabric_numeric",
+    "seed=4",
+    "split_seed=4",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001"
+  ],
+  "dataset": "metabric_numeric",
+  "info": {
+    "dataset": "metabric_encoding",
+    "seed": 4,
+    "repr": "continuous",
+    "stage": "encoding",
+    "model": "deephit_paper"
+  },
+  "seconds": 29.916637182235718
+}

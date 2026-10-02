@@ -1,0 +1,24 @@
+{
+  "tag": "enc__metabric_quantile__deephit_paper__s1",
+  "script": "finetune",
+  "experiment": "survtrace_metabric/deephit_paper",
+  "overrides": [
+    "dataset=metabric_quantile",
+    "data.parse.scale_method=quantile",
+    "seed=1",
+    "split_seed=1",
+    "transformer_num_hidden_layers=2",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.001"
+  ],
+  "dataset": "metabric_quantile",
+  "info": {
+    "dataset": "metabric_encoding",
+    "seed": 1,
+    "repr": "quantile",
+    "stage": "encoding",
+    "model": "deephit_paper"
+  },
+  "seconds": 27.600355863571167
+}

@@ -1,0 +1,25 @@
+{
+  "tag": "tune__support__13",
+  "script": "finetune",
+  "experiment": "survtrace_support/survival",
+  "overrides": [
+    "dataset=support_numeric",
+    "transformer_num_hidden_layers=3",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=32",
+    "learning_rate=0.0001",
+    "seed=0",
+    "split_seed=0",
+    "tasks/losses=nllpch"
+  ],
+  "dataset": "support_numeric",
+  "info": {
+    "dataset": "support",
+    "model": "tune",
+    "transformer_num_hidden_layers": 3,
+    "transformer_hidden_size": 16,
+    "transformer_intermediate_size": 32,
+    "learning_rate": 0.0001
+  },
+  "seconds": 174.25966882705688
+}

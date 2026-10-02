@@ -1,0 +1,24 @@
+{
+  "tag": "enc__support_quantile__deephit_paper__s0",
+  "script": "finetune",
+  "experiment": "survtrace_support/deephit_paper",
+  "overrides": [
+    "dataset=support_quantile",
+    "data.parse.scale_method=quantile",
+    "seed=0",
+    "split_seed=0",
+    "transformer_num_hidden_layers=4",
+    "transformer_hidden_size=16",
+    "transformer_intermediate_size=64",
+    "learning_rate=0.0001"
+  ],
+  "dataset": "support_quantile",
+  "info": {
+    "dataset": "support_encoding",
+    "seed": 0,
+    "repr": "quantile",
+    "stage": "encoding",
+    "model": "deephit_paper"
+  },
+  "seconds": 154.9142096042633
+}
