@@ -86,8 +86,10 @@ multi-event data 8 + 4 + 16 = 28 setups. If run times turn out too long, we cut 
 after the smoke test shows the real cost, and we will say which ones were cut.
 
 ## How we test (the standard protocol, from DSM and SurvTRACE)
-- Split each dataset 60% train / 10% validation / 30% test, **10 times with different
-  splits**, and report the **mean (standard deviation)**.
+- Split each dataset 60% train / 10% validation / 30% test, **5 times with different
+  splits**, and report the **mean (standard deviation)**. (SurvTRACE used 10; we use 5
+  for every notebook to fit Kaggle's ~30 GPU-hours per week. Every model gets the same
+  5 splits.)
 - Main score: **C_td** (how well the model ranks patients by risk) at the 25%, 50% and
   75% points of the event times. Second score: **Brier score** (how accurate the
   predicted probabilities are). For multi-event data, each event is scored separately.

@@ -154,7 +154,7 @@ def notebook(name, title_md, options, body, needs_tuned=True):
 
 
 SEEDS_OPT = '''
-SEEDS = list(range(10))   # protocol: 10 random 60/10/30 splits; seed s = split s and init s
+SEEDS = list(range(5))    # 5 random 60/10/30 splits (SurvTRACE used 10; reduced for the Kaggle GPU quota); seed s = split s and init s
 '''
 
 # ================================================================== 01 tuning
@@ -302,7 +302,7 @@ MODELS = ["ours", "cox", "rsf", "deepsurv", "pchazard", "deephit", "dsm", "mensa
 notebook("02_tabular_benchmark", """# 02 · Tabular benchmark (paper §4.1)
 
 METABRIC and SUPPORT, the two datasets of SurvTRACE's Table 2, under its protocol:
-10 random 60/10/30 splits, C_td (IPCW, censoring from training) at the 25/50/75% event-time
+5 random 60/10/30 splits (SurvTRACE: 10), C_td (IPCW, censoring from training) at the 25/50/75% event-time
 quantiles, mean (std). Our model uses L_PCH (recipe S1); the loss ablations are in 05.
 
 Models: ours, Cox, Random Survival Forest, DeepSurv, PC-Hazard, DeepHit, DSM, MENSA and
