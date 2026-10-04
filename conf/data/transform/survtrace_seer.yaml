@@ -6,4 +6,7 @@ data:
     cuts: ${label_transform_cuts}
     scheme: ${label_transform_scheme}
     save_dir: ${modelhub}/${dataset}
+    # outcome-derived files (training labels, event proportions) of the training
+    # split of this split_seed; see train_labeltransform.py
+    train_dir: ${data.label_transform.save_dir}/split_${split_seed}
     event_type: 1

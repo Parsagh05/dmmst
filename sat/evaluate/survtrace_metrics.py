@@ -27,7 +27,7 @@ with ``times`` the 25/50/75% quantiles of the *uncensored* event times, which is
 already what ``train_labeltransform`` writes into ``duration_cuts.csv``.
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import Optional
@@ -66,7 +66,7 @@ def _structured(events, durations):
 
 def event_horizons(training_set: str, num_events: int, q=(0.25, 0.5, 0.75)) -> dict:
     """{event: quantiles of that event's observed times} from the training labels."""
-    df = pd.read_csv(training_set, header=0)
+    df = pd.read_csv(training_set, header=0, float_precision="round_trip")
     out = {}
     for k in range(num_events):
         t = df.loc[df[f"event{k + 1}"] == 1, f"duration_event{k + 1}"].values.astype(float)
@@ -92,6 +92,78 @@ def _on_times(cuts, risk, surv, times):
     return r, s
 
 
+def load_event_horizons(save_dir, training_set: Optional[str], num_events: int) -> dict:
+    """Per-event horizons written by train_labeltransform (full-data quantiles of each
+    event's observed times). Falls back to the training labels for label directories
+    created before that file existed."""
+    import json
+    from pathlib import Path
+
+    path = Path(save_dir) / "event_horizons.json"
+    if path.is_file():
+        raw = json.loads(path.read_text())
+        return {int(k): np.asarray(v, dtype=float) for k, v in raw.items()}
+    if training_set is None:
+        return {}
+    return event_horizons(training_set, num_events)
+
+
+def score_at_horizons(et_train, et_test, risk, surv, times, labels, event) -> dict:
+    """C_td (sksurv concordance_index_ipcw, truncated at tau) and Brier score at the
+    evaluation horizons, exactly as SurvTRACE's evaluate_utils.py. risk / surv:
+    (n_test, len(times)) values AT ``times``. Shared by every model (finetune, Cox and
+    the other baselines) so all rows of a table come from the same code."""
+    out = {}
+    durations_test = et_test["t"]
+    times = np.asarray(times, dtype=float)
+    # sksurv refuses times outside the follow-up of the training data
+    t_max_train = et_train["t"].max()
+    t_max_test = durations_test.max()
+    usable = [
+        i
+        for i, t in enumerate(times)
+        if t < min(t_max_train, t_max_test) and (durations_test >= t).any()
+    ]
+    if not usable:
+        logger.warning("no usable evaluation horizons for event %d", event)
+        return out
+
+    cis, brs = [], []
+    for i in usable:
+        tau = float(times[i])
+        try:
+            ci = concordance_index_ipcw(
+                et_train, et_test, estimate=risk[:, i], tau=tau
+            )[0]
+            cis.append(ci)
+            out[f"ctd_{event}th_event_{labels[i]}"] = float(ci)
+        except Exception as e:  # noqa: BLE001
+            logger.warning(f"C-index failed at tau={tau}: {e}")
+
+    try:
+        idx = np.array(usable)
+        # sksurv's Brier needs every test time inside the training censoring
+        # support; the hash splitter does not guarantee the longest-duration
+        # subject lands in train, so restrict rather than fail.
+        keep = durations_test < et_train["t"].max()
+        if keep.sum() > 0:
+            _, bs = sksurv_brier_score(
+                et_train, et_test[keep], surv[keep][:, idx],
+                times[idx].astype(float),
+            )
+            for j, i in enumerate(usable):
+                brs.append(bs[j])
+                out[f"brier_{event}th_event_{labels[i]}"] = float(bs[j])
+    except Exception as e:  # noqa: BLE001
+        logger.warning(f"Brier score failed: {e}")
+
+    if cis:
+        out[f"ctd_{event}th_event"] = float(np.mean(cis))
+    if brs:
+        out[f"brier_{event}th_event"] = float(np.mean(brs))
+    return out
+
+
 class SurvTRACEMetrics:
     """C-index (IPCW, truncated) and Brier score, per the SurvTRACE protocol.
 
@@ -113,7 +185,7 @@ class SurvTRACEMetrics:
     ):
         self.cfg = cfg
 
-        cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"]).cuts.values
+        cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"], float_precision="round_trip").cuts.values
         self.cuts = np.asarray(cuts, dtype=float)
         # evaluation horizons: drop the leading 0 and the trailing max, exactly as
         # SurvTRACE does with duration_index[1:-1]
@@ -124,9 +196,11 @@ class SurvTRACEMetrics:
         # quantiles put every horizon before the late events have happened. With
         # per_event_horizons each event is scored at the 25/50/75% quantiles of its
         # own observed times (risk read off the model's cut grid, log-linearly).
+        from pathlib import Path
+
         self.event_times = (
-            event_horizons(training_set, cfg.num_events)
-            if per_event_horizons and training_set is not None
+            load_event_horizons(Path(duration_cuts).parent, training_set, cfg.num_events)
+            if per_event_horizons
             else {}
         )
 
@@ -137,7 +211,7 @@ class SurvTRACEMetrics:
                 "which is NOT the published protocol and is not comparable."
             )
         else:
-            df = pd.read_csv(training_set, header=0)
+            df = pd.read_csv(training_set, header=0, float_precision="round_trip")
             for event in range(self.cfg.num_events):
                 self.train[event] = _structured(
                     df[f"event{event + 1}"] == 1, df[f"duration_event{event + 1}"]
@@ -166,55 +240,13 @@ class SurvTRACEMetrics:
             risk, surv = _on_times(self.cuts, risk, surv, times)
         times = np.asarray(times, dtype=float)
 
-        # sksurv refuses times outside the follow-up of the training data
-        t_max_train = et_train["t"].max()
-        t_max_test = durations_test.max()
-        usable = [
-            i
-            for i, t in enumerate(times)
-            if t < min(t_max_train, t_max_test) and (durations_test >= t).any()
-        ]
-        if not usable:
-            logger.warning("no usable evaluation horizons for event %d", event)
-            return out
-
-        cis, brs = [], []
-        for i in usable:
-            tau = float(times[i])
-            try:
-                ci = concordance_index_ipcw(
-                    et_train, et_test, estimate=risk[:, i], tau=tau
-                )[0]
-                cis.append(ci)
-                out[f"ctd_{event}th_event_{labels[i]}"] = float(ci)
-            except Exception as e:  # noqa: BLE001
-                logger.warning(f"C-index failed at tau={tau}: {e}")
-
-        try:
-            idx = np.array(usable)
-            # sksurv's Brier needs every test time inside the training censoring
-            # support; the hash splitter does not guarantee the longest-duration
-            # subject lands in train, so restrict rather than fail.
-            keep = durations_test < et_train["t"].max()
-            if keep.sum() > 0:
-                _, bs = sksurv_brier_score(
-                    et_train, et_test[keep], surv[keep][:, idx],
-                    times[idx].astype(float),
-                )
-                for j, i in enumerate(usable):
-                    brs.append(bs[j])
-                    out[f"brier_{event}th_event_{labels[i]}"] = float(bs[j])
-        except Exception as e:  # noqa: BLE001
-            logger.warning(f"Brier score failed: {e}")
-
-        if cis:
-            out[f"ctd_{event}th_event"] = float(np.mean(cis))
-        if brs:
-            out[f"brier_{event}th_event"] = float(np.mean(brs))
-        return out
+        return score_at_horizons(et_train, et_test, risk, surv, times, labels, event)
 
     def compute(self, predictions, references):
         from sat.evaluate.eval_modules import SurvivalEvaluationModule
+
+        if isinstance(predictions, dict) and predictions.get("survival") is None:
+            return {}  # no survival head (regression-only model): no C_td / Brier
 
         predictions = SurvivalEvaluationModule.survival_predictions(self, predictions)
         metrics = {}
@@ -271,12 +303,12 @@ class SurvivalMAEMetrics:
         from sat.utils.km import KaplanMeierArea
 
         self.cfg = cfg
-        cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"]).cuts.values
+        cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"], float_precision="round_trip").cuts.values
         self.cuts = np.asarray(cuts, dtype=float)
 
         self.kms = {}
         if training_set is not None:
-            df = pd.read_csv(training_set, header=0)
+            df = pd.read_csv(training_set, header=0, float_precision="round_trip")
             for event in range(self.cfg.num_events):
                 self.kms[event] = KaplanMeierArea(
                     df[f"duration_event{event + 1}"], df[f"event{event + 1}"] == 1

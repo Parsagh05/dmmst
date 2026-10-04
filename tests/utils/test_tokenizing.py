@@ -50,7 +50,7 @@ def test_truncation_right():
     new_element = tokenizing.numerics_padding_and_truncation(numerics(), **cfg)
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
-    assert (new_element["numerics"] == np.array([1.1, 2.1, 3.1])).all()
+    assert (new_element["numerics"] == np.array([1.1, 2.1, 3.1], dtype=np.float32)).all()
 
 
 def test_truncation_left():
@@ -59,7 +59,7 @@ def test_truncation_left():
     new_element = tokenizing.numerics_padding_and_truncation(numerics(), **cfg)
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
-    assert (new_element["numerics"] == np.array([3.1, 4.1, 5.1])).all()
+    assert (new_element["numerics"] == np.array([3.1, 4.1, 5.1], dtype=np.float32)).all()
 
 
 def test_truncation_with_bert_pooling():
@@ -68,7 +68,7 @@ def test_truncation_with_bert_pooling():
     new_element = tokenizing.numerics_padding_and_truncation(numerics(), **cfg)
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
-    assert (new_element["numerics"] == np.array([1.0, 4.1, 5.1])).all()
+    assert (new_element["numerics"] == np.array([1.0, 4.1, 5.1], dtype=np.float32)).all()
 
 
 def test_padding_left():
@@ -81,7 +81,7 @@ def test_padding_left():
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
     assert (
-        new_element["numerics"] == np.array([1.0, 1.0, 1.0, 1.1, 2.1, 3.1, 4.1, 5.1])
+        new_element["numerics"] == np.array([1.0, 1.0, 1.0, 1.1, 2.1, 3.1, 4.1, 5.1], dtype=np.float32)
     ).all()
 
 
@@ -92,7 +92,7 @@ def test_padding_left_with_bert_pooling():
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
     assert (
-        new_element["numerics"] == np.array([1.0, 1.0, 1.0, 1.1, 2.1, 3.1, 4.1, 5.1])
+        new_element["numerics"] == np.array([1.0, 1.0, 1.0, 1.1, 2.1, 3.1, 4.1, 5.1], dtype=np.float32)
     ).all()
 
 
@@ -106,7 +106,7 @@ def test_padding_right():
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
     assert (
-        new_element["numerics"] == np.array([1.1, 2.1, 3.1, 4.1, 5.1, 1.0, 1.0, 1.0])
+        new_element["numerics"] == np.array([1.1, 2.1, 3.1, 4.1, 5.1, 1.0, 1.0, 1.0], dtype=np.float32)
     ).all()
 
 
@@ -117,7 +117,7 @@ def test_padding_right_with_bert_pooling():
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
     assert (
-        new_element["numerics"] == np.array([1.0, 1.1, 2.1, 3.1, 4.1, 5.1, 1.0, 1.0])
+        new_element["numerics"] == np.array([1.0, 1.1, 2.1, 3.1, 4.1, 5.1, 1.0, 1.0], dtype=np.float32)
     ).all()
 
 
@@ -127,4 +127,4 @@ def test_bert_pooling():
     new_element = tokenizing.numerics_padding_and_truncation(numerics(), **cfg)
 
     assert len(new_element["numerics"]) == cfg["max_seq_length"]
-    assert (new_element["numerics"] == np.array([1.0, 2.1, 3.1, 4.1, 5.1])).all()
+    assert (new_element["numerics"] == np.array([1.0, 2.1, 3.1, 4.1, 5.1], dtype=np.float32)).all()

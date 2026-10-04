@@ -42,7 +42,7 @@ written; ``"reference"`` reproduces the released code. They differ whenever
 ``T_A != T_B``, which is exactly the multi-event case the term is meant to address.
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import Dict, List, Optional, Sequence, Tuple, Union

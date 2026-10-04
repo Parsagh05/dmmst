@@ -12,9 +12,9 @@ Upload either notebook from [notebooks/](notebooks/) to Kaggle and Run All. It c
 this repo, installs what it needs, and runs. Turn **Internet: On** in the notebook
 settings; GPU is optional.
 
-- [notebooks/yasi_environment_and_baselines.ipynb](notebooks/yasi_environment_and_baselines.ipynb)
+- [notebooks/version_0/yasi_environment_and_baselines.ipynb](notebooks/version_0/yasi_environment_and_baselines.ipynb)
   - pipeline + the four baselines across METABRIC, SUPPORT and hsa-synthetic
-- [notebooks/parsa_mmv_loss.ipynb](notebooks/parsa_mmv_loss.ipynb)
+- [notebooks/version_0/parsa_mmv_loss.ipynb](notebooks/version_0/parsa_mmv_loss.ipynb)
   - the Margin-Mean-Variance loss vs. the `nllpch` baseline
 
 Both default to `SMOKE_TEST = True` (3 epochs, ~1 min) so a broken setup shows up before

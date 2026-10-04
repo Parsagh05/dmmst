@@ -152,14 +152,20 @@ class Runner:
             self._log(f"  !! {label or name} FAILED ({dt:.0f}s)\n{tail}")
         return ok, dt, p.stdout
 
-    def prepare(self, experiment: str, overrides=(), label: str = "prepare"):
-        """prepare_data -> train_tokenizer -> train_labeltransform (once per dataset)."""
-        for step in ("prepare_data", "train_tokenizer", "train_labeltransform"):
-            ok, dt, _ = self.sat(step, experiment, overrides, label=f"{label}:{step}",
-                                 log_name=f"{label}_{step}")
+    def prepare(self, experiment: str, overrides=(), label: str = "prepare", split_seeds=None):
+        """prepare_data -> train_tokenizer once per dataset, then train_labeltransform
+        once per split seed: the training labels it writes (IPCW, Kaplan-Meier best
+        guesses, event proportions) must come from that split's training rows only."""
+        steps = [("prepare_data", list(overrides)), ("train_tokenizer", list(overrides))]
+        for s in split_seeds if split_seeds is not None else [None]:
+            extra = [] if s is None else [f"split_seed={s}"]
+            steps.append(("train_labeltransform", list(overrides) + extra))
+        for step, ov in steps:
+            name = f"{label}_{step}" + ("" if ov == list(overrides) else f"_{ov[-1].split('=')[-1]}")
+            ok, dt, _ = self.sat(step, experiment, ov, label=f"{label}:{step}", log_name=name)
             if not ok:
-                raise RuntimeError(f"{step} failed for {experiment} {overrides}; see logs/")
-            self._log(f"  {label}: {step} ok ({dt:.0f}s)")
+                raise RuntimeError(f"{step} failed for {experiment} {ov}; see logs/")
+            self._log(f"  {name}: ok ({dt:.0f}s)")
 
     def done(self, tag) -> bool:
         return (self.results_dir / f"{tag}.json").is_file()
@@ -271,6 +277,60 @@ class Runner:
                 if p.is_file():
                     z.write(p, p.relative_to(self.results_dir.parent))
         return out
+
+
+# ------------------------------------------------------------------ tuning
+def grid(space: Dict[str, list]) -> List[Dict]:
+    """Cartesian product of a search space {override_key: [values]} (grid search, as in
+    SurvTRACE's protocol)."""
+    import itertools
+
+    keys = list(space)
+    return [dict(zip(keys, vals)) for vals in itertools.product(*(space[k] for k in keys))]
+
+
+def tuning_runs(prefix: str, script: str, experiment: str, base_overrides: List[str],
+                space: Dict[str, list], seeds, dataset: str, info: Optional[Dict] = None) -> List[Run]:
+    """One Run per (configuration, tuning split). Configurations are numbered c000, c001..
+    and their values are stored in info["config"], so select_best can rebuild them."""
+    runs = []
+    for i, conf in enumerate(grid(space)):
+        ov = [f"{k}={v}" for k, v in conf.items()]
+        for s in seeds:
+            runs.append(Run(
+                f"{prefix}__c{i:03d}__s{s}", script, experiment,
+                list(base_overrides) + ov + [f"seed={s}", f"split_seed={s}"], dataset,
+                (info or {}) | {"config_id": f"c{i:03d}", "config": conf, "seed": s},
+            ))
+    return runs
+
+
+def select_best(runner: "Runner", prefix: str, metric: str = "ctd_weighted_avg",
+                greater: bool = True) -> Dict:
+    """The configuration of `prefix` with the best mean VALIDATION metric over its tuning
+    splits (test numbers are never looked at). Returns {"config", "score", "n", "table"}."""
+    rows = []
+    for f in sorted(runner.results_dir.glob(f"{prefix}__c*.meta.json")):
+        meta = json.loads(f.read_text())
+        res = runner.results_dir / f"{meta['tag']}.json"
+        if not res.is_file():
+            continue
+        val = json.loads(res.read_text()).get("validation", {}).get(metric)
+        v = val.get("mean") if isinstance(val, dict) else val
+        if v is not None and np.isfinite(v):
+            rows.append({"config_id": meta["info"]["config_id"], "score": v,
+                         "config": json.dumps(meta["info"]["config"], sort_keys=True)})
+    if not rows:
+        raise RuntimeError(f"no finished tuning runs for {prefix}")
+    t = pd.DataFrame(rows).groupby(["config_id", "config"]).score.agg(["mean", "std", "count"])
+    t = t.sort_values("mean", ascending=not greater).reset_index()
+    best = t.iloc[0]
+    return {"config": json.loads(best["config"]), "score": float(best["mean"]),
+            "n": int(best["count"]), "table": t}
+
+
+def as_overrides(conf: Dict) -> List[str]:
+    return [f"{k}={v}" for k, v in conf.items()]
 
 
 # ------------------------------------------------------------------ statistics

@@ -304,3 +304,33 @@ def test_split_seed_changes_partition_reproducibly():
     assert test_ids(3) == test_ids(3)
     assert test_ids(3) != test_ids(4)
     assert test_ids(3) != test_ids(None)
+
+
+@given(num_items=st.integers(min_value=50, max_value=3000), seed=st.integers(0, 50))
+@settings(max_examples=15, deadline=None)
+def test_exact_sizes_60_10_30(num_items, seed):
+    """SurvTRACE protocol: exactly 30% test and 10% validation, for every split seed."""
+    import math
+
+    cfg = DummyConfig(dataset_name="synthetic", streaming=False)
+    with patch("hydra.utils.call", return_value=make_synthetic_dataset(num_items)):
+        sp = StreamingKFoldSplitter(
+            id_field="id", k=None, val_ratio=0.1, test_ratio=0.3, split_seed=seed
+        )
+        result = sp.load_split(cfg)
+    assert_disjoint_and_complete(result, num_items)
+    assert len(result["test"]) == math.ceil(0.3 * num_items)
+    assert len(result["val"]) == num_items - math.ceil(0.9 * num_items)
+
+
+def test_split_seed_changes_the_split():
+    cfg = DummyConfig(dataset_name="synthetic", streaming=False)
+    tests = []
+    for seed in (0, 1):
+        with patch("hydra.utils.call", return_value=make_synthetic_dataset(1000)):
+            sp = StreamingKFoldSplitter(
+                id_field="id", k=None, val_ratio=0.1, test_ratio=0.3, split_seed=seed
+            )
+            tests.append(set(sp.load_split(cfg)["test"]["id"]))
+    overlap = len(tests[0] & tests[1]) / len(tests[0])
+    assert 0.2 < overlap < 0.4  # independent 30% draws overlap ~30%

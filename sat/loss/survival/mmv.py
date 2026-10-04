@@ -51,7 +51,7 @@ Note that Eq. 5 is the same "best guess" construction used in Eq. 6 of our own
 paper, and is already implemented by ``sat.utils.km.KaplanMeierArea.best_guess``.
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import Dict, List, Optional, Union
@@ -93,6 +93,7 @@ class MMVLoss(Loss):
         importance_sample_weights: Optional[str] = None,
         num_events: int = 1,
         variance_weight: float = 0.01,
+        time_scale: float = 1.0,
         balance_strategy: Optional[Union[str, BalancingStrategy]] = "fixed",
         balance_params: Optional[Dict] = None,
     ):
@@ -103,6 +104,9 @@ class MMVLoss(Loss):
         )
 
         self.variance_weight = variance_weight
+        # both terms are squared times; dividing by time_scale**2 measures them in
+        # units of time_scale, so the loss does not dwarf the likelihood on data in days
+        self.time_scale = float(time_scale)
 
         # per-event importance weights (index 0 is censoring, as elsewhere)
         if importance_sample_weights is not None:
@@ -261,7 +265,7 @@ class MMVLoss(Loss):
         l_mm = torch.mean(torch.sum(per_event * event_weights, dim=1))
         l_v = torch.mean(torch.sum(v * event_weights, dim=1))
 
-        loss = l_mm + self.variance_weight * l_v
+        loss = (l_mm + self.variance_weight * l_v) / self.time_scale**2
 
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"MMV: L_mm={l_mm.item():.4f} L_v={l_v.item():.4f}")

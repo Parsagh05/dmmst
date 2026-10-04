@@ -68,7 +68,7 @@ def _oracle(cfg: DictConfig):
     references[:, K : 2 * K] = events
     references[:, 3 * K : 4 * K] = durations
 
-    training_set = f"{save_dir}/transformed_train_labels.csv"
+    training_set = f"{cfg.data.label_transform.train_dir}/transformed_train_labels.csv"
     cuts_file = f"{save_dir}/duration_cuts.csv"
     metrics = {}
     for module in (

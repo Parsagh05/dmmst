@@ -29,7 +29,7 @@ Reported:
     within_ctd_pairs     number of admissible pairs
 """
 
-__authors__ = ["Dominik Dahlem"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import Optional
@@ -110,10 +110,10 @@ class WithinSubjectOrdering:
 
     def __init__(self, cfg, duration_cuts: str, training_set: Optional[str] = None):
         self.cfg = cfg
-        self.cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"]).cuts.values.astype(float)
+        self.cuts = pd.read_csv(duration_cuts, header=None, names=["cuts"], float_precision="round_trip").cuts.values.astype(float)
         self.km = None
         if training_set is not None:
-            df = pd.read_csv(training_set, header=0)
+            df = pd.read_csv(training_set, header=0, float_precision="round_trip")
             fine = np.linspace(0.0, self.cuts[-1], 512)
             self.km = (
                 fine,

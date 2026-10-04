@@ -42,3 +42,22 @@ def test_sweep_figure_includes_base_in_every_sweep(tmp_path):
     assert (out / "sweep_shared.png").is_file() and (out / "sweep_regime.png").is_file()
     tab = (out / "sweep_shared.csv").read_text()
     assert "0.5" in tab  # the base scenario appears at shared = 0.5
+
+
+def test_grid_tuning_selects_on_validation(tmp_path):
+    import json
+
+    from scripts.runner import Runner, as_overrides, grid, select_best, tuning_runs
+
+    assert len(grid({"a": [1, 2], "b": ["x", "y", "z"]})) == 6
+    r = Runner(repo=".", results_dir=str(tmp_path), verbose=False)
+    runs = tuning_runs("t", "finetune", "exp", [], {"learning_rate": [1e-3, 1e-4]}, [0, 1], "ds")
+    for run in runs:  # config c001 is better on validation, worse on test
+        good = run.info["config_id"] == "c001"
+        (tmp_path / f"{run.tag}.json").write_text(json.dumps({
+            "validation": {"ctd_weighted_avg": {"mean": 0.7 if good else 0.6}},
+            "test": {"ctd_weighted_avg": {"mean": 0.5 if good else 0.9}}}))
+        (tmp_path / f"{run.tag}.meta.json").write_text(json.dumps({"tag": run.tag, "info": run.info}))
+    best = select_best(r, "t")
+    assert best["config"] == {"learning_rate": 1e-4} and best["n"] == 2
+    assert as_overrides(best["config"]) == ["learning_rate=0.0001"]

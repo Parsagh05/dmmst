@@ -230,7 +230,7 @@ def _finetune(cfg: DictConfig) -> pd.DataFrame:
 
         preds_dict = {}
         idx = 1
-        if model.is_survival or model.is_dsm:
+        if model.is_survival or getattr(model, "is_dsm", False):
             preds_dict["hazard"] = preds[1]
             preds_dict["risk"] = preds[2]
             preds_dict["survival"] = preds[3]
@@ -375,6 +375,12 @@ def _finetune(cfg: DictConfig) -> pd.DataFrame:
     logging.log_summary(result)
     logger.info("Save model")
     trainer.save_model()
+
+    # the expensive metrics (calibration, pseudo-observation MAE, ...) are only needed
+    # for the reported numbers, not at every evaluation during training
+    for metric in metrics:
+        if hasattr(metric, "final"):
+            metric.final = True
 
     logger.debug("Do predictions on validation set")
     valid_output = trainer.predict(

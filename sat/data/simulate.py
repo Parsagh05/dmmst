@@ -50,7 +50,7 @@ writes ``data.csv`` (id, x_1..x_p, event1..K, duration1..K), ``truth.npz`` and
 ``meta.json`` into ``--out``.
 """
 
-__authors__ = ["Dominik Dahlem"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 import argparse

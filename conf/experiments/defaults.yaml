@@ -172,3 +172,60 @@ regression_bias: true
 regression_num_hidden_layers: 0
 regression_num_labels: 1
 regression_loss_weight: 1.0
+
+# ---------------------------------------------------------------- version 2
+# Checkpoint selection on the validation split. Survival-head models: C_td (higher is
+# better). Regression-only models: the regression head's MAE-margin (lower is better).
+selection_metric: eval_ctd_weighted_avg
+selection_greater: true
+
+# Loss recipe (sat/loss/factory.py, tasks/losses=v2): a term is used when its weight > 0.
+v2_rank_coeff: 0.0          # L_rank (Eq. 4)
+v2_rank_sigma: 0.1
+v2_mul_coeff: 0.0           # L_mul (Eq. 5), needs >= 2 events
+v2_mul_sigma: 0.1
+v2_mmv_coeff: 0.0           # MMV (UniSurv reference, not in the paper)
+v2_mmv_variance_weight: 0.01
+v2_l1_type: margin          # regression head L_MAE: uncensored | margin (best guess, Eq. 6)
+v2_mm_coeff: 0.0            # L_MM (Eq. 7), needs >= 2 events
+v2_mm_t_q: observed         # t_q of an unobserved event: observed (Eq. 1) | best_guess (Eq. 6)
+# time unit of the regression head (predicts v2_time_scale * softplus(z)), of L_MAE / L_MM
+# and of MMV: by default the end of follow-up (last duration cut), so these losses sit on
+# the scale of the likelihood. Override with 1.0 to work in raw time units.
+v2_time_scale: ${cuts_max:${data.label_transform.save_dir}/duration_cuts.csv}
+
+# Baselines (python -m sat.baselines baseline=<cox|rsf|deepsurv|pchazard>); the values
+# here are only starting points - version 2 grid-searches them on validation.
+baseline: cox
+bl_cox_alpha: 0.01
+bl_rsf_n_estimators: 200
+bl_rsf_min_samples_leaf: 10
+bl_rsf_max_features: sqrt
+bl_nn_nodes: 32
+bl_nn_layers: 2
+bl_nn_dropout: 0.1
+bl_nn_batch_norm: true
+bl_nn_lr: 0.001
+bl_nn_batch: 256
+bl_nn_epochs: 200
+bl_nn_patience: 10
+
+# Official SurvTRACE (python -m sat.survtrace_official); defaults = its released STConfig,
+# tuned in version 2 on the same grid as our model
+st_hidden_size: 16
+st_intermediate_size: 64
+st_num_hidden_layers: 3
+st_num_attention_heads: 2
+st_hidden_dropout_prob: 0.0
+st_early_stop_patience: 5
+st_learning_rate: 0.001
+st_weight_decay: 0.0001
+st_batch_size: 64
+st_epochs: 100
+
+# LLM (paper Sec. 3), version 2 options
+llm_loss: ce                 # ce (Eq. 8) | deephit (the paper's DeepHit-style likelihood)
+llm_illegal_coeff: 0.0       # > 0: penalty on tokens after [C] (paper: illegal sequences)
+llm_lora_r: 0                # > 0: LoRA adapters of rank r (e.g. for Qwen/Qwen2.5-0.5B)
+llm_grad_accum: 1
+llm_max_steps: -1           # > 0 only for smoke tests

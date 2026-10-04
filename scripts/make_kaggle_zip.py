@@ -16,7 +16,7 @@ REPO = Path(__file__).resolve().parents[1]
 SKIP_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", ".hypothesis", "tb_logs",
              "test-trainer-output", "results", "results_survtrace", "logs", "model-hub",
              "outputs", "multirun", "optuna"}
-SKIP_PREFIXES = ("data/sim_", "data/ebmt", "data/ehrsim_", "notebooks/new/_smoke_")
+SKIP_PREFIXES = ("data/sim_", "data/ebmt", "data/ehrsim_", "notebooks/version_1/_smoke_")
 SKIP_SUFFIXES = (".log", ".pyc", ".zip")
 
 

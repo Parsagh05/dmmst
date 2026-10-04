@@ -51,6 +51,21 @@ def _concat_ds(dataset: DatasetDict, cfg):
     return full_dataset
 
 
+def _write_event_horizons(events, durations, path, q=(0.25, 0.5, 0.75)) -> None:
+    """Per-event evaluation horizons: the 25/50/75% quantiles of each event's observed
+    times over the full data (SurvTRACE: ``np.quantile(df.duration[df.event == 1])``).
+    For a single event these equal the inner duration cuts."""
+    events = events.reshape(len(events), -1)
+    durations = durations.reshape(len(durations), -1)
+    out = {}
+    for k in range(events.shape[1]):
+        t = durations[events[:, k] > 0, k].astype(float)
+        if len(t):
+            out[str(k)] = np.quantile(t, q).tolist()
+    with Path(path).open("w") as f:
+        json.dump(out, f, indent=2)
+
+
 @rand.seed
 def _train_labeltransform(cfg: DictConfig) -> None:
     ds_splitter = splitter.StreamingKFoldSplitter(
@@ -149,9 +164,30 @@ def _train_labeltransform(cfg: DictConfig) -> None:
         logger.info(f"Write {dump_file}")
         pickle.dump(labtrans, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
+    # Everything below is derived from OUTCOMES, so it must come from the training
+    # split of this split_seed only (SurvTRACE fits the censoring distribution on
+    # df_train). It used to be computed on train+val+test, which put the test
+    # patients' outcomes into the IPCW weights and into the Kaplan-Meier best guesses
+    # the MAE/MMV losses train on. The cuts above stay on the full data, as in
+    # SurvTRACE's released code (quantiles of the event times of the whole df).
+    train_dir = Path(f"{cfg.data.label_transform.train_dir}")
+    train_dir.mkdir(parents=True, exist_ok=True)
+    train_split = dataset[cfg.data.splits[0]]
+    train_batch = (
+        next(train_split.iter(batch_size=cfg.data.label_transform.buffer_size))
+        if cfg.data.load.streaming
+        else train_split[:]
+    )
+
+    _write_event_horizons(
+        np.array(train_data[cfg.data.event_col]),
+        np.array(train_data[cfg.data.duration_col]),
+        out_dir / "event_horizons.json",
+    )
+
     # Computation of importance sampling weights
     logger.debug("Compute importance sampling weights")
-    events = np.array(shuffled_dataset[cfg.data.event_col])
+    events = np.array(train_batch[cfg.data.event_col])
     events = events[:, np.newaxis] if events.ndim == 1 else events
     censored = (~events.any(1)).reshape(-1, 1)
     events = np.hstack((censored, events))
@@ -159,7 +195,7 @@ def _train_labeltransform(cfg: DictConfig) -> None:
     imp_weights = pd.DataFrame({"imp_samp": imp_weights})
 
     imp_weights.to_csv(
-        Path(f"{out_dir}/imp_sample.csv"),
+        train_dir / "imp_sample.csv",
         index=False,
         header=False,
     )
@@ -175,12 +211,12 @@ def _train_labeltransform(cfg: DictConfig) -> None:
     logger.info(f"Save feature extractor to {dump_file}")
     feature_extractor.save_pretrained(out_dir)
 
-    transformed_labels = Path(f"{out_dir}/transformed_train_labels.csv")
+    transformed_labels = train_dir / "transformed_train_labels.csv"
     logger.info(
         f"Transform training data and save for evaluation at {transformed_labels}"
     )
 
-    transformed_data = feature_extractor(train_data)
+    transformed_data = feature_extractor(train_batch)
     labels = pd.DataFrame(transformed_data["labels"])
 
     # Enhanced debugging information

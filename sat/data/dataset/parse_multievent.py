@@ -20,7 +20,7 @@ Used by the synthetic simulator (``sat.data.simulate``) and by EBMT
 (``scripts/prepare_ebmt.py``).
 """
 
-__authors__ = ["Dominik Dahlem"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 import re

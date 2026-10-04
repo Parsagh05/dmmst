@@ -16,6 +16,7 @@ from .meta import MetaLoss
 from .ranking.multievent import MultiEventRankingLoss
 from .ranking.sample import SampleRankingLoss
 from .regression.l1 import L1Loss
+from .regression.mismatch import MismatchPenalty
 from .regression.mse import MSELoss
 from .survival.mismatch import MismatchLoss
 from .survival.mmv import MMVLoss
@@ -39,7 +40,9 @@ __all__ = [
     "MultiEventRankingLoss",
     # L_PCH: piece-wise constant hazard likelihood
     "SATNLLPCHazardLoss",
-    # L_MM (Eq. 7): mismatch penalty for the regression head
+    # L_MM (Eq. 7): mismatch penalty on the regression head's predicted times
+    "MismatchPenalty",
+    # older variant on the survival head's mean lifetimes (old label layout; unused)
     "MismatchLoss",
     # L_MAE (Eq. 6): best-guess MAE with Kaplan-Meier extension
     "L1Loss",

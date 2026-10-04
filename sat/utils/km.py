@@ -110,15 +110,24 @@ class KaplanMeierArea(KaplanMeier):
         self.area = np.append(area, 0)
 
     def best_guess(self, censor_times: np.array):
-        surv_prob = self.predict(censor_times)
-        censor_indexes = np.digitize(censor_times, self.area_times)
-        censor_indexes = np.where(
-            censor_indexes == self.area_times.size + 1,
-            censor_indexes - 1,
-            censor_indexes,
-        )
-        censor_area = (
-            self.area_times[censor_indexes] - censor_times
-        ) * self.area_probabilities[censor_indexes - 1]
-        censor_area += self.area[censor_indexes]
-        return censor_times + censor_area / surv_prob
+        """Haider et al. (2020) best guess of the event time of a subject censored at c:
+
+            c + (area under the extended KM curve after c) / S(c)
+
+        The curve is the KM step function, extended to zero as in ``__post_init__``.
+        At or after the point where it reaches zero there is no area left and the best
+        guess is c itself. (The indexing of the original implementation ran one past
+        the end of ``area`` for such c and raised IndexError.)
+        """
+        c = np.asarray(censor_times, dtype=float)
+        times = self.area_times[:-1]  # drop the trailing inf
+        probs = self.area_probabilities  # S on [times[i], times[i + 1])
+        i = np.clip(np.searchsorted(times, c, side="right") - 1, 0, len(times) - 1)
+        last = i >= len(times) - 1
+        nxt = np.minimum(i + 1, len(times) - 1)
+        partial = np.where(last, 0.0, (times[nxt] - c) * probs[i])
+        rest = np.where(last, 0.0, self.area[nxt])
+        surv = np.where(last, 0.0, probs[i])
+        with np.errstate(divide="ignore", invalid="ignore"):
+            guess = c + (partial + rest) / surv
+        return np.where(surv > 0, guess, c)

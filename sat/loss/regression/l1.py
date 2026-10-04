@@ -29,7 +29,11 @@ class L1Loss(Loss):
         num_events: int = 1,
         balance_strategy: Optional[Union[str, BalancingStrategy]] = "fixed",
         balance_params: Optional[Dict] = None,
+        time_scale: float = 1.0,
     ):
+        """time_scale: errors are measured in units of time_scale (the regression head
+        predicts time_scale * softplus(z)), so the MAE sits on the same scale as the
+        survival likelihood instead of in raw days."""
         super(L1Loss, self).__init__(
             num_events=num_events,
             balance_strategy=balance_strategy,
@@ -37,6 +41,7 @@ class L1Loss(Loss):
         )
 
         self.l1_type = l1_type
+        self.time_scale = float(time_scale)
         self.kms: List[KaplanMeierArea] = []
 
         # load the importance sampling weights if not None
@@ -58,7 +63,7 @@ class L1Loss(Loss):
                 logger.debug("Train the Kaplan Meier Curves")
 
             # read training data into pandas dataframe with given columns
-            df = pd.read_csv(training_set, header=0)
+            df = pd.read_csv(training_set, header=0, float_precision="round_trip")
             for event in range(self.num_events):
                 duration_col = f"duration_event{event+1}"
                 event_col = f"event{event+1}"
@@ -143,8 +148,8 @@ class L1Loss(Loss):
                 best_guesses_np = self.kms[event_type].best_guess(censor_times_cpu)
 
                 # Move back to device in one operation
-                weights = torch.tensor(weights_np, device=device)
-                best_guesses = torch.tensor(best_guesses_np, device=device)
+                weights = torch.tensor(weights_np, device=device, dtype=preds.dtype)
+                best_guesses = torch.tensor(best_guesses_np, device=device, dtype=preds.dtype)
 
                 # Calculate censored scores
                 censored_preds = preds[non_event_mask]
@@ -168,7 +173,7 @@ class L1Loss(Loss):
             raise ValueError("L1 type must be 'uncensored', 'hinge', or 'margin'.")
 
         # Apply importance weight
-        return self.weights[event_type + 1] * loss
+        return self.weights[event_type + 1] * loss / self.time_scale
 
     def forward(
         self, predictions: TaskOutput, references: torch.Tensor
@@ -176,8 +181,8 @@ class L1Loss(Loss):
         predictions = predictions.predictions
         device = references.device
 
-        # Initialize loss as tensor
-        loss = torch.zeros(1, device=device)
+        # Initialize loss as a scalar tensor (shape () so it adds onto other heads' losses)
+        loss = torch.zeros((), device=device)
         for event in range(self.num_events):
             loss += self.l1(predictions, references, event)
 

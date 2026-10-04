@@ -73,11 +73,11 @@ paper's actual novelty rather than generic survival performance.
 | Generic K-event parser (numeric + categorical tokens) and config group | [parse_multievent.py](sat/data/dataset/parse_multievent.py), [conf/experiments/multievent/](conf/experiments/multievent/) |
 | EBMT (real, 5 events) | [prepare_ebmt.py](scripts/prepare_ebmt.py) |
 | `L_PCH + L_mul` only | [nllpch_event_ranking.yaml](conf/tasks/losses/nllpch_event_ranking.yaml) |
-| Experiment runner, report, Kaggle notebooks | [scripts/](scripts/), [notebooks/new/](notebooks/new/README.md) |
+| Experiment runner, report, Kaggle notebooks | [scripts/](scripts/), [notebooks/version_1/](notebooks/version_1/README.md) |
 | §3 end-to-end LLM (answer tokens N/C/E_k, Eq. 8) | [llm.py](sat/llm.py) |
 | §4.2 coded, time-stamped histories: EHR simulator, sequence/bag/static parser, config group | [simulate_ehr.py](sat/data/simulate_ehr.py), [parse_sequence.py](sat/data/dataset/parse_sequence.py), [conf/experiments/ehrseq/](conf/experiments/ehrseq/) |
 
-The README in `notebooks/new/` lists the bugs fixed on this date (train/validation swap in
+The README in `notebooks/version_1/` lists the bugs fixed on this date (train/validation swap in
 the splitter, Cox ignoring categorical features, the "+L_mul" config without L_mul, …);
 every number produced before it is superseded.
 
@@ -162,11 +162,11 @@ that now comes from the config ([support.yaml](conf/data/parse/support.yaml)).
 
 One per person, fully independent — they share nothing but the repo.
 
-- [notebooks/yasi_environment_and_baselines.ipynb](notebooks/yasi_environment_and_baselines.ipynb)
+- [notebooks/version_0/yasi_environment_and_baselines.ipynb](notebooks/version_0/yasi_environment_and_baselines.ipynb)
   — pipeline run, the four baselines, config fluency, and an auto-generated
   `experimental_setup.md`. Ends with a checklist tracker showing which `task.pdf` boxes
   actually got ticked.
-- [notebooks/parsa_mmv_loss.ipynb](notebooks/parsa_mmv_loss.ipynb) — MMV formula, toy
+- [notebooks/version_0/parsa_mmv_loss.ipynb](notebooks/version_0/parsa_mmv_loss.ipynb) — MMV formula, toy
   NumPy verification, unit tests, and MMV vs. `nllpch` on METABRIC.
 
 Both default to `SMOKE_TEST = True` (3 epochs, ~1 min) so a broken setup surfaces before

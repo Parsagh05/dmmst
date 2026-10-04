@@ -45,7 +45,7 @@ training phase), which averages the log-terms with the softmax weights instead::
     log S = sum_g softmax(gate)_g * log S_g
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import List, Optional

@@ -38,6 +38,12 @@ class StreamingKFoldSplitter:
         Salt mixed into every hash. None reproduces the original, fixed split; an
         integer draws a different (but reproducible) train/val/test partition, which
         is what repeated-split error bars (as in SurvTRACE) require.
+    exact_sizes : bool, default=True
+        For in-memory hash splits without k-fold: rank all examples by their (salted)
+        hash and cut at the rank, so test / validation hold exactly ``test_ratio`` /
+        ``val_ratio`` of the data, as SurvTRACE's ``sample(frac=...)`` does. Thresholding
+        each hash independently (``exact_sizes=False``) gives Bernoulli-sized splits
+        that wobble by a few points on small datasets.
 
     Methods:
     --------
@@ -72,6 +78,7 @@ class StreamingKFoldSplitter:
         test_split_strategy: str = "hash",
         split_names: Tuple[str] = ("train", "val", "test"),
         split_seed: int = None,
+        exact_sizes: bool = True,
     ):
         self.id_field = id_field
         self.k = k
@@ -80,6 +87,8 @@ class StreamingKFoldSplitter:
         self.test_split_strategy = test_split_strategy
         self.split_names = split_names
         self.split_seed = split_seed
+        self.exact_sizes = exact_sizes
+        self._rank = None  # id -> rank fraction in [0, 1) when exact_sizes applies
 
     def _salted(self, s: str) -> bytes:
         if self.split_seed is None:
@@ -87,6 +96,11 @@ class StreamingKFoldSplitter:
         return f"{self.split_seed}:{s}".encode("utf-8")
 
     def _normalize_hash(self, s: str) -> float:
+        if self._rank is not None:
+            return self._rank[s]
+        return self._raw_hash(s)
+
+    def _raw_hash(self, s: str) -> float:
         h = hashlib.md5(self._salted(s), usedforsecurity=False).hexdigest()
         return int(h, 16) / 2**128
 
@@ -179,6 +193,12 @@ class StreamingKFoldSplitter:
             else:
                 train_val_dataset = self._concat_datasets(train_split, val_split)
         else:
+            if self.exact_sizes and self.k is None and not streaming:
+                ids = [str(x) for x in full_dataset["train"][self.id_field]]
+                if len(set(ids)) != len(ids):
+                    raise ValueError(f"duplicate values in id_field '{self.id_field}'")
+                order = sorted(ids, key=lambda i: (self._raw_hash(i), i))
+                self._rank = {i: r / len(ids) for r, i in enumerate(order)}
 
             def is_test(example: Dict[str, Any]) -> bool:
                 return (

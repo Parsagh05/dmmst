@@ -17,7 +17,7 @@ Usage
     python -m sat.coxph experiments=survtrace_metabric/survival
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 import json
@@ -139,10 +139,12 @@ def _coxph(cfg: DictConfig):
     curves = {}  # event -> test survival on the full cut grid
     per_event = {}
     if cfg.get("per_event_horizons", False):
-        from sat.evaluate.survtrace_metrics import event_horizons
+        from sat.evaluate.survtrace_metrics import load_event_horizons
 
-        per_event = event_horizons(
-            f"{cfg.data.label_transform.save_dir}/transformed_train_labels.csv", num_events
+        per_event = load_event_horizons(
+            cfg.data.label_transform.save_dir,
+            f"{cfg.data.label_transform.train_dir}/transformed_train_labels.csv",
+            num_events,
         )
     for event_idx in range(num_events):
         ev_times, ev_horizons = (
@@ -205,7 +207,8 @@ def _curve_metrics(cfg, xy, curves, num_events):
         references[:, num_events + k] = e
         references[:, 3 * num_events + k] = d
     save = cfg.data.label_transform.save_dir
-    cuts_file, train = f"{save}/duration_cuts.csv", f"{save}/transformed_train_labels.csv"
+    cuts_file = f"{save}/duration_cuts.csv"
+    train = f"{cfg.data.label_transform.train_dir}/transformed_train_labels.csv"
     out = {}
     for module in (SurvivalMAEMetrics(cfg.data, cuts_file, train),
                    WithinSubjectOrdering(cfg.data, cuts_file, train)):

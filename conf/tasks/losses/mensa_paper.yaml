@@ -5,7 +5,7 @@
 survival:
   _target_: sat.loss.MENSAPaperLoss
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
-  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
   num_events: ${data.num_events}
   trajectories: ${mensa_trajectories}
   traj_lambda: ${mensa_traj_lambda}

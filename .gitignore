@@ -217,4 +217,13 @@ summery.md
 # generated multi-event datasets (sat.data.simulate / scripts/prepare_ebmt.py)
 data/sim_*/
 data/ebmt/
+data/ebmt4ev/
+data/deephit_synthetic/
+data/hsa_synthetic_me/
 data/ehrsim_*/
+
+# personal, detailed version of the results report (not shared)
+results/report_personal/
+
+# authors' code fetched at run time (scripts/fetch_survtrace.py)
+third_party/

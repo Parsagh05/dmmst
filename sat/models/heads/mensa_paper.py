@@ -40,7 +40,7 @@ Mixture, in log space (reference `compute_risks_multi`):
                                 + log g_psi ]
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import List, Optional

@@ -3,9 +3,6 @@
 __authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
 __status__ = "Development"
 
-from dataclasses import dataclass, field
-from typing import Any, Dict
-
 import hydra
 import torch
 from torch import nn
@@ -19,16 +16,41 @@ from .output import TaskOutput
 logger = logging.get_default_logger()
 
 
-@dataclass
 class EventDurationTaskConfig(BaseConfig):
-    """Configuration for event duration regression task head"""
+    """Configuration for the event-duration (regression) task head, paper Sec. 2.4.
 
-    model_type: str = "regression"
-    num_labels: int = 1
-    num_events: int = 1
-    indiv_intermediate_size: int = 32
-    indiv_num_hidden_layers: int = 1
-    loss: Dict[str, Any] = field(default_factory=dict)
+    Same constructor pattern as SurvivalConfig: shared settings (initializer,
+    loss, loss_weight, num_events, ...) go to BaseConfig, unknown keys (e.g.
+    num_features, num_labels) to PretrainedConfig. It used to be a @dataclass, which
+    cannot take those keyword arguments, so the head could not be built from config.
+    """
+
+    model_type = "regression"
+
+    def __init__(
+        self,
+        intermediate_size: int = 32,
+        num_hidden_layers: int = 0,
+        indiv_intermediate_size: int = 32,
+        indiv_num_hidden_layers: int = 1,
+        batch_norm: bool = False,
+        hidden_dropout_prob: float = 0.0,
+        bias: bool = True,
+        time_scale: float = 1.0,
+        **kwargs,
+    ):
+        kwargs.setdefault("num_labels", 1)
+        super().__init__(**kwargs)
+        self.intermediate_size = intermediate_size
+        self.num_hidden_layers = num_hidden_layers
+        self.indiv_intermediate_size = indiv_intermediate_size
+        self.indiv_num_hidden_layers = indiv_num_hidden_layers
+        self.batch_norm = batch_norm
+        self.hidden_dropout_prob = hidden_dropout_prob
+        self.bias = bias
+        # predicted time = time_scale * softplus(z). With time_scale ~ the follow-up length
+        # the network works on an O(1) scale instead of having to reach raw days
+        self.time_scale = float(time_scale)
 
 
 class EventDurationTaskHead(RegressionTask):
@@ -68,8 +90,12 @@ class EventDurationTaskHead(RegressionTask):
         self.loss = hydra.utils.instantiate(loss)
 
     def forward(self, sequence_output, labels=None, **kwargs):
-        logits = nn.ReLU()(self.nets(sequence_output))
-        predictions = torch.squeeze(logits, dim=2)  # num events x batch x predictions
+        # softplus, not ReLU: a ReLU output dies (every pre-activation < 0 -> zero
+        # gradient) and then predicts 0 for every subject, which is what happened in
+        # the first smoke run. Softplus is positive and always has a gradient.
+        logits = nn.functional.softplus(self.nets(sequence_output))
+        # (batch, events): one predicted time per event, in the data's time unit
+        predictions = torch.squeeze(logits, dim=2) * self.config.time_scale
 
         loss = None
         output = TaskOutput(loss=loss, logits=logits, predictions=predictions)

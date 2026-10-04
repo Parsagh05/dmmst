@@ -4,7 +4,7 @@
 - _target_: sat.evaluate.survtrace_metrics.SurvTRACEMetrics
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
-  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
   per_event_horizons: ${per_event_horizons}
 # Within-subject ordering scored on exactly the pairs of Eq. 5 (L_mul), at the earlier
 # event's time, including observed-vs-censored pairs, with a population-KM reference.
@@ -14,7 +14,7 @@
 - _target_: sat.evaluate.multievent_metrics.WithinSubjectOrdering
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
-  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
 # Time-to-event error implied by the survival curve. Included HERE, in the default
 # metric set, rather than only in a separate `survtrace_mae` recipe, because the
 # notebook that selects the recipe is a file uploaded to Kaggle separately from the
@@ -25,7 +25,7 @@
 - _target_: sat.evaluate.survtrace_metrics.SurvivalMAEMetrics
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
-  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
 - _target_: sat.evaluate.eval_modules.ComputeBrier
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv

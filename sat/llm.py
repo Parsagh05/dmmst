@@ -21,12 +21,26 @@ every other model.
     python -m sat.llm experiments=multievent/survival <dataset overrides> modelname=llm \\
         llm_init=pretrained llm_model=distilgpt2        # or llm_init=scratch
 
-Deviations from the paper's sketch, both deliberate: the censoring token's probability is
-removed rather than treated as an outcome (independent censoring), and the optional
-DeepHit-style loss and "illegal sequence" penalties are not implemented.
+Training losses (``llm_loss``), both from the paper:
+
+* ``ce``      - token-level cross-entropy on the answer (Eq. 8);
+* ``deephit`` - the DeepHit-style likelihood the paper proposes as an alternative,
+  written with the same per-unit event hazards h_k(t) used at inference (so training
+  and inference describe one distribution): an event k observed in unit s contributes
+  -log[S_k(s-1) h_k(s)], a subject censored in unit s contributes -log S_k(s), with
+  S_k(s) = prod_{m<=s} (1 - h_k(m)) (cause-specific, one term per event).
+
+``llm_illegal_coeff`` > 0 adds the paper's "illegal sequence" penalty: in this answer
+format a [C] can only be followed by [C], so the penalty is the probability the model
+puts on any other token at a position whose prefix already contains [C].
+
+The censoring token's probability is removed when reading hazards rather than treated
+as an outcome (independent censoring). Any Hugging Face causal LM works as the backbone
+(GPT-2, Qwen2.5-0.5B, ...); ``llm_lora_r`` > 0 trains LoRA adapters (plus the embedding
+and output layers, which hold the new answer tokens) instead of all weights.
 """
 
-__authors__ = ["Dominik Dahlem"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 import json
@@ -83,8 +97,9 @@ def _map_unknown(label, vocab):
 
 # ------------------------------------------------------------------ data
 class _Encoded(torch.utils.data.Dataset):
-    def __init__(self, prompts, answers, tok, special, max_prompt):
+    def __init__(self, prompts, answers, tok, special, max_prompt, units=None):
         self.items = []
+        self.units = units  # [(unit (K,), observed (K,))] for the deephit loss
         for p, a in zip(prompts, answers):
             ids = tok(p, add_special_tokens=False)["input_ids"]
             if len(ids) > max_prompt:  # keep the head (static) and the most recent history
@@ -97,7 +112,10 @@ class _Encoded(torch.utils.data.Dataset):
 
     def __getitem__(self, i):
         ids, ans = self.items[i]
-        return {"prompt": ids, "answer": ans}
+        out = {"prompt": ids, "answer": ans}
+        if self.units is not None:
+            out["event_unit"], out["event_observed"] = self.units[i]
+        return out
 
 
 def _collate(pad_id):
@@ -116,18 +134,38 @@ def _collate(pad_id):
             att[i, : len(seq)] = 1
             pos[i] = len(b["prompt"]) - 1 + torch.arange(T)
         labels = torch.tensor([b["answer"] for b in batch], dtype=torch.long)
-        return {"input_ids": ids, "attention_mask": att, "answer_pos": pos, "labels": labels}
+        out = {"input_ids": ids, "attention_mask": att, "answer_pos": pos, "labels": labels}
+        if "event_unit" in batch[0]:
+            out["event_unit"] = torch.tensor(np.stack([b["event_unit"] for b in batch]), dtype=torch.long)
+            out["event_observed"] = torch.tensor(
+                np.stack([b["event_observed"] for b in batch]), dtype=torch.float32)
+        return out
 
     return fn
+
+
+def _lm(model):
+    """The causal LM itself, also when wrapped by PEFT (LoRA)."""
+    return model.get_base_model() if hasattr(model, "get_base_model") else model
 
 
 def answer_logits(model, input_ids, attention_mask, answer_pos):
     """Next-token logits at the answer positions only. Applying the LM head at every
     prompt position (50k-way softmax x ~800 positions) is what made a naive run ~50x
     slower; the loss is unchanged because only answer positions carry labels."""
-    h = model.base_model(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
+    lm = _lm(model)
+    h = lm.base_model(input_ids=input_ids, attention_mask=attention_mask).last_hidden_state
     h = torch.gather(h, 1, answer_pos[:, :, None].expand(-1, -1, h.shape[-1]))
-    return model.get_output_embeddings()(h)  # (b, T, V)
+    return lm.get_output_embeddings()(h)  # (b, T, V)
+
+
+def event_hazards(logits, ans_ids, contains, c_idx):
+    """Per-unit event hazards from next-token logits restricted to the answer
+    vocabulary: h_k(t) = p_t(tokens with Ek) / (1 - p_t([C])). logits: (b, T, V).
+    Returns (hazards (b, T, K), answer-token probabilities (b, T, |answer vocab|))."""
+    p = torch.softmax(logits[:, :, ans_ids].float(), dim=-1)
+    haz = (p @ contains) / (1.0 - p[:, :, c_idx : c_idx + 1]).clamp_min(1e-6)
+    return haz.clamp(1e-7, 1 - 1e-7), p
 
 
 # ------------------------------------------------------------------ inference
@@ -144,6 +182,7 @@ def survival_curves(model, enc: _Encoded, special, vocab, K, T, device, batch_si
                 contains[j, int(part[1:]) - 1] = 1.0
     c_idx = vocab.index("C")
     out = []
+    model = _lm(model)
     for s in range(0, len(enc), batch_size):
         chunk = enc.items[s : s + batch_size]
         L = max(len(ids) for ids, _ in chunk) + T
@@ -156,25 +195,74 @@ def survival_curves(model, enc: _Encoded, special, vocab, K, T, device, batch_si
             pos.append(len(p) - 1)
         idx = torch.tensor(pos, device=device)[:, None] + torch.arange(T, device=device)[None, :]
         lg = answer_logits(model, ids.to(device), att.to(device), idx)  # (b, T, V)
-        p = torch.softmax(lg[:, :, ans_ids], dim=-1)  # restricted to the answer vocabulary
-        p_event = p @ contains  # (b, T, K)
-        haz = (p_event / (1.0 - p[:, :, c_idx : c_idx + 1]).clamp_min(1e-6)).clamp(0, 1)
+        haz, _ = event_hazards(lg, ans_ids, contains, c_idx)  # (b, T, K)
         surv = torch.cumprod(1.0 - haz, dim=1).permute(0, 2, 1)  # (b, K, T)
         out.append(torch.cat([torch.ones_like(surv[:, :, :1]), surv], dim=2).cpu().numpy())
     return np.concatenate(out)
 
 
 # ------------------------------------------------------------------ main
+def deephit_loss(haz, unit, observed):
+    """Cause-specific DeepHit-style likelihood on per-unit hazards.
+
+    haz: (b, T, K) hazards; unit: (b, K) 0-based unit of each event / censoring time;
+    observed: (b, K) 1 if event k was observed in that unit."""
+    log_s = torch.cumsum(torch.log1p(-haz), dim=1)  # log S_k(t), t = 1..T
+    log_s_prev = torch.cat([torch.zeros_like(log_s[:, :1]), log_s[:, :-1]], dim=1)
+    idx = unit.clamp(0, haz.shape[1] - 1)[:, None, :]  # (b, 1, K)
+
+    def at(x):
+        return torch.gather(x, 1, idx)[:, 0, :]
+
+    ll = observed * (at(log_s_prev) + torch.log(at(haz))) + (1 - observed) * at(log_s)
+    return -ll.sum(dim=1).mean()
+
+
+def illegal_mass(probs, labels, c_label):
+    """Mean probability on non-[C] tokens at positions whose (true) prefix has a [C].
+    probs: (b, T, |answer vocab|); labels: (b, T) positions in the answer vocabulary."""
+    seen_c = torch.cumsum((labels == c_label).long(), dim=1)
+    after_c = torch.cat([torch.zeros_like(seen_c[:, :1]), seen_c[:, :-1]], dim=1) > 0
+    if not after_c.any():
+        return probs.sum() * 0.0
+    return (1.0 - probs[..., c_label])[after_c].mean()
+
+
+def event_units(events, durations, cuts):
+    """(K,) 0-based unit of each event / censoring time and whether it was observed;
+    unit t covers (cuts[t], cuts[t + 1]], as in answer_tokens."""
+    events = np.atleast_1d(np.asarray(events, dtype=int))
+    durations = np.atleast_1d(np.asarray(durations, dtype=float))
+    unit = np.clip(np.searchsorted(cuts, durations, side="left") - 1, 0, len(cuts) - 2)
+    return unit.astype(int), events.astype(float)
+
+
 def _answer_trainer_cls():
     from transformers import Trainer
 
     class AnswerTrainer(Trainer):
-        """Token-level cross-entropy over the answer tokens (paper Eq. 8)."""
+        """Answer-token loss: cross-entropy (Eq. 8) or the DeepHit-style likelihood,
+        optionally plus the illegal-sequence penalty."""
+
+        loss_kind = "ce"
+        illegal_coeff = 0.0
+        ans_ids = contains = None
+        c_idx = 0
 
         def compute_loss(self, model, inputs, return_outputs=False, num_items_in_batch=None):
             logits = answer_logits(model, inputs["input_ids"], inputs["attention_mask"], inputs["answer_pos"])
-            loss = torch.nn.functional.cross_entropy(
-                logits.reshape(-1, logits.shape[-1]).float(), inputs["labels"].reshape(-1))
+            dev = logits.device
+            ans_ids, contains = self.ans_ids.to(dev), self.contains.to(dev)
+            if self.loss_kind == "ce":
+                loss = torch.nn.functional.cross_entropy(
+                    logits.reshape(-1, logits.shape[-1]).float(), inputs["labels"].reshape(-1))
+                probs = torch.softmax(logits[:, :, ans_ids].float(), dim=-1)
+            else:
+                haz, probs = event_hazards(logits, ans_ids, contains, self.c_idx)
+                loss = deephit_loss(haz, inputs["event_unit"], inputs["event_observed"])
+            if self.illegal_coeff > 0:
+                lab = (inputs["labels"][..., None] == ans_ids[None, None, :]).float().argmax(-1)
+                loss = loss + self.illegal_coeff * illegal_mass(probs, lab, self.c_idx)
             return (loss, {"logits": logits}) if return_outputs else loss
 
     return AnswerTrainer
@@ -188,8 +276,8 @@ def _llm(cfg: DictConfig):
     _AnswerTrainer = _answer_trainer_cls()
 
     from sat.data import splitter
-    from sat.evaluate.multievent_metrics import WithinSubjectOrdering
-    from sat.evaluate.survtrace_metrics import SurvivalMAEMetrics, SurvTRACEMetrics
+    from sat.evaluate.multievent_metrics import _interp_cif
+    from sat.evaluate.shared import evaluate_curves, references, write_metrics
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     K = int(cfg.data.num_events)
@@ -223,7 +311,7 @@ def _llm(cfg: DictConfig):
     special = {s: tok.convert_tokens_to_ids(f"[{s}]") for s in vocab}
 
     if cfg.llm_init == "pretrained":
-        model = AutoModelForCausalLM.from_pretrained(cfg.llm_model)
+        model = AutoModelForCausalLM.from_pretrained(cfg.llm_model, torch_dtype=torch.float32)
     elif cfg.llm_init == "scratch":
         model = GPT2LMHeadModel(GPT2Config(
             vocab_size=len(tok), n_positions=cfg.llm_max_prompt_tokens + T + 8,
@@ -232,11 +320,37 @@ def _llm(cfg: DictConfig):
     else:
         raise ValueError(f"llm_init must be pretrained|scratch, got {cfg.llm_init}")
     model.resize_token_embeddings(len(tok))
+    n_pos = getattr(model.config, "n_positions", None) or getattr(
+        model.config, "max_position_embeddings", 2048)
+    if int(cfg.get("llm_lora_r", 0)) > 0:
+        from peft import LoraConfig, get_peft_model
+
+        # the new answer tokens live in the input embeddings and the output layer, so
+        # those are trained in full; everything else through rank-r adapters
+        emb = model.get_input_embeddings()
+        out_layer = model.get_output_embeddings()
+        names = {m: n for n, m in model.named_modules()}
+        model = get_peft_model(model, LoraConfig(
+            r=int(cfg.llm_lora_r), lora_alpha=2 * int(cfg.llm_lora_r), lora_dropout=0.05,
+            target_modules="all-linear", task_type="CAUSAL_LM",
+            modules_to_save=[names[emb].split(".")[-1], names[out_layer].split(".")[-1]],
+        ))
     model.to(device)
 
-    max_prompt = min(cfg.llm_max_prompt_tokens, model.config.n_positions - T - 1)
-    e_tr = _Encoded(texts(tr), a_tr, tok, special, max_prompt)
-    e_va = _Encoded(texts(va), a_va, tok, special, max_prompt)
+    loss_kind = str(cfg.get("llm_loss", "ce"))
+    if loss_kind not in ("ce", "deephit"):
+        raise ValueError(f"llm_loss must be ce|deephit, got {loss_kind}")
+
+    def units(split):
+        if loss_kind != "deephit":
+            return None
+        return [event_units(e, d, cuts) for e, d in
+                zip(split[cfg.data.event_col], split[cfg.data.duration_col])]
+
+    max_prompt = min(cfg.llm_max_prompt_tokens, n_pos - T - 1)
+    e_tr = _Encoded(texts(tr), a_tr, tok, special, max_prompt, units(tr))
+    e_va = _Encoded(texts(va), a_va, tok, special, max_prompt, units(va))
+    e_va_inf = _Encoded(texts(va), [["N"] * T] * len(va), tok, special, max_prompt)
     e_te = _Encoded(texts(te), [["N"] * T] * len(te), tok, special, max_prompt)
 
     out_dir = Path(f"{cfg.modelhub}/{cfg.dataset}/{cfg.modelname}")
@@ -250,39 +364,55 @@ def _llm(cfg: DictConfig):
         load_best_model_at_end=True, metric_for_best_model="eval_loss", greater_is_better=False,
         logging_strategy="epoch", report_to=[], seed=int(cfg.seed or 0), save_safetensors=False,
         remove_unused_columns=False, fp16=device == "cuda", dataloader_pin_memory=device == "cuda",
+        gradient_accumulation_steps=int(cfg.get("llm_grad_accum", 1)),
+        max_steps=int(cfg.get("llm_max_steps", -1)),  # > 0 only for smoke tests
         prediction_loss_only=True, label_names=["labels"],
     )
+    contains = torch.zeros((len(vocab), K))
+    for j, lab in enumerate(vocab):
+        for part in lab.split("+"):
+            if part.startswith("E"):
+                contains[j, int(part[1:]) - 1] = 1.0
+    _AnswerTrainer.loss_kind = loss_kind
+    _AnswerTrainer.illegal_coeff = float(cfg.get("llm_illegal_coeff", 0.0))
+    _AnswerTrainer.ans_ids = torch.tensor([special[x] for x in vocab])
+    _AnswerTrainer.contains = contains
+    _AnswerTrainer.c_idx = vocab.index("C")
     trainer = _AnswerTrainer(model=model, args=args, train_dataset=e_tr, eval_dataset=e_va,
                       data_collator=_collate(tok.pad_token_id),
                       callbacks=[EarlyStoppingCallback(early_stopping_patience=cfg.llm_patience)])
     trainer.train()
 
-    surv = survival_curves(trainer.model, e_te, special, vocab, K, T, device)
-    predictions = np.stack([np.zeros_like(surv), 1.0 - surv, surv], axis=1)
-    references = np.zeros((len(te), 4 * K))
-    references[:, K : 2 * K] = np.asarray(te[cfg.data.event_col], dtype=float).reshape(-1, K)
-    references[:, 3 * K : 4 * K] = np.asarray(te[cfg.data.duration_col], dtype=float).reshape(-1, K)
+    def curves(enc):
+        return survival_curves(trainer.model, enc, special, vocab, K, T, device)
 
-    cuts_file, train_file = f"{save}/duration_cuts.csv", f"{save}/transformed_train_labels.csv"
-    metrics = {"eval_answer_ce": float(trainer.evaluate()["eval_loss"])}
-    modules = [SurvTRACEMetrics(cfg.data, cuts_file, train_file, cfg.get("per_event_horizons", False)),
-               SurvivalMAEMetrics(cfg.data, cuts_file, train_file)]
-    if K > 1:
-        modules.append(WithinSubjectOrdering(cfg.data, cuts_file, train_file))
-    for m in modules:
-        metrics.update(m.compute(predictions, references))
+    def surv_at(S):
+        """Per-unit hazards are constant within a unit: log-linear between the cuts."""
+        n = len(S)
 
-    payload = {"test": {k: {"mean": float(v), "variance": 0.0, "sd": 0.0} for k, v in metrics.items()}}
-    payload["validation"] = {"eval_answer_ce": payload["test"]["eval_answer_ce"]}
-    (out_dir / "metrics.json").write_text(json.dumps(payload, indent=4))
+        def f(times):
+            return np.stack([
+                np.stack([1.0 - _interp_cif(cuts, 1.0 - S[:, k], np.full(n, t)) for t in times], 1)
+                for k in range(K)], axis=1)
+        return f
+
+    def labels(split):
+        e = np.asarray(split[cfg.data.event_col], dtype=float).reshape(len(split), K)
+        d = np.asarray(split[cfg.data.duration_col], dtype=float).reshape(len(split), K)
+        return references(e, d)
+
+    answer_loss = float(trainer.evaluate()["eval_loss"])
+    s_va, s_te = curves(e_va_inf), curves(e_te)
+    val = evaluate_curves(cfg, surv_at(s_va), labels(va)) | {"answer_loss": answer_loss}
+    test = evaluate_curves(cfg, surv_at(s_te), labels(te))
+    write_metrics(out_dir, test, val)
     (out_dir / "answer_vocab.json").write_text(json.dumps(vocab))
     for k in range(K):
-        pd.DataFrame(surv[:, k], columns=[f"t{j}" for j in range(T + 1)]).assign(
+        pd.DataFrame(s_te[:, k], columns=[f"t{j}" for j in range(T + 1)]).assign(
             id=te[cfg.data.id_col]).to_csv(out_dir / f"survival{k}.csv", index=False)
-    logger.info(f"LLM metrics -> {out_dir / 'metrics.json'}")
-    for k, v in metrics.items():
-        logger.info(f"  {k} = {v:.4f}")
-    return metrics
+    logger.info(f"LLM ({cfg.llm_model}, {cfg.llm_init}, loss={loss_kind}): "
+                f"test C_td {test.get('ctd_weighted_avg'):.4f} -> {out_dir}")
+    return test
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="finetune.yaml")

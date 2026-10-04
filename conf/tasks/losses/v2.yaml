@@ -1,0 +1,26 @@
+# Version-2 losses: every recipe of the plan is a set of overrides of the v2_* keys
+# (see sat/loss/factory.py). A term is included only when its weight is > 0.
+survival:
+  _target_: sat.loss.factory.survival_loss
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  importance_sample_weights: ${data.label_transform.train_dir}/imp_sample.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
+  num_events: ${data.num_events}
+  max_time: ${survival_max_time}
+  likelihood_coeff: 1.0
+  rank_coeff: ${v2_rank_coeff}
+  rank_sigma: ${v2_rank_sigma}
+  mul_coeff: ${v2_mul_coeff}
+  mul_sigma: ${v2_mul_sigma}
+  mmv_coeff: ${v2_mmv_coeff}
+  mmv_variance_weight: ${v2_mmv_variance_weight}
+  time_scale: ${v2_time_scale}
+regression:
+  _target_: sat.loss.factory.regression_loss
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
+  importance_sample_weights: ${data.label_transform.train_dir}/imp_sample.csv
+  num_events: ${data.num_events}
+  l1_type: ${v2_l1_type}
+  mm_coeff: ${v2_mm_coeff}
+  mm_t_q: ${v2_mm_t_q}
+  time_scale: ${v2_time_scale}

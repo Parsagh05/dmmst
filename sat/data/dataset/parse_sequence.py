@@ -28,7 +28,7 @@ The ``bag``/``static`` tables go through the generic tabular parser
 (``parse_multievent``), so the three differ only in what the model is shown.
 """
 
-__authors__ = ["Dominik Dahlem"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 import argparse

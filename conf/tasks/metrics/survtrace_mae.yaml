@@ -4,11 +4,11 @@
 - _target_: sat.evaluate.survtrace_metrics.SurvTRACEMetrics
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
-  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
 - _target_: sat.evaluate.survtrace_metrics.SurvivalMAEMetrics
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
-  training_set: ${data.label_transform.save_dir}/transformed_train_labels.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
 - _target_: sat.evaluate.eval_modules.ComputeBrier
   cfg: ${data}
   duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv

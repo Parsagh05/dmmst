@@ -1,0 +1,12 @@
+# Version-2 metric set: the SurvTRACE-protocol C_td / Brier at the 25/50/75% horizons
+# (per event) plus the full suite of sat/evaluate/v2_metrics.py (IBS, IBLL, Antolini,
+# AUC, D-/1-calibration, MAE of E[T] under three tails, regression-head MAE / Harrell).
+- _target_: sat.evaluate.survtrace_metrics.SurvTRACEMetrics
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv
+  per_event_horizons: ${per_event_horizons}
+- _target_: sat.evaluate.v2_metrics.V2Metrics
+  cfg: ${data}
+  duration_cuts: ${data.label_transform.save_dir}/duration_cuts.csv
+  training_set: ${data.label_transform.train_dir}/transformed_train_labels.csv

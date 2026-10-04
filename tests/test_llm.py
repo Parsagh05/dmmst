@@ -1,3 +1,4 @@
+import pytest
 import numpy as np
 import torch
 
@@ -53,3 +54,37 @@ def test_survival_from_token_probabilities():
     h1, h2 = 0.2 / 0.8, 0.1 / 0.8  # censoring mass removed
     np.testing.assert_allclose(surv[0, 0], [1, 1 - h1, (1 - h1) ** 2, (1 - h1) ** 3], atol=1e-6)
     np.testing.assert_allclose(surv[0, 1], [1, 1 - h2, (1 - h2) ** 2, (1 - h2) ** 3], atol=1e-6)
+
+
+def test_deephit_loss_by_hand():
+    from sat.llm import deephit_loss
+
+    # one subject, K=1, hazards 0.1, 0.2, 0.3 over three units
+    haz = torch.tensor([[[0.1], [0.2], [0.3]]])
+    # event in unit 2 (0-based 1): -log[(1-0.1) * 0.2]
+    ev = deephit_loss(haz, torch.tensor([[1]]), torch.tensor([[1.0]]))
+    assert ev.item() == pytest.approx(-np.log(0.9 * 0.2), rel=1e-5)
+    # censored in unit 2: -log[(1-0.1)(1-0.2)]
+    ce = deephit_loss(haz, torch.tensor([[1]]), torch.tensor([[0.0]]))
+    assert ce.item() == pytest.approx(-np.log(0.9 * 0.8), rel=1e-5)
+
+
+def test_illegal_mass_counts_only_positions_after_c():
+    from sat.llm import illegal_mass
+
+    vocab = _vocab([], K=1)  # C, E1, N
+    c = vocab.index("C")
+    labels = torch.tensor([[vocab.index("N"), c, c]])
+    probs = torch.zeros((1, 3, len(vocab)))
+    probs[0, :, c] = torch.tensor([0.1, 0.6, 0.9])  # p(C) per position
+    # positions after the first [C]: only index 2 -> illegal mass 1 - 0.9
+    assert illegal_mass(probs, labels, c).item() == pytest.approx(0.1, rel=1e-6)
+
+
+def test_event_units_match_answer_tokens():
+    from sat.llm import event_units
+
+    cuts = np.array([0, 1, 2, 3, 4, 5.0])
+    unit, obs = event_units([1, 0], [1.5, 3.0], cuts)
+    assert unit.tolist() == [1, 2] and obs.tolist() == [1.0, 0.0]
+    assert answer_tokens([1, 0], [1.5, 3.0], cuts)[1] == "E1"

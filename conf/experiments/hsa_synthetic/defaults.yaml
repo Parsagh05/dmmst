@@ -35,4 +35,5 @@ survival_max_time: 150
 # Select the checkpoint on the SurvTRACE-protocol C_td, not on the legacy
 # ipcw_weighted_avg (no tau truncation, IPCW fitted on the evaluated split).
 tasks:
-  eval_metric: eval_ctd_weighted_avg
+  eval_metric: ${selection_metric}
+  eval_metric_greater_is_better: ${selection_greater}  # set with the metric: task files differ

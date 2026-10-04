@@ -21,7 +21,7 @@ otherwise. With SAT's per-event binary indicators that is ``events[:, p] == 1`` 
 the competing-risks assumption that at most one event fires.
 """
 
-__authors__ = ["Dominik Dahlem", "Mahed Abroshan"]
+__authors__ = ["Parsa"]
 __status__ = "Development"
 
 from typing import Dict, Optional, Union
