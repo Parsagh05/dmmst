@@ -47,6 +47,9 @@ def _import_survtrace():
         fetch()
     if str(root) not in sys.path:
         sys.path.insert(0, str(root))
+    # the released code uses np.Inf, removed in NumPy 2 (Kaggle's image); restore the alias
+    if not hasattr(np, "Inf"):
+        np.Inf = np.inf
     import survtrace  # noqa: F401
     from survtrace.config import STConfig
     from survtrace.model import SurvTraceMulti, SurvTraceSingle
