@@ -233,6 +233,8 @@ class RankingLoss(Loss):
             self.duration_cuts[-1] - self.duration_cuts[0]
         ) / self.duration_cuts[-1]
         TMinus = torch.nn.functional.relu(durations_tiled - t_epsilon)  # (n x e x e)
+        # stay inside the interval: extrapolating back past T0 gives exp(+large) -> inf -> NaN
+        TMinus = torch.maximum(TMinus, T0)
 
         # Calculate survival at t-epsilon
         SatTMinus = SatT0 * torch.exp(-(TMinus - T0) * hstar)  # (n x e x e)
