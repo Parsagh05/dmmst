@@ -324,6 +324,11 @@ def _llm(cfg: DictConfig):
         model.config, "max_position_embeddings", 2048)
     if int(cfg.get("llm_lora_r", 0)) > 0:
         from peft import LoraConfig, get_peft_model
+        from peft.tuners.lora import torchao as _peft_torchao
+
+        # Kaggle ships torchao 0.10, which peft rejects with ImportError while checking
+        # for torchao-quantised layers; we use none, so report torchao as absent
+        _peft_torchao.is_torchao_available = lambda: False
 
         # the new answer tokens live in the input embeddings and the output layer, so
         # those are trained in full; everything else through rank-r adapters
