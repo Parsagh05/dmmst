@@ -130,7 +130,7 @@ def sample_grid(space: Dict[str, list], n: Optional[int], seed: int = 0) -> List
 
 # ---------------------------------------------------------------- loss recipes
 def survival_recipes(multi: bool, rank: Dict, mul: Dict) -> Dict[str, List[str]]:
-    """S1-S4 (+MMV). rank / mul: tuned {"coeff", "sigma"} of L_rank / L_mul."""
+    """S1-S4. rank / mul: tuned {"coeff", "sigma"} of L_rank / L_mul."""
     r = [f"v2_rank_coeff={rank['coeff']}", f"v2_rank_sigma={rank['sigma']}"]
     m = [f"v2_mul_coeff={mul['coeff']}", f"v2_mul_sigma={mul['sigma']}"]
     rec = {"S1": [], "S2": r}

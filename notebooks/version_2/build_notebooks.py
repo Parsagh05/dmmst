@@ -170,7 +170,7 @@ test numbers are never looked at. The result, `tuned.json`, is read by notebooks
   DeepSurv and PC-Hazard on their own grids. DeepHit / DSM / MENSA use the transformer
   backbone tuned for our model (same encoder, different head).
 * **Stage B - loss weights** (with the tuned backbone): weight and sigma of L_rank (Eq. 4)
-  and L_mul (Eq. 5), the MMV variance weight, the L_MM weight (Eq. 7) and the regression
+  and L_mul (Eq. 5), the L_MM weight (Eq. 7) and the regression
   head's time unit (end of follow-up vs raw time).
 
 Selection: mean validation C_td over `TUNE_SEEDS` (regression-only runs: validation
@@ -181,7 +181,6 @@ N_CONFIGS = 24            # configurations drawn from the 216-point SurvTRACE gr
 N_CONFIGS_NN = 16         # DeepSurv / PC-Hazard (36-point grid)
 MODELS = ["ours", "survtrace", "cox", "rsf", "deepsurv", "pchazard"]
 RANK_GRID = {"coeff": [0.1, 0.5, 1.0], "sigma": [0.1, 0.5, 1.0]}
-MMV_VARIANCE = [0.001, 0.01, 0.1, 1.0]   # UniSurv's grid
 MM_COEFF = [0.1, 0.5, 1.0]
 ''', [
     md("## Data (built once, label files per split seed)"), code(r'''
@@ -220,8 +219,6 @@ for name in DATASETS:
     multi = v2.DATASETS[name]["events"] > 1
     runs += v2.tune_runs("ours", name, [{"v2_rank_coeff": c["coeff"], "v2_rank_sigma": c["sigma"]} for c in rank_cfgs],
                          TUNE_SEEDS, REPO, extra=ours(name), prefix=f"{name}__rank__tune")
-    runs += v2.tune_runs("ours", name, [{"v2_mmv_coeff": 1.0, "v2_mmv_variance_weight": w} for w in MMV_VARIANCE],
-                         TUNE_SEEDS, REPO, extra=ours(name), prefix=f"{name}__mmv__tune")
     # regression head time unit: end of follow-up (default) vs raw time, R2 regression-only
     reg = ours(name) + ["tasks=v2_regression", "selection_metric=eval_reg_mae_margin", "selection_greater=false",
                         "v2_l1_type=margin"]
@@ -248,10 +245,8 @@ TUNED["losses"] = {}
 for name in DATASETS:
     multi = v2.DATASETS[name]["events"] > 1
     rk = pick(f"{name}__rank__tune", default={"v2_rank_coeff": 0.5, "v2_rank_sigma": 0.5})
-    mv = pick(f"{name}__mmv__tune", default={"v2_mmv_coeff": 1.0, "v2_mmv_variance_weight": 0.01})
     ts = pick(f"{name}__timescale__tune", "reg_mae_margin", False, default={})
     L = {"rank": {"coeff": rk["v2_rank_coeff"], "sigma": rk["v2_rank_sigma"]},
-         "mmv_variance_weight": mv["v2_mmv_variance_weight"],
          "time_scale_raw": bool(ts.get("v2_time_scale") == 1.0)}
     if multi:
         mu = pick(f"{name}__mul__tune", default={"v2_mul_coeff": 0.5, "v2_mul_sigma": 0.5})
@@ -290,8 +285,6 @@ def surv_recipes(name):
 def reg_recipes(name):
     L = LOSS[name]
     return v2.regression_recipes(v2.DATASETS[name]["events"] > 1, L.get("mm_coeff", 0.5))
-
-MMV = lambda name: ["v2_mmv_coeff=1.0", f"v2_mmv_variance_weight={LOSS[name]['mmv_variance_weight']}"]
 '''
 
 BENCH_MODELS = '''
@@ -436,8 +429,7 @@ Our model always uses L_PCH. On top of it, with the weights and sigmas tuned in 
 | S3 + L_mul (Eq. 5) | - | yes |
 | S4 + L_rank + L_mul | - | yes |
 
-and each of them **with MMV** added (UniSurv; a reference, not in the paper). These runs
-also report the time error of the survival head's E[T] under the three tails of §2.4,
+These runs also report the time error of the survival head's E[T] under the three tails of §2.4,
 which notebook 06 uses as the "survival head only" row.""", SEEDS_OPT + '''
 DATASETS = ["metabric", "support", "ebmt", "hsa_synthetic", "deephit_synthetic"]
 ''', [
@@ -449,11 +441,8 @@ v2.prepare(r, DATASETS, SEEDS, REPO)
 runs = []
 for name in DATASETS:
     for rec, ov in surv_recipes(name).items():
-        for mmv in (False, True):
-            extra = tuned("ours", name) + loss_extra(name) + ov + (MMV(name) if mmv else [])
-            tag = rec + ("+MMV" if mmv else "")
-            runs += v2.runs("ours", name, SEEDS, REPO, extra=extra, tag=tag,
-                            info={"stage": "losses", "recipe": rec, "mmv": mmv})
+        runs += v2.runs("ours", name, SEEDS, REPO, extra=tuned("ours", name) + loss_extra(name) + ov,
+                        tag=rec, info={"stage": "losses", "recipe": rec})
 print(len(runs), "runs")
 r.run_many(runs, time_budget_min=TIME_BUDGET_MIN)
 '''),

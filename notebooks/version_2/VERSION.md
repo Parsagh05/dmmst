@@ -1,7 +1,10 @@
 # Version 2 — the complete test of the paper (current)
 
-**Status:** steps 0 and 1 done and the notebooks written (2026-10-04). Nothing has been
-run on Kaggle yet.
+**Status (2026-10-05):** steps 0-1 done, notebooks written; Kaggle runs under way.
+01 (tuning) and 07 (LLM, 1 seed) have run once; the fixes they needed are in
+(NumPy 2 alias for SurvTRACE, ranking-loss overflow, peft/torchao on Kaggle).
+**MMV removed:** it is not in the paper (it came from UniSurv via our own version-1
+experiment) and our regression head (Eq. 6) already covers the same idea.
 
 ### What steps 0-1 changed
 - **Protocol fixes found by the checks:** the files used for the censoring weights and
@@ -66,7 +69,6 @@ Our model always uses the survival loss **L_PCH** as its base. On top of it:
 | S2 | L_PCH + L_rank | yes | yes |
 | S3 | L_PCH + L_mul | — (needs 2+ events) | yes |
 | S4 | L_PCH + L_rank + L_mul | — | yes |
-| S1–S4 + MMV | each of the above with the MMV loss added (MMV is not in the paper; it is a reference) | yes | yes |
 
 **Regression ("time of event") head**
 | # | Losses | Single event | Multiple events |
@@ -77,12 +79,12 @@ Our model always uses the survival loss **L_PCH** as its base. On top of it:
 | R4 | R2 + L_MM using the "best guess" time for the unobserved event | — | yes |
 
 **Model setups that use these**
-- Survival head only: every S combination (with and without MMV).
+- Survival head only: every S combination.
 - Regression head only: every R combination.
 - Both heads together: **every S × every R** combination.
 
-So nothing is skipped: on single-event data that is 4 + 2 + 4 = 10 setups, on
-multi-event data 8 + 4 + 16 = 28 setups. If run times turn out too long, we cut only
+So nothing is skipped: on single-event data that is 2 + 2 + 4 = 8 setups, on
+multi-event data 4 + 4 + 16 = 24 setups. If run times turn out too long, we cut only
 after the smoke test shows the real cost, and we will say which ones were cut.
 
 ## How we test (the standard protocol, from DSM and SurvTRACE)
@@ -113,10 +115,24 @@ after the smoke test shows the real cost, and we will say which ones were cut.
 | 02 | `02_tabular_benchmark` | 6 on METABRIC, SUPPORT (SurvTRACE Table 2 layout) | 01 |
 | 03 | `03_multievent_benchmark` | 6 on EBMT, hsa_synthetic, DeepHit synthetic | 01 |
 | 04 | `04_ablation_encoding_representation` | 1, 2 | 01 |
-| 05 | `05_ablation_losses` | 3 (every S recipe, with and without MMV) | 01 |
+| 05 | `05_ablation_losses` | 3 (every S recipe) | 01 |
 | 06 | `06_regression_head` | 4 (R1-R4, regression only and both heads) | 01 |
 | 07 | `07_llm_end_to_end` | 5 (GPT-2, Qwen2.5-0.5B, scratch x 3 objectives) | - |
 | 08 | `08_report` | every table + `REPORT.md` | outputs of 02-07 |
+
+**Size and time of each notebook** (10 seeds, Kaggle T4, 2 parallel runs; estimated from
+the per-run times of the first Kaggle runs, so treat them as rough):
+
+| # | Runs | What the runs are | Time |
+|---|---|---|---|
+| 01 | 485 + 91 | A: per dataset ours 24, SurvTRACE 24, Cox 5, RSF 12, DeepSurv 16, PC-Hazard 16 (split 0). B: L_rank 9, time unit 2, and on multi-event data L_mul 9 + L_MM 3 | ~5 h |
+| 02 | 180 | 9 models x 2 datasets x 10 seeds | ~1-1.5 h |
+| 03 | 270 | 9 models x 3 datasets x 10 seeds | ~3-4 h |
+| 04 | 320 | 3 encodings x 2 datasets x 10 + 13 representations x 2 datasets x 10 | ~3 h |
+| 05 | 160 | S1-S2 on 2 single-event sets, S1-S4 on 3 multi-event sets, x 10 | ~2 h |
+| 06 | 720 | 8 setups per single-event set, 24 per multi-event set, x 10 | ~8-9 h (may need one resume) |
+| 07 | 270 | 3 backbones x 3 objectives x 3 datasets x 10, one at a time | ~40-50 h (4-5 sessions) |
+| 08 | - | tables only | minutes |
 
 **How to run on Kaggle**
 1. Upload a notebook (File -> Import), turn on **Internet** and the **GPU (T4)**. It clones
