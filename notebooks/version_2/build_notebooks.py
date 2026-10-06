@@ -412,7 +412,9 @@ for ds in DATASETS:
     for t, s_emb, layers in REPRESENTATIONS:
         extra = tuned("ours", ds) + [f"token_emb={t}", f"sentence_emb={s_emb}"]
         if layers == "last":
-            extra.append("select_hidden_layers=[-1]")
+            # hidden-state indices run 0 (embeddings) .. number of layers; -1 is rejected
+            n_layers = TUNED[ds]["ours"]["transformer_num_hidden_layers"]
+            extra.append(f"select_hidden_layers=[{n_layers}]")
         runs += v2.runs("ours", ds, SEEDS, REPO, extra=extra, tag=f"rep_t{t}_s{s_emb}_{layers}",
                         info={"stage": "representation", "token_emb": t, "sentence_emb": s_emb, "layers": layers})
 print(len(runs), "representation runs")
