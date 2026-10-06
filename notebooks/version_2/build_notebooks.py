@@ -99,14 +99,25 @@ r = Runner(repo=REPO, results_dir=RESULTS_ROOT / RUN_NAME,
 
 # Resume: attach this notebook's previous output ("Add Input") and finished runs are
 # copied back, so only the missing ones are trained.
-n_copied = 0
+def _incomplete(f):
+    """A survival result scored before the IBS/IBLL/AUC fix (commit after b0bbe25): rerun it."""
+    if f.name.endswith(".meta.json") or f.name == "environment.json" or not f.is_file():
+        return False
+    test = json.loads(f.read_text()).get("test", {})
+    return "ctd_weighted_avg" in test and "ibs" not in test
+
+n_copied, n_redo = 0, 0
 for root in INPUT_ROOTS:
     for d in root.rglob(RUN_NAME):
         if d.is_dir() and d != r.results_dir:
             for f in d.glob("*.json"):
-                if not (r.results_dir / f.name).exists():
-                    shutil.copy2(f, r.results_dir / f.name); n_copied += 1
-print(f"resumed {n_copied} files from attached inputs")
+                if (r.results_dir / f.name).exists():
+                    continue
+                if _incomplete(f) or _incomplete(d / f.name.replace(".meta.json", ".json")):
+                    n_redo += f.name.endswith(".meta.json") is False
+                    continue
+                shutil.copy2(f, r.results_dir / f.name); n_copied += 1
+print(f"resumed {n_copied} files from attached inputs; {n_redo} runs without IBS will be rerun")
 (r.results_dir / "environment.json").write_text(json.dumps({
     "commit": COMMIT, "code_fingerprint": CODE_FINGERPRINT, "torch": torch.__version__,
     "cuda": torch.cuda.is_available(), "smoke": SMOKE_TEST, "name": RUN_NAME}, indent=2))

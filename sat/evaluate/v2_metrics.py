@@ -199,7 +199,13 @@ class V2Metrics:
         not piecewise exponential pass their survival on a fine grid instead."""
         out = {}
         t_tr, e_tr = self.train[k]
-        et_train, et_test = _structured(e_tr, t_tr), _structured(e, t)
+        et_train = _structured(e_tr, t_tr)
+        # The IPCW metrics (IBS, IBLL, AUC) evaluate the censoring KM, fitted on training,
+        # at each test time and refuse times past the last training time. Every evaluation
+        # time lies below that point, so a test subject followed longer counts as "still at
+        # risk" either way: capping its time just below the last training time changes no value.
+        t_cap = np.minimum(t, t_tr.max() * (1 - 1e-12))  # above the grid end (1 - 1e-9)
+        et_test = _structured(e, t_cap)
         if grid is None:
             cuts = self.cuts
             grid, fine = fine_curves(self.cuts, surv, self.fine_grid)
