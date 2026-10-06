@@ -214,7 +214,9 @@ class V2Metrics:
             fine = np.clip(surv, 0.0, 1.0)
 
         lo = np.percentile(t, 1)
-        hi = min(np.percentile(t, 99), t_tr.max() * (1 - 1e-9))
+        # IBS needs the grid strictly below the largest test time; with many subjects
+        # censored at the same final time (hsa_synthetic) the 99th percentile equals it
+        hi = min(np.percentile(t, 99), t_tr.max() * (1 - 1e-9), t_cap.max() * (1 - 1e-9))
         # a fixed integration grid, independent of how the model's curve is sampled
         inner = np.linspace(lo, hi, 100) if hi > lo else np.array([])
         if len(inner) >= 3:
