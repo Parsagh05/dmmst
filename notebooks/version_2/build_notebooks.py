@@ -115,7 +115,11 @@ print("results ->", r.results_dir)
 
 LOAD_TUNED = r'''
 # ---- settings tuned on validation in notebook 01 -------------------------------------
-TUNED = v2.load_tuned(v2.find_tuned(RESULTS_ROOT, INPUT_ROOTS))
+# an attached 01 output wins; otherwise the copy committed to GitHub
+# (results/version_2/01_tuning/tuned.json in the cloned repo)
+TUNED_PATH = v2.find_tuned(RESULTS_ROOT, INPUT_ROOTS + [REPO / "results" / "version_2" / "01_tuning"])
+print("tuned settings from", TUNED_PATH)
+TUNED = v2.load_tuned(TUNED_PATH)
 LOSS = TUNED["losses"]
 print(json.dumps(TUNED, indent=1)[:1500])
 '''

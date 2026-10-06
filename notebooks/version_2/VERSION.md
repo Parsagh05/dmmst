@@ -137,8 +137,9 @@ the per-run times of the first Kaggle runs, so treat them as rough):
 **How to run on Kaggle**
 1. Upload a notebook (File -> Import), turn on **Internet** and the **GPU (T4)**. It clones
    the code from GitHub; nothing else has to be uploaded.
-2. Run **01 first**. Then 02-07 in any order (07 does not need 01): in each, *Add Input* ->
-   the output of `01_tuning` (it reads `tuned.json` from there).
+2. Run **01 first**. Then 02-07 in any order (07 does not need 01). They read `tuned.json`
+   from the repo (`results/version_2/01_tuning/`, committed after 01 ran); an attached
+   01 output, if any, takes priority.
 3. A session stops launching runs after ~11 h. To continue, run the notebook again with its
    own previous output added as an input: finished runs are copied back and skipped.
 4. Finally 08 with the outputs of 02-07 as inputs.
