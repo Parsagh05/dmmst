@@ -497,7 +497,9 @@ notebook("06_regression_head", """# 06 · The regression ("time of event") head 
 Both heads are always trained with times in units of the end of follow-up, so L_MAE / L_MM
 sit on the scale of L_PCH. The raw-time unit chosen in 01 is used only by regression-only
 models: it was chosen on them, and with raw times the regression loss (hundreds of days)
-swamps the survival loss in joint training.
+swamps the survival loss in joint training. Joint runs also wait 30 evaluations
+(not 10) before early stopping: their validation C_td can sit near 0.5 for the first
+~30 epochs while the two heads settle, and the shorter patience stopped some of them there.
 
 L_MM needs >= 2 events, so R3/R4 only exist on the multi-event datasets. Regression-only
 models select checkpoints on validation MAE-margin; models with a survival head on
@@ -512,9 +514,14 @@ if SMOKE_TEST:
     SEEDS, DATASETS = SEEDS[:1], ["metabric", "ebmt"]
 v2.prepare(r, DATASETS, SEEDS, REPO)
 REG_ONLY = ["tasks=v2_regression", "selection_metric=eval_reg_mae_margin", "selection_greater=false"]
-# earlier joint runs ("both_*") used the raw-time unit: superseded by "joint_*"
+JOINT_PATIENCE = "callbacks.0.early_stopping_patience=30"
+# superseded joint results: "both_*" (raw-time unit) and "joint_*" trained with patience 10
 for f in r.results_dir.glob("*__both_*.json"):
     f.unlink()
+for m in r.results_dir.glob("*__joint_*.meta.json"):
+    if JOINT_PATIENCE not in json.loads(m.read_text()).get("overrides", []):
+        m.unlink()
+        m.with_name(m.name.replace(".meta.json", ".json")).unlink(missing_ok=True)
 runs = []
 for name in DATASETS:
     for rr, rov in reg_recipes(name).items():
@@ -522,7 +529,7 @@ for name in DATASETS:
                         tag=f"reg_{rr}", info={"stage": "regression", "setup": "regression only", "R": rr})
         for sr, sov in surv_recipes(name).items():
             runs += v2.runs("ours", name, SEEDS, REPO,
-                            extra=tuned("ours", name) + ["tasks=v2_survival_regression"] + sov + rov,
+                            extra=tuned("ours", name) + ["tasks=v2_survival_regression", JOINT_PATIENCE] + sov + rov,
                             tag=f"joint_{sr}x{rr}",
                             info={"stage": "regression", "setup": "both heads", "S": sr, "R": rr})
 print(len(runs), "runs")
