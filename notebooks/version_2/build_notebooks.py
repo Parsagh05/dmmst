@@ -459,7 +459,8 @@ Our model always uses L_PCH. On top of it, with the weights and sigmas tuned in 
 | S3 + L_mul (Eq. 5) | - | yes |
 | S4 + L_rank + L_mul | - | yes |
 
-These runs also report the time error of the survival head's E[T] under the three tails of §2.4,
+Early stopping waits 30 evaluations, as for the joint models of notebook 06, so that
+"survival head only" and "both heads" are trained alike. These runs also report the time error of the survival head's E[T] under the three tails of §2.4,
 which notebook 06 uses as the "survival head only" row.""", SEEDS_OPT + '''
 DATASETS = ["metabric", "support", "ebmt", "hsa_synthetic", "deephit_synthetic"]
 ''', [
@@ -468,10 +469,16 @@ DATASETS = ["metabric", "support", "ebmt", "hsa_synthetic", "deephit_synthetic"]
 if SMOKE_TEST:
     SEEDS, DATASETS = SEEDS[:1], ["metabric", "ebmt"]
 v2.prepare(r, DATASETS, SEEDS, REPO)
+PATIENCE = "callbacks.0.early_stopping_patience=30"   # the same as the joint runs of 06
+# results trained with the earlier patience (10) are superseded
+for m in r.results_dir.glob("*.meta.json"):
+    if PATIENCE not in json.loads(m.read_text()).get("overrides", []):
+        m.unlink()
+        m.with_name(m.name.replace(".meta.json", ".json")).unlink(missing_ok=True)
 runs = []
 for name in DATASETS:
     for rec, ov in surv_recipes(name).items():
-        runs += v2.runs("ours", name, SEEDS, REPO, extra=tuned("ours", name) + loss_extra(name) + ov,
+        runs += v2.runs("ours", name, SEEDS, REPO, extra=tuned("ours", name) + loss_extra(name) + ov + [PATIENCE],
                         tag=rec, info={"stage": "losses", "recipe": rec})
 print(len(runs), "runs")
 r.run_many(runs, time_budget_min=TIME_BUDGET_MIN)
