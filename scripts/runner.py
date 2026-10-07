@@ -108,6 +108,7 @@ class Runner:
         self.smoke_epochs = smoke_epochs
         self.extra = list(extra_overrides or [])
         self.keep_checkpoints = keep_checkpoints
+        self.commit = None  # code version, recorded in each run's meta (set by the notebooks)
         self.verbose = verbose
         self._lock = threading.Lock()
 
@@ -183,7 +184,7 @@ class Runner:
         if ok and (out / "metrics.json").is_file():
             shutil.copy2(out / "metrics.json", self.results_dir / f"{r.tag}.json")
             self._true_order(r, out)
-            meta = asdict(r) | {"seconds": dt}
+            meta = asdict(r) | {"seconds": dt, "commit": self.commit}
             (self.results_dir / f"{r.tag}.meta.json").write_text(json.dumps(meta, indent=2))
             self._log(f"  ok   {r.tag} ({dt:.0f}s)")
         elif ok:

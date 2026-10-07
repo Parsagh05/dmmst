@@ -96,15 +96,28 @@ RUN_NAME = NAME + ("_smoke" if SMOKE_TEST else "")
 r = Runner(repo=REPO, results_dir=RESULTS_ROOT / RUN_NAME,
            workers=WORKERS or (2 if ON_KAGGLE else 4),
            smoke_epochs=SMOKE_EPOCHS if SMOKE_TEST else None, gpu="0")
+r.commit = COMMIT
 
 # Resume: attach this notebook's previous output ("Add Input") and finished runs are
 # copied back, so only the missing ones are trained.
 def _incomplete(f):
-    """A survival result scored before the IBS/IBLL/AUC fix (commit after b0bbe25): rerun it."""
+    """Results scored by code that has since been fixed - rerun them:
+    * survival results without IBS (IBS/IBLL/AUC fixes 9b048a8, bae0c14);
+    * hsa_synthetic models scored by the trainer (script "finetune") before 070f18b,
+      whose Brier dropped the ~70% of subjects censored at the end of follow-up.
+      Results from 070f18b on record the commit in their .meta.json."""
     if f.name.endswith(".meta.json") or f.name == "environment.json" or not f.is_file():
         return False
     test = json.loads(f.read_text()).get("test", {})
-    return "ctd_weighted_avg" in test and "ibs" not in test
+    if "ctd_weighted_avg" in test and "ibs" not in test:
+        return True
+    meta_f = f.with_name(f.name[:-len(".json")] + ".meta.json")
+    if "ctd_weighted_avg" in test and meta_f.is_file():
+        meta = json.loads(meta_f.read_text())
+        if (meta.get("info", {}).get("dataset") == "hsa_synthetic" and meta.get("script") == "finetune"
+                and not meta.get("commit")):
+            return True
+    return False
 
 n_copied, n_redo = 0, 0
 for root in INPUT_ROOTS:
@@ -481,6 +494,11 @@ notebook("06_regression_head", """# 06 · The regression ("time of event") head 
 | regression head only | R1 MAE on observed events · R2 best-guess MAE (Eq. 6) · R3 R2 + L_MM with t_q from Eq. 1 · R4 R2 + L_MM with the best-guess t_q |
 | both heads | every survival recipe S x every regression recipe R |
 
+Both heads are always trained with times in units of the end of follow-up, so L_MAE / L_MM
+sit on the scale of L_PCH. The raw-time unit chosen in 01 is used only by regression-only
+models: it was chosen on them, and with raw times the regression loss (hundreds of days)
+swamps the survival loss in joint training.
+
 L_MM needs >= 2 events, so R3/R4 only exist on the multi-event datasets. Regression-only
 models select checkpoints on validation MAE-margin; models with a survival head on
 validation C_td. Reported: MAE (uncensored / hinge / margin / pseudo-observation) and
@@ -494,15 +512,18 @@ if SMOKE_TEST:
     SEEDS, DATASETS = SEEDS[:1], ["metabric", "ebmt"]
 v2.prepare(r, DATASETS, SEEDS, REPO)
 REG_ONLY = ["tasks=v2_regression", "selection_metric=eval_reg_mae_margin", "selection_greater=false"]
+# earlier joint runs ("both_*") used the raw-time unit: superseded by "joint_*"
+for f in r.results_dir.glob("*__both_*.json"):
+    f.unlink()
 runs = []
 for name in DATASETS:
-    base = tuned("ours", name) + loss_extra(name)
     for rr, rov in reg_recipes(name).items():
-        runs += v2.runs("ours", name, SEEDS, REPO, extra=base + REG_ONLY + rov, tag=f"reg_{rr}",
-                        info={"stage": "regression", "setup": "regression only", "R": rr})
+        runs += v2.runs("ours", name, SEEDS, REPO, extra=tuned("ours", name) + loss_extra(name) + REG_ONLY + rov,
+                        tag=f"reg_{rr}", info={"stage": "regression", "setup": "regression only", "R": rr})
         for sr, sov in surv_recipes(name).items():
-            runs += v2.runs("ours", name, SEEDS, REPO, extra=base + ["tasks=v2_survival_regression"] + sov + rov,
-                            tag=f"both_{sr}x{rr}",
+            runs += v2.runs("ours", name, SEEDS, REPO,
+                            extra=tuned("ours", name) + ["tasks=v2_survival_regression"] + sov + rov,
+                            tag=f"joint_{sr}x{rr}",
                             info={"stage": "regression", "setup": "both heads", "S": sr, "R": rr})
 print(len(runs), "runs")
 r.run_many(runs, time_budget_min=TIME_BUDGET_MIN)
