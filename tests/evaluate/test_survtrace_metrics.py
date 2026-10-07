@@ -111,3 +111,36 @@ def test_per_event_horizons_come_from_event_horizons_json(tmp_path):
     for i in usable:
         want = concordance_index_ipcw(et_train, et_test, risk[:, i], tau=h[i])[0]
         assert out[f"ctd_1th_event_{[0.25, 0.5, 0.75][i]}"] == pytest.approx(want, abs=1e-6)
+
+
+def test_brier_keeps_subjects_censored_at_the_last_training_time():
+    """Administrative censoring: many subjects end at the same final time, which is also
+    the last training time (hsa_synthetic: ~70%). They are alive at every horizon and must
+    count in the Brier score - not be dropped - whatever the float precision of the times."""
+    from sat.evaluate.survtrace_metrics import _structured, score_at_horizons
+
+    rng = np.random.default_rng(0)
+    end = 574.2571974083571
+
+    def sample(n):
+        t = rng.uniform(10, 500, n)
+        e = rng.random(n) < 0.7
+        late = rng.random(n) < 0.6
+        t[late], e[late] = end, False
+        return t, e
+
+    t_tr, e_tr = sample(800)
+    t_te, e_te = sample(400)
+    times = np.array([150.0, 300.0, 450.0])
+    surv = np.exp(-np.outer(rng.uniform(0.001, 0.004, len(t_te)), times))
+    et_tr = _structured(e_tr, np.float32(t_tr).astype(float))
+
+    # reference: the same data with the final time nudged below the training maximum
+    ref_t = np.where(t_te == end, end - 1.0, t_te)
+    _, ref = brier_score(et_tr, _structured(e_te, ref_t), surv, times)
+
+    for t in (t_te, np.float32(t_te).astype(float)):  # float64 and float32 labels
+        out = score_at_horizons(et_tr, _structured(e_te, t), 1 - surv, surv, times,
+                                [0.25, 0.5, 0.75], 0)
+        got = [out[f"brier_0th_event_{q}"] for q in (0.25, 0.5, 0.75)]
+        np.testing.assert_allclose(got, ref, rtol=1e-9)

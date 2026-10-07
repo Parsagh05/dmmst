@@ -142,13 +142,16 @@ def score_at_horizons(et_train, et_test, risk, surv, times, labels, event) -> di
 
     try:
         idx = np.array(usable)
-        # sksurv's Brier needs every test time inside the training censoring
-        # support; the hash splitter does not guarantee the longest-duration
-        # subject lands in train, so restrict rather than fail.
-        keep = durations_test < et_train["t"].max()
-        if keep.sum() > 0:
+        # sksurv's Brier needs every test time below the last training time. Dropping
+        # the subjects at or beyond it (as before) removed everyone censored at the end
+        # of follow-up - 70% of hsa_synthetic once the label transform stores times in
+        # float32. Every horizon lies below that time, so a subject followed that long
+        # is "still alive" at each of them either way: cap its time instead.
+        et_cap = et_test.copy()
+        et_cap["t"] = np.minimum(et_cap["t"], et_train["t"].max() * (1 - 1e-12))
+        if len(et_cap):
             _, bs = sksurv_brier_score(
-                et_train, et_test[keep], surv[keep][:, idx],
+                et_train, et_cap, surv[:, idx],
                 times[idx].astype(float),
             )
             for j, i in enumerate(usable):
