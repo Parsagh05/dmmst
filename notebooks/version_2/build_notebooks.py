@@ -23,8 +23,10 @@ COMMON_OPTIONS = '''
 SMOKE_TEST   = False    # True: 2 epochs, 1 seed, 1-2 configurations - only to check that it runs
 SMOKE_EPOCHS = 2
 WORKERS      = None     # parallel runs; None = 2 on Kaggle (4 vCPU), 4 locally
-TIME_BUDGET_MIN = 11 * 60   # stop launching new runs after this (Kaggle sessions end at 12 h);
-                            # re-run with this notebook's output attached to continue
+TIME_BUDGET_MIN = 10 * 60 + 30   # from session start: no new runs after this
+HARD_STOP_MIN   = 11 * 60 + 20   # runs still going are stopped (redone on resume), then the
+                                 # tables + zip are written so Kaggle saves the output (12 h limit).
+                                 # To continue: re-run with this notebook's output attached
 INSTALL_DEPS = True     # Kaggle only
 GIT_URL      = "https://github.com/Parsagh05/dmmst.git"   # the code is cloned from here
 CLEAN_UP_AT_END = True  # Kaggle: delete the working repo copy after the report
@@ -33,6 +35,7 @@ CLEAN_UP_AT_END = True  # Kaggle: delete the working repo copy after the report
 SETUP = r'''
 # ---- 1. get the code --------------------------------------------------------------
 import os, sys, json, shutil, subprocess, time, hashlib
+SESSION_T0 = time.time()   # the time budgets count from here
 from pathlib import Path
 
 ON_KAGGLE = Path("/kaggle/working").is_dir()
@@ -97,6 +100,8 @@ r = Runner(repo=REPO, results_dir=RESULTS_ROOT / RUN_NAME,
            workers=WORKERS or (2 if ON_KAGGLE else 4),
            smoke_epochs=SMOKE_EPOCHS if SMOKE_TEST else None, gpu="0")
 r.commit = COMMIT
+r.session_t0 = SESSION_T0
+r.deadline = SESSION_T0 + HARD_STOP_MIN * 60
 
 # Resume: attach this notebook's previous output ("Add Input") and finished runs are
 # copied back, so only the missing ones are trained.

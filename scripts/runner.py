@@ -109,6 +109,11 @@ class Runner:
         self.extra = list(extra_overrides or [])
         self.keep_checkpoints = keep_checkpoints
         self.commit = None  # code version, recorded in each run's meta (set by the notebooks)
+        # Kaggle: time.time() of the session start and the hard stop. Budgets count from
+        # session_t0; a run still going at the deadline is killed (not counted as failed,
+        # redone on the next resume) so the notebook can finish and its output is saved.
+        self.session_t0 = None
+        self.deadline = None
         self.verbose = verbose
         self._lock = threading.Lock()
 
@@ -138,10 +143,15 @@ class Runner:
         """Run one sat entry point; returns (ok, seconds, log text)."""
         cmd = [sys.executable, "-m", f"sat.{script}", f"experiments={experiment}", *overrides]
         t0 = time.time()
-        p = subprocess.run(
-            cmd, cwd=self.repo, env=self.env, text=True, errors="replace",
-            stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        )
+        timeout = None if self.deadline is None else max(1.0, self.deadline - t0)
+        try:
+            p = subprocess.run(
+                cmd, cwd=self.repo, env=self.env, text=True, errors="replace",
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=timeout,
+            )
+        except subprocess.TimeoutExpired:
+            self._log(f"  .. {label or log_name or script} stopped at the session deadline (redone on resume)")
+            return False, time.time() - t0, ""
         dt = time.time() - t0
         ok = p.returncode == 0
         name = re.sub(r"[^A-Za-z0-9._-]+", "_", log_name or label or f"{script}_{experiment}")[:120]
@@ -215,7 +225,7 @@ class Runner:
         self._log(f"{len(runs)} runs planned, {len(runs) - len(todo)} already done, {len(todo)} to go")
         if not todo:
             return
-        t0 = time.time()
+        t0 = self.session_t0 or time.time()
         failed = []
         # the first run alone: warms the HF datasets / evaluate caches, which are not
         # safe to populate from several processes at once
@@ -241,6 +251,8 @@ class Runner:
                     bar.update(1)
         if bar:
             bar.close()
+        if self.deadline is not None:  # killed at the deadline: not failures, just unfinished
+            failed = [t for t in failed if self.done(t) or (self.results_dir / "logs" / f"FAILED_{t}.log").is_file()]
         if failed and not (time_budget_min and (time.time() - t0) / 60 > time_budget_min):
             # one sequential retry: parallel runs can be killed for memory without any bug
             self._log(f"retrying {len(failed)} failed run(s) one at a time")
