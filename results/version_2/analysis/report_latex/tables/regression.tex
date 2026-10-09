@@ -1,0 +1,31 @@
+\begin{tabular}{lllcccc}
+\toprule
+Dataset & Setup & Recipe & MAE-margin & MAE-pseudo-obs. & Harrell $C$ & $C_{td}$ \\
+\midrule
+METABRIC & regression only & R1 & 80.6 (2.8) & 92.5 (3.8) & 0.608 (0.018) & --- \\
+METABRIC & regression only & R2 & 76.7 (3.2) & 88.6 (4.0) & 0.643 (0.012) & --- \\
+METABRIC & joint (all recipes) & mean & 80.7 (4.7) & 92.6 (5.5) & 0.626 (0.026) & 0.670 (0.017) \\
+\midrule
+SUPPORT & regression only & R1 & 613.9 (9.1) & 739.4 (12.7) & 0.546 (0.007) & --- \\
+SUPPORT & regression only & R2 & 604.6 (9.6) & 730.1 (12.7) & 0.592 (0.009) & --- \\
+SUPPORT & joint (all recipes) & mean & 612.3 (13.7) & 737.6 (15.8) & 0.575 (0.023) & 0.620 (0.006) \\
+\midrule
+EBMT & regression only & R1 & 4254.4 (122.7) & 6932.4 (199.3) & 0.510 (0.012) & --- \\
+EBMT & regression only & R2 & 4231.9 (130.2) & 6909.9 (200.0) & 0.524 (0.014) & --- \\
+EBMT & regression only & R3 & 4245.1 (125.6) & 6923.1 (202.4) & 0.530 (0.009) & --- \\
+EBMT & regression only & R4 & 4247.4 (120.1) & 6925.4 (201.8) & 0.533 (0.011) & --- \\
+EBMT & joint (all recipes) & mean & 4320.6 (149.8) & 6993.7 (188.9) & 0.504 (0.015) & 0.530 (0.015) \\
+\midrule
+hsa synth. & regression only & R1 & 396.4 (5.8) & 677.8 (9.8) & 0.566 (0.021) & --- \\
+hsa synth. & regression only & R2 & 408.7 (96.7) & 690.0 (95.0) & 0.663 (0.047) & --- \\
+hsa synth. & regression only & R3 & 420.6 (94.9) & 702.0 (96.0) & 0.663 (0.087) & --- \\
+hsa synth. & regression only & R4 & 379.8 (62.2) & 661.1 (63.3) & 0.665 (0.063) & --- \\
+hsa synth. & joint (all recipes) & mean & 487.5 (120.6) & 665.4 (181.0) & 0.689 (0.125) & 0.801 (0.077) \\
+\midrule
+DeepHit synth. & regression only & R1 & 38.8 (1.5) & 75.0 (2.3) & 0.689 (0.046) & --- \\
+DeepHit synth. & regression only & R2 & 34.8 (3.2) & 70.8 (4.2) & 0.704 (0.042) & --- \\
+DeepHit synth. & regression only & R3 & 35.0 (3.0) & 71.0 (2.9) & 0.700 (0.035) & --- \\
+DeepHit synth. & regression only & R4 & 33.9 (0.4) & 69.9 (1.8) & 0.714 (0.003) & --- \\
+DeepHit synth. & joint (all recipes) & mean & 44.3 (5.6) & 80.4 (5.9) & 0.551 (0.141) & 0.742 (0.013) \\
+\bottomrule
+\end{tabular}

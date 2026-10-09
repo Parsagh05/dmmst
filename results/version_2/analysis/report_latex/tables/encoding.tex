@@ -1,0 +1,23 @@
+\begin{tabular}{lcccc}
+\toprule
+ & \multicolumn{2}{c}{METABRIC} & \multicolumn{2}{c}{SUPPORT} \\
+Variant & $C_{td}$ & IBS & $C_{td}$ & IBS \\
+\midrule
+encoding: numeric embedding (paper) & 0.666 (0.023) & 0.178 (0.010) & 0.617 (0.007) & 0.200 (0.004) \\
+encoding: quantile & 0.669 (0.014) & \textbf{0.174} (0.005) & 0.620 (0.006) & 0.200 (0.005) \\
+encoding: bins & 0.642 (0.019) & 0.188 (0.013) & \textbf{0.627} (0.006) & \textbf{0.195} (0.004) \\
+repr.: sum / max / all layers & 0.667 (0.014) & 0.179 (0.013) & 0.617 (0.009) & 0.201 (0.004) \\
+repr.: sum / max / last layers & 0.665 (0.013) & 0.181 (0.013) & 0.619 (0.008) & 0.200 (0.005) \\
+repr.: sum / mean / all layers & 0.671 (0.011) & 0.178 (0.011) & 0.618 (0.010) & 0.201 (0.006) \\
+repr.: sum / mean / last layers & 0.667 (0.024) & 0.178 (0.010) & 0.610 (0.018) & 0.203 (0.007) \\
+repr.: mean / max / all layers & 0.657 (0.023) & 0.186 (0.015) & 0.615 (0.010) & 0.201 (0.004) \\
+repr.: mean / max / last layers & 0.664 (0.017) & 0.181 (0.013) & 0.618 (0.010) & 0.200 (0.004) \\
+repr.: mean / mean / all layers & 0.665 (0.024) & 0.182 (0.013) & 0.609 (0.024) & 0.204 (0.009) \\
+repr.: mean / mean / last layers & 0.654 (0.034) & 0.182 (0.015) & 0.615 (0.011) & 0.202 (0.007) \\
+repr.: concat / max / all layers & 0.668 (0.021) & 0.177 (0.009) & 0.621 (0.009) & 0.200 (0.005) \\
+repr.: concat / max / last layers & 0.651 (0.034) & 0.184 (0.015) & 0.611 (0.009) & 0.203 (0.009) \\
+repr.: concat / mean / all layers & \textbf{0.672} (0.014) & 0.177 (0.013) & 0.616 (0.010) & 0.201 (0.005) \\
+repr.: concat / mean / last layers & 0.668 (0.016) & 0.182 (0.012) & 0.615 (0.008) & 0.201 (0.003) \\
+repr.: [CLS] / - / all layers & 0.658 (0.020) & 0.192 (0.012) & 0.584 (0.034) & 0.209 (0.010) \\
+\bottomrule
+\end{tabular}
