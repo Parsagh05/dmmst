@@ -1,0 +1,406 @@
+\documentclass[11pt]{article}
+\usepackage[margin=2.2cm]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{tabularx}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\setlist{itemsep=2pt}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+\renewcommand{\arraystretch}{1.15}
+
+\title{DMMST Version 2 --- explained from zero}
+\author{Parsa}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\noindent This document explains, without assuming any background, what survival analysis is, what
+our model does, what every loss and dataset is, what we ran in version 2, and what came out. Numbers
+are from notebooks 01--06 (the language-model notebook 07 is not included).
+
+\tableofcontents
+\newpage
+
+%==========================================================================
+\section{The problem}
+
+\subsection{What is survival analysis?}
+We want to predict \textbf{when} something will happen to a patient --- death, relapse of a cancer,
+recovery after a transplant. That ``something'' is called an \textbf{event}, and the time until it
+happens is the \textbf{event time}.
+
+It is not a normal prediction problem because of \textbf{censoring}: for many patients we never see
+the event. A study runs for, say, 10 years; a patient who is still alive at the end, or who moved away
+after 3 years, has no event time. We only know ``the event had not happened by time $T$''. Such a
+patient is \textbf{censored} at time $T$. Throwing censored patients away would bias everything (they
+are often the healthiest ones), so survival models are built to use the partial information they carry.
+
+\subsection{What does a survival model output?}
+Instead of one number, a survival model usually outputs a \textbf{survival curve} for each patient:
+\[
+  S(t) = \text{the probability that the event has \emph{not} happened by time } t.
+\]
+$S$ starts at 1 (at time 0 nothing has happened) and goes down. A high-risk patient's curve drops
+fast, a low-risk patient's curve drops slowly. From the curve one can read a risk at any time, or an
+expected event time.
+
+\subsection{One event or several events?}
+\begin{itemize}
+  \item \textbf{Single event}: one kind of event, e.g.\ death.
+  \item \textbf{Multiple events}: several kinds per patient, e.g.\ after a bone-marrow transplant:
+        recovery, an adverse event, relapse, death. They can be
+        \begin{itemize}
+          \item \textbf{competing}: only the first one is seen (if you die of A you cannot later die of B);
+          \item \textbf{semi-competing / non-exclusive}: several can happen to the same patient, in some
+                order (recovery, then relapse, then death).
+        \end{itemize}
+\end{itemize}
+Our paper (DMMST) is about a model that handles \textbf{multiple events}.
+
+%==========================================================================
+\section{Our model}
+
+\subsection{The idea in one paragraph}
+Each patient is a list of features (age, lab values, treatment, \dots). We turn every feature into a
+small vector (a \textbf{token}), feed all tokens of a patient into a \textbf{transformer} (the same
+kind of network used in language models), and get one vector that summarises the patient. On top of
+that vector sit \textbf{heads} --- small networks that produce the outputs:
+\begin{itemize}
+  \item the \textbf{survival head} outputs one survival curve per event;
+  \item the \textbf{regression head} (optional) outputs one predicted event time per event.
+\end{itemize}
+
+\subsection{The numeric embedding (paper \S2.2)}
+How do you give a number like ``age = 63'' to a transformer? Two options:
+\begin{itemize}
+  \item \textbf{Discretise} it: cut age into bins (e.g.\ 60--65) and treat the bin as a word. Simple,
+        but loses precision.
+  \item \textbf{Numeric embedding} (what the paper proposes): every feature has its own learned vector,
+        and that vector is \textbf{multiplied by the (standardised) value}. Age 63 and age 64 then give
+        almost the same input, as they should.
+\end{itemize}
+We also tried \textbf{quantile} scaling (the value is replaced by its rank among all patients before
+the multiplication).
+
+\subsection{Representation: how to get one patient vector}
+The transformer outputs a vector per token per layer. We tried different ways to combine them: over
+\textbf{layers} (sum, mean, concatenate, or a special [CLS] token), over \textbf{tokens} (max or mean),
+and using \textbf{all layers} or only the \textbf{last} one.
+
+\subsection{How the survival head works ($L_{PCH}$)}
+Time is cut into a few intervals (e.g.\ 0--14 days, 14--18 days, \dots). In each interval the head
+predicts a \textbf{hazard}: how likely the event is in that interval if it has not happened yet.
+Multiplying the ``no event'' chances interval by interval gives the survival curve. This is called a
+\textbf{piecewise-constant hazard (PCH)} model.
+
+The model is trained with $L_{PCH}$, the likelihood of what we actually observed:
+\begin{itemize}
+  \item for a patient with an event at time $T$: ``survive until $T$, then the event happens at $T$'';
+  \item for a patient censored at time $T$: ``survive until $T$'' (nothing more is claimed).
+\end{itemize}
+This is how censored patients are used correctly.
+
+%==========================================================================
+\section{The losses}
+A \textbf{loss} is the number the model tries to make small during training. $L_{PCH}$ alone already
+gives a working model. The paper adds more losses; testing whether they help is a large part of
+version 2.
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{llY}
+\toprule
+Loss & Paper & What it asks of the model, in plain words \\
+\midrule
+$L_{PCH}$ & Eq.~3 & Make the observed event times (and censoring times) likely. The base loss. \\
+$L_{rank}$ & Eq.~4 & \textbf{Between patients}: if patient A had the event before patient B, A should have
+  been predicted as riskier than B (for the same event). \\
+$L_{mul}$ & Eq.~5 & \textbf{Within one patient}: if a patient had event 1 before event 2, event 1 should
+  have been predicted as riskier at that time. Needs $\geq 2$ events. \\
+$L_{MAE}$ & Eq.~6 & For the regression head: the predicted time should be close to the real time. \\
+$L_{MM}$ & Eq.~7 & For the regression head: the predicted times of the different events should agree
+  with each other (``mismatch'' penalty). Needs $\geq 2$ events. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Best guess (Eq.~6).} For a censored patient we do not know the true time, only that it is
+later than $T$. The ``best guess'' is an estimate of the real time made from all training patients
+(Kaplan--Meier curve): ``patients who were still event-free at $T$ had their event on average at time
+$X$''. $L_{MAE}$ can either ignore censored patients (R1) or use their best guess (R2).
+
+\paragraph{Weight and $\sigma$.} $L_{rank}$ and $L_{mul}$ have a strength (weight) and a sharpness
+($\sigma$). These were tuned. The paper writes Eqs.~4--5 with the wrong sign; we use the correct
+direction (as in DeepHit) and a test checks it.
+
+\subsection{The recipes we tested}
+\begin{table}[H]
+\centering
+\begin{tabular}{ll@{\hspace{2cm}}ll}
+\toprule
+\multicolumn{2}{l}{Survival head} & \multicolumn{2}{l}{Regression head} \\
+\midrule
+S1 & $L_{PCH}$ only & R1 & $L_{MAE}$, observed events only \\
+S2 & $L_{PCH} + L_{rank}$ & R2 & $L_{MAE}$ with the best guess \\
+S3 & $L_{PCH} + L_{mul}$ (multi-event) & R3 & R2 + $L_{MM}$, observed time as reference \\
+S4 & $L_{PCH} + L_{rank} + L_{mul}$ (multi-event) & R4 & R2 + $L_{MM}$, best guess as reference \\
+\bottomrule
+\end{tabular}
+\end{table}
+``---'' in a table means the recipe needs $\geq 2$ events and does not exist on that dataset.
+
+We also removed one loss that was in earlier versions, \textbf{MMV} (from another paper, UniSurv): it
+is not in our paper and does the same job as our regression head.
+
+%==========================================================================
+\section{The data}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{lllp{3.3cm}Y}
+\toprule
+Dataset & Real? & Patients & Events & What it is \\
+\midrule
+METABRIC & real & 1,904 & 1: death & breast-cancer patients; 9 features (genes + clinical) \\
+SUPPORT & real & 8,873 & 1: death & seriously ill hospital patients; 14 features \\
+EBMT & real & 2,279 & 4: recovery, adverse event, relapse, death & bone-marrow transplant patients;
+  only 4 categorical features \\
+hsa synthetic & simulated & 5,000 & 2, both can happen & from Tjandra et al.\ (2021); about 70\%
+  censored at the end of the study \\
+DeepHit synthetic & simulated & 30,000 & 2, competing & from the DeepHit paper (Lee et al.\ 2018) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+METABRIC and SUPPORT are the standard datasets of SurvTRACE, our closest competitor, so we can compare
+with its published numbers. \textbf{SEER} was planned as a large real dataset, but because of the
+updated SEER+ data-access policies we could not get access to it.
+
+%==========================================================================
+\section{How we measured (the protocol)}
+
+\subsection{Splits}
+Each dataset is split at random into \textbf{60\% training} (the model learns from it), \textbf{10\%
+validation} (used to choose settings and when to stop training) and \textbf{30\% test} (used only for
+the final numbers). This is done \textbf{10 times} with different random splits, and every model gets
+the same 10 splits. Results are written as \textbf{mean (standard deviation)} over the 10 splits ---
+e.g.\ 0.667 (0.013). The standard deviation shows how much the result moves from split to split.
+
+\subsection{Tuning (notebook 01)}
+Every model has settings (learning rate, network size, \dots). We tried many combinations on the
+\textbf{validation} split and kept the best --- for every model, not only ours, so the comparison is
+fair. Then, with the chosen network, we tuned the loss weights ($L_{rank}$, $L_{mul}$, $L_{MM}$).
+
+\subsection{Early stopping and ``patience''}
+During training the model is checked on validation regularly. If it has not improved for a number of
+checks (the \textbf{patience}), training stops. We use 30 for our loss and regression experiments
+(Section~\ref{sec:fixes}).
+
+\subsection{The scores}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{lYl}
+\toprule
+Score & Meaning & Good value \\
+\midrule
+$C_{td}$ & Of all pairs of patients, how often is the one who had the event first predicted as riskier?
+  Measured at the 25\%, 50\% and 75\% points of the event times, then averaged. & higher; 0.5 = coin flip \\
+Brier score & Squared error of the predicted probability ``event by time $t$'' versus what happened. & lower \\
+IBS & Brier score averaged over the whole follow-up. & lower \\
+IBLL & Like IBS, but with log-loss. & lower \\
+AUC & Another standard way to measure ranking at a time point. & higher \\
+Antolini $C$ & A $C_{td}$ version that uses the whole curve. & higher \\
+D-calibration $p$ & Tests whether predicted probabilities match observed frequencies. Large test sets make it
+  very strict. & higher ($>0.05$ = no problem found) \\
+MAE & Average error of a predicted event time, in the dataset's time unit. Censored patients are handled
+  with the best guess (``margin'') or ``pseudo-observations''. & lower \\
+Harrell $C$ & Like $C_{td}$ but for a predicted \emph{time}: are earlier events predicted earlier? & higher \\
+\bottomrule
+\end{tabularx}
+\end{table}
+In short: \textbf{$C_{td}$ = does the model put patients in the right order; IBS = are its
+probabilities right.}
+
+%==========================================================================
+\section{The models we compared against}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{lY}
+\toprule
+Model & What it is \\
+\midrule
+SurvTRACE & A transformer survival model (2022), run with the authors' own code. Our closest competitor. \\
+DeepHit & Neural network that predicts the event-time distribution directly (2018). \\
+DSM & Deep Survival Machines: a mixture of simple distributions (2021). \\
+MENSA & A recent multi-event model (2024). \\
+RSF & Random Survival Forest: many decision trees. A strong classic. \\
+PC-Hazard & A simple neural network with the same piecewise hazard as our head. \\
+DeepSurv & A neural version of the Cox model. \\
+Cox & The classic statistical survival model (linear). \\
+\bottomrule
+\end{tabularx}
+\end{table}
+DeepHit, DSM and MENSA use our transformer with their own head; the others are separate models. On
+multi-event data, single-event models are trained once per event.
+
+%==========================================================================
+\section{What each notebook did}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{lYr}
+\toprule
+Notebook & What it did & Runs \\
+\midrule
+01 Tuning & chose the settings of every model and the loss weights, on validation only & 576 \\
+02 Tabular benchmark & all 9 models on METABRIC and SUPPORT (single event) & 180 \\
+03 Multi-event benchmark & all 9 models on EBMT, hsa synthetic, DeepHit synthetic & 270 \\
+04 Encoding / representation & numeric embedding vs quantile vs bins; 13 ways to pool the transformer & 320 \\
+05 Survival losses & S1--S4 on all datasets & 160 \\
+06 Regression head & R1--R4 alone, and every S $\times$ R together with the survival head (``joint'') & 720 \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%==========================================================================
+\section{The results, in plain words}
+
+\subsection{Are we better than the other models? (02, 03)}
+\begin{table}[H]
+\centering
+\resizebox{\textwidth}{!}{\begin{tabular}{lccccc}
+\toprule
+$C_{td}$ & METABRIC & SUPPORT & EBMT & hsa synth. & DeepHit synth. \\
+\midrule
+Best other model & SurvTRACE 0.678 & SurvTRACE 0.638 & RSF 0.549 & SurvTRACE 0.868 & DeepSurv 0.762 \\
+Our best recipe & 0.672 & 0.620 & 0.537 & \textbf{0.868} & 0.744 \\
+Our rank (of 9, S1) & 5 & 4 & 6 & 3 & 5 \\
+\bottomrule
+\end{tabular}}
+\end{table}
+\textbf{Plainly: our model is good but not the best.} It is always in the better half and ties
+SurvTRACE on hsa synthetic, but on the other four datasets something else is slightly better (by
+0.006--0.018). Our \textbf{calibration} (IBS) is good --- close to the best on four datasets, and
+better than SurvTRACE on METABRIC. A sanity check also passed: our run of SurvTRACE gets almost its
+published numbers (0.678 vs 0.691, 0.638 vs 0.640), so the setup is right.
+
+\textbf{EBMT is hard for every model} (all between 0.50 and 0.55): its 4 features say little about the
+outcome.
+
+\subsection{Do the extra losses help? (05)}
+\begin{table}[H]
+\centering
+\begin{tabular}{lccccc}
+\toprule
+$C_{td}$ & METABRIC & SUPPORT & EBMT & hsa synth. & DeepHit synth. \\
+\midrule
+S1: $L_{PCH}$ & 0.667 & 0.615 & 0.529 & 0.849 & 0.743 \\
+S2: $+L_{rank}$ & 0.670 & 0.620 & 0.535 & 0.868 & 0.743 \\
+S3: $+L_{mul}$ & --- & --- & 0.530 & 0.859 & 0.742 \\
+S4: $+$both & --- & --- & 0.537 & 0.867 & 0.742 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\begin{itemize}
+  \item \textbf{$L_{rank}$ helps a little, on every dataset.} The gains are small; statistically clear
+        only on hsa synthetic.
+  \item \textbf{Their real benefit is reliability.} With $L_{PCH}$ alone, training sometimes goes wrong
+        on one split: on hsa one split reached only 0.71 (the others about 0.86), and on EBMT several
+        splits had very bad probabilities (Brier up to 0.6). With $L_{rank}+L_{mul}$ (S4) this did not
+        happen: EBMT's IBS went from 0.338 to 0.233 and became much more stable.
+  \item On DeepHit synthetic nothing changes --- $L_{PCH}$ alone is enough there.
+\end{itemize}
+
+\subsection{Does the numeric embedding help? (04)}
+\begin{itemize}
+  \item METABRIC: yes --- 0.666 versus 0.642 with bins.
+  \item SUPPORT: no --- bins are slightly better (0.627 versus 0.617).
+  \item How the transformer outputs are combined hardly matters (all within $\pm0.01$), except that
+        the [CLS] token is clearly worst.
+\end{itemize}
+
+\subsection{Does the regression head work? (06)}
+\begin{itemize}
+  \item \textbf{R2 (best guess) is better than R1 (observed only)}: it orders the predicted times
+        better on every dataset (Harrell $C$, e.g.\ 0.57 $\rightarrow$ 0.66 on hsa) and has a smaller
+        error on 4 of 5 datasets.
+  \item \textbf{$L_{MM}$ (R3/R4)} changes little.
+  \item \textbf{Training both heads together} (``joint''):
+        \begin{itemize}
+          \item does not hurt the survival predictions, as long as $L_{rank}$ is used (on hsa:
+                0.84--0.85 with $L_{rank}$, 0.72--0.82 without);
+          \item on hsa it even makes the predicted times better (Harrell $C$ 0.69 on average, up to
+                0.79, versus 0.66 alone);
+          \item on DeepHit synthetic the predicted times get worse (0.55 versus 0.70), because joint
+                models pick their best checkpoint by the survival score, not by the time prediction.
+        \end{itemize}
+\end{itemize}
+
+\subsection{What this means for the paper}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{lY}
+\toprule
+Claim & Supported? \\
+\midrule
+``Better accuracy than other models'' & \textbf{No} --- competitive, upper half \\
+``Well calibrated'' & Mostly (not on EBMT) \\
+``$L_{rank}$ and $L_{mul}$ improve the model'' & Yes, but as \textbf{stability and calibration};
+  accuracy gains are small \\
+``The numeric embedding is better than bins'' & On METABRIC yes, on SUPPORT no \\
+``The regression head works; the best-guess loss helps'' & Yes \\
+``Training both heads together helps'' & On hsa yes; neutral elsewhere; worse time prediction on
+  DeepHit synthetic \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%==========================================================================
+\section{Problems we found and fixed along the way}\label{sec:fixes}
+Version 2 was run on Kaggle; several issues were found from the results and fixed before the final
+numbers. They are listed so you know the final results are trustworthy.
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{lYY}
+\toprule
+Problem & What happened & Fix \\
+\midrule
+SurvTRACE crashed & its 2021 code used a NumPy name removed in NumPy 2 & restored the name \\
+Ranking loss gave NaN & on whole-number times a formula ran outside its interval and overflowed & kept it
+  inside the interval \\
+Qwen (LLM) crashed & a library version clash on Kaggle & bypassed the check \\
+IBS/IBLL/AUC missing & some test patients were followed longer than any training patient & handle them
+  correctly (cap the time) \\
+Brier wrong on hsa & 70\% of hsa patients (censored at the end) were silently dropped from the Brier
+  score of the neural models & keep them \\
+Joint models collapsed & the regression loss measured in days (hundreds) drowned the survival loss &
+  measure time as a fraction of follow-up \\
+Some joint runs never learned & they start slowly and were stopped too early (patience 10) & patience 30
+  (also for notebook 05, to be fair) \\
+``Last layer'' runs crashed & wrong layer index (notebook 04) & use the real last-layer number \\
+Kaggle killed long sessions & runs went past the 12-hour limit and nothing was saved & notebooks stop at
+  11\,h\,20 and save \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+%==========================================================================
+\section{Where everything is}
+\begin{itemize}
+  \item Results of each notebook: \texttt{results/version\_2/<notebook>/}
+  \item Figures and reports: \texttt{results/version\_2/analysis/}
+        \begin{itemize}
+          \item \texttt{REPORT.md} --- short comparison of our losses versus other models;
+          \item \texttt{report\_latex/report.pdf} --- 3-page report;
+          \item \texttt{report\_latex/full\_report.pdf} --- 16-page report with every table;
+          \item \texttt{report\_latex/explained.pdf} and \texttt{EXPLAINED.md} --- this document.
+        \end{itemize}
+  \item The plan of version 2: \texttt{notebooks/version\_2/VERSION.md}
+  \item Not yet included: notebook 07 (the language-model part of the paper, \S3) and sequential data
+        (\S4.2, planned for version 3).
+\end{itemize}
+
+\end{document}
