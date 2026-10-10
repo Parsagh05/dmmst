@@ -296,7 +296,84 @@ numbers. They are listed so you know the final results are trustworthy.
 
 ---
 
-## Part 10 — Where everything is
+## Part 10 — The code, briefly
+
+The code lives in the `dmmst` repository (a fork of the open-source **SAT** library, extended by us).
+You never need to call most of it directly: the notebooks do. Here is what each part is for.
+
+### 10.1 How one run works
+Every experiment is a short pipeline of Python programs, each started with a **configuration**:
+
+```
+prepare_data  ->  train_tokenizer  ->  train_labeltransform  ->  finetune
+(read the data)   (feature -> token)   (time intervals,         (train the model,
+                                        best guesses, per split)  score it, save metrics.json)
+```
+
+The first three run once per dataset (the label step once per split); `finetune` runs once per model,
+recipe and split. Baselines use `baselines.py` or `survtrace_official.py` instead of `finetune`.
+
+### 10.2 Configuration (`conf/`, Hydra)
+Settings are not written in the code but in YAML files, combined by the **Hydra** library. A run is
+described by a few overrides on the command line, e.g.
+
+```
+python -m sat.finetune experiments=multievent/survival dataset=hsa_synthetic_me \
+       tasks=v2_survival v2_rank_coeff=1.0 seed=3 split_seed=3
+```
+
+| Folder / file | What it holds |
+|---|---|
+| `conf/experiments/` | one group per dataset family (e.g. `survtrace_metabric`, `multievent`); `defaults.yaml` holds all shared settings (`v2_rank_coeff`, `v2_mul_coeff`, `v2_l1_type`, `v2_mm_coeff`, ...) |
+| `conf/tasks/v2_survival.yaml`, `v2_regression.yaml`, `v2_survival_regression.yaml` | which heads the model has (survival, regression, or both) |
+| `conf/tasks/losses/v2.yaml` | the loss recipe: which losses are on and their weights |
+| `conf/tasks/metrics/v2.yaml` | the metrics computed at evaluation |
+
+### 10.3 The library (`sat/`)
+
+| Path | What it does |
+|---|---|
+| `sat/prepare_data.py`, `sat/data/` | read each dataset into one common format; `data/splitter.py` makes the exact 60/10/30 splits from a seed |
+| `sat/train_labeltransform.py` | builds the time intervals and, **from the training split only**, the Kaplan–Meier best guesses and censoring weights |
+| `sat/models/heads/embeddings.py` | the numeric embedding (feature vector × value) |
+| `sat/models/heads/mtl.py` | the whole model: transformer + the heads it is configured with |
+| `sat/models/heads/survival.py`, `regression.py` | the survival head (hazards → survival curve) and the regression head (predicted time) |
+| `sat/loss/survival/nllpchazard.py` | **L_PCH** |
+| `sat/loss/ranking/sample.py`, `multievent.py` | **L_rank** (between patients) and **L_mul** (between events of one patient) |
+| `sat/loss/regression/l1.py`, `mismatch.py` | **L_MAE** (R1/R2) and **L_MM** (R3/R4) |
+| `sat/loss/factory.py`, `meta.py` | build the recipe: switch on only the losses with weight > 0 and add them up |
+| `sat/finetune.py` | trains with the Hugging Face Trainer, early-stops on validation C_td, scores validation and test, writes `metrics.json` |
+| `sat/evaluate/survtrace_metrics.py` | C_td and Brier at the 25/50/75% time points (the SurvTRACE protocol) |
+| `sat/evaluate/v2_metrics.py` | the other metrics: IBS, IBLL, AUC, Antolini, calibration, MAE, Harrell C |
+| `sat/evaluate/shared.py` | the same scoring for the baselines, so every model is measured by the same code |
+| `sat/baselines.py` | Cox, RSF, DeepSurv, PC-Hazard (from scikit-survival / pycox) |
+| `sat/survtrace_official.py` | runs the authors' SurvTRACE code on our splits |
+| `sat/llm.py` | the language-model experiments (notebook 07) |
+| `sat/utils/km.py` | Kaplan–Meier "best guess" |
+
+### 10.4 Running many experiments (`scripts/`)
+
+| File | What it does |
+|---|---|
+| `scripts/runner.py` | the **Runner**: launches runs in parallel, skips runs that are already done, retries failures once, stops safely before Kaggle's time limit, collects all results into one table, paired significance tests |
+| `scripts/v2.py` | the **version-2 plan**: datasets, how each model is launched, search grids, loss recipes, reading `tuned.json`, table formatting |
+| `scripts/verify_protocol.py` | checks the protocol (split sizes, no test data used for training files) |
+| `scripts/prepare_ebmt.py`, `prepare_public_synthetic.py`, `fetch_survtrace.py` | download / build EBMT, the two synthetic datasets, and the SurvTRACE code |
+
+### 10.5 The notebooks (`notebooks/version_2/`)
+The notebooks are **generated** by `build_notebooks.py` from shared cells, so they all set up the same
+way. On Kaggle each notebook: (1) clones the code from GitHub, (2) installs packages, (3) copies back
+finished runs from an attached previous output, (4) reads `tuned.json`, (5) builds its list of runs and
+gives it to the Runner, (6) writes tables and a zip. Each run leaves two files in the results folder:
+`<run>.json` (all metrics for validation and test) and `<run>.meta.json` (exactly how it was run,
+including the code version).
+
+### 10.6 Tests (`tests/`)
+159 automated tests check, among other things, that our metrics equal the reference libraries, that
+the ranking losses push in the right direction, and the edge cases fixed during version 2. They run
+with `pytest`.
+
+## Part 11 — Where everything is
 - Results of each notebook: `results/version_2/<notebook>/`
 - Figures and reports: `results/version_2/analysis/`
   - `REPORT.md` — the short comparison of our losses vs other models

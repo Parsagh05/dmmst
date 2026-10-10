@@ -388,6 +388,117 @@ Kaggle killed long sessions & runs went past the 12-hour limit and nothing was s
 \end{table}
 
 %==========================================================================
+\section{The code, briefly}
+The code lives in the \texttt{dmmst} repository (a fork of the open-source \textbf{SAT} library,
+extended by us). You never need to call most of it directly: the notebooks do. Here is what each part
+is for.
+
+\subsection{How one run works}
+Every experiment is a short pipeline of Python programs, each started with a \textbf{configuration}:
+\begin{center}
+\texttt{prepare\_data} $\rightarrow$ \texttt{train\_tokenizer} $\rightarrow$
+\texttt{train\_labeltransform} $\rightarrow$ \texttt{finetune}
+\end{center}
+\begin{itemize}
+  \item \texttt{prepare\_data} reads the data; \texttt{train\_tokenizer} turns features into tokens;
+  \item \texttt{train\_labeltransform} makes the time intervals and, per split, the best guesses;
+  \item \texttt{finetune} trains the model, scores it and saves \texttt{metrics.json}.
+\end{itemize}
+The first three run once per dataset (the label step once per split); \texttt{finetune} runs once per
+model, recipe and split. Baselines use \texttt{baselines.py} or \texttt{survtrace\_official.py}
+instead of \texttt{finetune}.
+
+\subsection{Configuration (\texttt{conf/}, Hydra)}
+Settings are not written in the code but in YAML files, combined by the \textbf{Hydra} library. A run
+is described by a few overrides on the command line, e.g.
+\begin{center}
+\small\texttt{python -m sat.finetune experiments=multievent/survival dataset=hsa\_synthetic\_me}\\
+\small\texttt{tasks=v2\_survival v2\_rank\_coeff=1.0 seed=3 split\_seed=3}
+\end{center}
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{lY}
+\toprule
+Folder / file & What it holds \\
+\midrule
+\texttt{conf/experiments/} & one group per dataset family; \texttt{defaults.yaml} holds all shared
+  settings (\texttt{v2\_rank\_coeff}, \texttt{v2\_mul\_coeff}, \texttt{v2\_l1\_type}, \dots) \\
+\texttt{conf/tasks/v2\_*.yaml} & which heads the model has (survival, regression, or both) \\
+\texttt{conf/tasks/losses/v2.yaml} & the loss recipe: which losses are on and their weights \\
+\texttt{conf/tasks/metrics/v2.yaml} & the metrics computed at evaluation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{The library (\texttt{sat/})}
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{lY}
+\toprule
+Path & What it does \\
+\midrule
+\texttt{prepare\_data.py}, \texttt{data/} & read each dataset into one common format;
+  \texttt{data/splitter.py} makes the exact 60/10/30 splits from a seed \\
+\texttt{train\_labeltransform.py} & time intervals and, \textbf{from the training split only}, the
+  Kaplan--Meier best guesses and censoring weights \\
+\texttt{models/heads/embeddings.py} & the numeric embedding (feature vector $\times$ value) \\
+\texttt{models/heads/mtl.py} & the whole model: transformer + the configured heads \\
+\texttt{models/heads/survival.py}, \texttt{regression.py} & survival head (hazards $\rightarrow$
+  curve) and regression head (predicted time) \\
+\texttt{loss/survival/nllpchazard.py} & $L_{PCH}$ \\
+\texttt{loss/ranking/sample.py}, \texttt{multievent.py} & $L_{rank}$ (between patients) and $L_{mul}$
+  (between events of one patient) \\
+\texttt{loss/regression/l1.py}, \texttt{mismatch.py} & $L_{MAE}$ (R1/R2) and $L_{MM}$ (R3/R4) \\
+\texttt{loss/factory.py}, \texttt{meta.py} & build the recipe: only losses with weight $>0$, added up \\
+\texttt{finetune.py} & trains (Hugging Face Trainer), early-stops on validation $C_{td}$, scores
+  validation and test, writes \texttt{metrics.json} \\
+\texttt{evaluate/survtrace\_metrics.py} & $C_{td}$ and Brier at the 25/50/75\% time points \\
+\texttt{evaluate/v2\_metrics.py} & IBS, IBLL, AUC, Antolini, calibration, MAE, Harrell $C$ \\
+\texttt{evaluate/shared.py} & the same scoring for the baselines \\
+\texttt{baselines.py} & Cox, RSF, DeepSurv, PC-Hazard (scikit-survival / pycox) \\
+\texttt{survtrace\_official.py} & the authors' SurvTRACE code on our splits \\
+\texttt{llm.py} & the language-model experiments (notebook 07) \\
+\texttt{utils/km.py} & Kaplan--Meier ``best guess'' \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Running many experiments (\texttt{scripts/})}
+\begin{table}[H]
+\centering
+\small
+\begin{tabularx}{\textwidth}{lY}
+\toprule
+File & What it does \\
+\midrule
+\texttt{runner.py} & the \textbf{Runner}: launches runs in parallel, skips finished ones, retries
+  failures once, stops safely before Kaggle's time limit, collects all results into one table,
+  paired significance tests \\
+\texttt{v2.py} & the \textbf{version-2 plan}: datasets, how each model is launched, search grids, loss
+  recipes, reading \texttt{tuned.json}, tables \\
+\texttt{verify\_protocol.py} & checks the protocol (split sizes, no test data in training files) \\
+\texttt{prepare\_ebmt.py}, \texttt{prepare\_public\_synthetic.py}, \texttt{fetch\_survtrace.py} &
+  download or build EBMT, the synthetic datasets and the SurvTRACE code \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{The notebooks (\texttt{notebooks/version\_2/})}
+The notebooks are \textbf{generated} by \texttt{build\_notebooks.py} from shared cells, so they all set
+up the same way. On Kaggle each notebook (1) clones the code from GitHub, (2) installs packages,
+(3) copies back finished runs from an attached previous output, (4) reads \texttt{tuned.json},
+(5) builds its list of runs and gives it to the Runner, (6) writes tables and a zip. Each run leaves
+two files: \texttt{<run>.json} (all metrics for validation and test) and \texttt{<run>.meta.json}
+(exactly how it was run, including the code version).
+
+\subsection{Tests (\texttt{tests/})}
+159 automated tests check, among other things, that our metrics equal the reference libraries, that
+the ranking losses push in the right direction, and the edge cases fixed during version 2. They run
+with \texttt{pytest}.
+
+%==========================================================================
 \section{Where everything is}
 \begin{itemize}
   \item Results of each notebook: \texttt{results/version\_2/<notebook>/}
