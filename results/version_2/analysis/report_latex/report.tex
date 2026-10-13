@@ -24,9 +24,14 @@ under the same protocol:
 \end{itemize}
 
 \paragraph{Datasets.}
-METABRIC and SUPPORT (real, one event: death);
-EBMT (real, 4 events);
-hsa synthetic and DeepHit synthetic (published synthetic data, 2 events).
+
+\begin{itemize}
+  \item \textbf{METABRIC} (real, 1,904 patients, 1 event: death): breast-cancer patients with gene-expression and clinical features.
+  \item \textbf{SUPPORT} (real, 8,873 patients, 1 event: death): seriously ill hospitalised adults with lab values and vital signs.
+  \item \textbf{EBMT} (real, 2,279 patients, 4 events: recovery, adverse event, relapse, death): bone-marrow transplant patients with only four categorical features.
+  \item \textbf{hsa synthetic} (synthetic, 5,000 patients, 2 events that can both occur): published simulated data (Tjandra et al.\ 2021).
+  \item \textbf{DeepHit synthetic} (synthetic, 30,000 patients, 2 competing events): simulated data from the DeepHit paper (Lee et al.\ 2018).
+\end{itemize}
 SEER was planned as an additional large real dataset, but because of the updated SEER+
 data-access policies we could not obtain access to it.
 
@@ -67,12 +72,27 @@ Predicted times are scored by MAE (mean absolute error, lower is better; in the 
 each dataset) and Harrell $C$ (how well predicted times rank the patients, higher is better).
 
 \paragraph{Baselines.}
-SurvTRACE (authors' code), DeepHit, RSF, PC-Hazard, DeepSurv, MENSA, Cox, DSM.
+
+\begin{itemize}
+  \item \textbf{Our model (DMMST):} a transformer reads one token per feature; a survival head predicts
+        a hazard per time interval (survival curve per event), an optional regression head predicts the event time.
+  \item \textbf{SurvTRACE:} transformer survival model (2022), the closest to ours; run with the authors' code.
+  \item \textbf{Cox:} classic statistical model; risk = baseline $\times$ exp(weighted sum of features).
+  \item \textbf{DeepSurv:} Cox model with a neural network instead of the weighted sum.
+  \item \textbf{RSF} (random survival forest): many decision trees, averaged.
+  \item \textbf{PC-Hazard:} neural network with a piecewise-constant hazard (like our survival head, without a transformer).
+  \item \textbf{DeepHit:} neural network predicting the probability of each event in each time interval.
+  \item \textbf{DSM} (Deep Survival Machines): survival time as a mixture of a few smooth distributions.
+  \item \textbf{MENSA:} recent model built for multi-event data.
+\end{itemize}
 
 \paragraph{Scores.}
-$C_{td}$: how well patients are ranked by risk (higher is better; 0.5 is random).
-IBS: integrated Brier score, the accuracy of the predicted survival probabilities
-(lower is better).
+\begin{itemize}
+  \item $C_{td}$: does the model give higher risk to the patient whose event comes first? (higher is better; 0.5 is random, 1 is perfect).
+  \item IBS: integrated Brier score, the squared error of the predicted survival probabilities over time (lower is better).
+  \item MAE: average error of the predicted event time, in the dataset's time unit (lower is better).
+  \item Harrell $C$: like $C_{td}$, but for the predicted times (higher is better).
+\end{itemize}
 
 \section{Results}
 
