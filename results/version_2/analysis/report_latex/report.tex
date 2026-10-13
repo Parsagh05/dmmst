@@ -48,17 +48,17 @@ $L_{mul}$ compares different events of the same patient, so S3 and S4 do not exi
 single-event data (``---'' in the tables).
 
 \paragraph{Regression head.} Besides the survival curve, the model can predict one number:
-the time of the event. For censored patients the true time is unknown, so the ``best guess''
-(from a Kaplan--Meier curve of the training data) is used as the target.
+the time of the event. For censored patients the true time is unknown; R1 simply leaves them out,
+the others use a ``best guess'' (from a Kaplan--Meier curve of the training data) as the target.
 \begin{center}
 \begin{tabular}{ll}
 \toprule
 Name & Losses \\
 \midrule
-R1 & $L_{MAE}$ with best guess \\
-R2 & $L_{MAE}$ with best guess $+ L_{rank}$ \\
-R3 & $L_{MM}$ (mismatch loss; multi-event data only) \\
-R4 & $L_{MM} + L_{rank}$ (multi-event data only) \\
+R1 & $L_{MAE}$ on observed events only (censored patients ignored) \\
+R2 & $L_{MAE}$ with the best guess for censored patients \\
+R3 & R2 + $L_{MM}$ (mismatch loss), observed times (multi-event data only) \\
+R4 & R2 + $L_{MM}$, best guesses (multi-event data only) \\
 Joint & both heads trained together, every S $\times$ R combination \\
 \bottomrule
 \end{tabular}
@@ -146,15 +146,16 @@ With $L_{PCH}$ alone (S1) some splits fail; with $L_{rank}+L_{mul}$ (S4) none do
 \centering
 \small
 \caption{Predicted times: Harrell $C$ (higher is better), mean (sd) over 10 splits. Best per dataset
-in bold. ``Joint'' is the mean over all S $\times$ R combinations.}
+in bold. ``Joint'' is the mean over all S $\times$ R combinations (both heads trained together).
+n/a: $L_{MM}$ needs several events, so R3/R4 do not exist on METABRIC and SUPPORT.}
 \begin{tabular}{lccccc}
 \toprule
 Recipe & METABRIC & SUPPORT & EBMT & hsa synth. & DeepHit synth. \\
 \midrule
 R1    & 0.608 (0.018) & 0.546 (0.007) & 0.510 (0.012) & 0.566 (0.021) & 0.689 (0.046) \\
 R2    & \textbf{0.643} (0.012) & \textbf{0.592} (0.009) & 0.524 (0.014) & 0.663 (0.047) & 0.704 (0.042) \\
-R3    & ---  & ---  & 0.530 (0.009) & 0.663 (0.087) & 0.700 (0.035) \\
-R4    & ---  & ---  & \textbf{0.533} (0.011) & 0.665 (0.063) & \textbf{0.714} (0.003) \\
+R3    & n/a & n/a & 0.530 (0.009) & 0.663 (0.087) & 0.700 (0.035) \\
+R4    & n/a & n/a & \textbf{0.533} (0.011) & 0.665 (0.063) & \textbf{0.714} (0.003) \\
 Joint & 0.626 (0.026) & 0.575 (0.023) & 0.504 (0.015) & \textbf{0.689} (0.125) & 0.551 (0.141) \\
 \bottomrule
 \end{tabular}
@@ -163,19 +164,37 @@ Joint & 0.626 (0.026) & 0.575 (0.023) & 0.504 (0.015) & \textbf{0.689} (0.125) &
 \begin{table}[H]
 \centering
 \small
-\caption{Predicted times: MAE (lower is better), mean (sd) over 10 splits.}
+\caption{Predicted times: MAE (lower is better), mean (sd) over 10 splits, in the time unit of each
+dataset (so values can only be compared within a column). n/a as in Table~3.}
 \begin{tabular}{lccccc}
 \toprule
 Recipe & METABRIC & SUPPORT & EBMT & hsa synth. & DeepHit synth. \\
 \midrule
 R1    & 80.6 (2.8) & 613.9 (9.1) & 4254 (123) & 396.4 (5.8) & 38.8 (1.5) \\
 R2    & \textbf{76.7} (3.2) & \textbf{604.6} (9.6) & \textbf{4232} (130) & 408.7 (96.7) & 34.8 (3.2) \\
-R3    & ---  & ---  & 4245 (126) & 420.6 (94.9) & 35.0 (3.0) \\
-R4    & ---  & ---  & 4247 (120) & \textbf{379.8} (62.2) & \textbf{33.9} (0.4) \\
+R3    & n/a & n/a & 4245 (126) & 420.6 (94.9) & 35.0 (3.0) \\
+R4    & n/a & n/a & 4247 (120) & \textbf{379.8} (62.2) & \textbf{33.9} (0.4) \\
 Joint & 80.7 (4.7) & 612.3 (13.7) & 4321 (150) & 487.5 (120.6) & 44.3 (5.6) \\
 \bottomrule
 \end{tabular}
 \end{table}
+
+\paragraph{What these tables show.}
+\begin{itemize}
+  \item \textbf{Using the best guess for censored patients (R2) is better than ignoring them (R1).}
+        R2 ranks predicted times better on every dataset (Harrell $C$ 0.566 $\rightarrow$ 0.663 on hsa
+        synthetic, 0.546 $\rightarrow$ 0.592 on SUPPORT) and has a lower MAE on four of five datasets
+        (hsa synthetic is the exception).
+  \item \textbf{The mismatch loss (R3, R4) adds little.} R4 is the best recipe on EBMT, hsa and DeepHit
+        synthetic, but only by small margins over R2.
+  \item \textbf{Joint training:} on hsa synthetic training both heads together ranks times better than
+        the regression head alone (0.689 vs about 0.66). On DeepHit synthetic it is much worse (0.551
+        vs about 0.70), because joint models pick their checkpoint by the survival $C_{td}$, not by
+        the quality of the predicted times. The large sd (0.125, 0.141) shows that the result depends
+        strongly on the recipe.
+  \item \textbf{EBMT:} Harrell $C \approx 0.5$ in every setup, so predicted times there carry almost
+        no information (the same as for the survival head).
+\end{itemize}
 
 \section{Findings}
 \begin{enumerate}
@@ -189,9 +208,8 @@ Joint & 80.7 (4.7) & 612.3 (13.7) & 4321 (150) & 487.5 (120.6) & 44.3 (5.6) \\
         does not happen: the EBMT IBS drops from 0.338 to 0.233.
   \item \textbf{Adding the regression head does not hurt survival prediction} when $L_{rank}$ is
         used (``Full'' $\approx$ S2/S4).
-  \item \textbf{$L_{rank}$ also helps the regression head.} R2 ranks predicted times better than R1
-        on every dataset (e.g.\ Harrell $C$ 0.566 $\rightarrow$ 0.663 on hsa synthetic) and lowers
-        the MAE on four of five datasets (hsa synthetic is the exception).
+  \item \textbf{For the regression head the best guess matters most} (R2 better than R1);
+        $L_{MM}$ adds little.
   \item \textbf{Joint training helps predicted times on hsa synthetic but hurts them on DeepHit
         synthetic} (Harrell $C$ 0.689 vs 0.551), because the checkpoint is chosen by the survival
         $C_{td}$, not by the regression score.
