@@ -232,11 +232,11 @@ Full & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
   \item \textbf{The mismatch loss (R3, R4) adds little.} R4 is the best recipe on EBMT, hsa and DeepHit
         synthetic, but only by small margins over R2.
   \item \textbf{Full:} on hsa synthetic training both heads together ranks times much
-        better than the regression head alone (0.767 vs about 0.66); the best joint combination there
-        (S1 $\times$ R4) even reaches 0.790, but it was picked by its test score, so it is optimistic.
-        On DeepHit synthetic joint training is much worse (0.576 vs about 0.70), because joint models
+        better than the regression head alone (0.767 vs about 0.66); the best S $\times$ R combination
+        there (S1 $\times$ R4) even reaches 0.790, but it was picked by its test score, so it is optimistic.
+        On DeepHit synthetic Full is much worse (0.576 vs about 0.70), because models with both heads
         pick their checkpoint by the survival $C_{td}$, not by the quality of the predicted times.
-        The large sd (0.112, 0.114) shows that the joint results vary a lot between splits.
+        The large sd (0.112, 0.114) shows that these results vary a lot between splits.
         On METABRIC and SUPPORT, Full is as good as the regression head alone.
   \item \textbf{EBMT:} Harrell $C \approx 0.5$ in every setup, so predicted times there carry almost
         no information (the same as for the survival head).
@@ -256,7 +256,7 @@ Full & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
         used (``Full'' $\approx$ S2/S4).
   \item \textbf{For the regression head the best guess matters most} (R2 better than R1);
         $L_{MM}$ adds little.
-  \item \textbf{Joint training helps predicted times on hsa synthetic but hurts them on DeepHit
+  \item \textbf{Full (both heads) helps predicted times on hsa synthetic but hurts them on DeepHit
         synthetic} (Harrell $C$ 0.767 vs 0.576), because the checkpoint is chosen by the survival
         $C_{td}$, not by the regression score.
   \item \textbf{Calibration is good} on four of five datasets, and better than SurvTRACE on
