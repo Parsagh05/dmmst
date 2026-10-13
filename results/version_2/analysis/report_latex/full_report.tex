@@ -327,14 +327,15 @@ and early stopping waits 30 validation rounds (Section~\ref{sec:notes}).
 \begin{table}[H]
 \centering
 \caption{Predicted times. MAE in the dataset's time unit (lower is better); Harrell's $C$ of the predicted
-time (higher is better); $C_{td}$ of the survival head for the joint models.}
+time (higher is better); $C_{td}$ of the survival head for the joint models. ``Full (joint)'' is the
+same model as ``Ours Full'' in the benchmark tables; all joint recipes are in Table~\ref{tab:jointrec}.}
 \tab{regression}
 \end{table}
 
 \begin{table}[H]
 \centering
 \caption{Joint models on multi-event data: $C_{td}$ / Harrell's $C$ of the predicted time for every
-survival recipe (rows) and regression recipe (columns).}
+survival recipe (rows) and regression recipe (columns).}\label{tab:jointrec}
 \tab{joint_recipes}
 \end{table}
 
@@ -369,8 +370,9 @@ relative to the regression-only models; right: $C_{td}$ of survival-only (notebo
         METABRIC, SUPPORT, EBMT and DeepHit synthetic. On hsa synthetic it does so only with $L_{rank}$
         (S2/S4 with R2--R4: 0.84--0.85 vs 0.86); without $L_{rank}$ (S1/S3) it is lower (0.72--0.82).
   \item \textbf{Effect on the predicted times:} on hsa synthetic the joint models rank times better than
-        the regression head alone (Harrell's $C$ 0.69 on average, up to 0.79, vs 0.66). On DeepHit
-        synthetic they are worse (0.55 vs 0.70): joint models choose their checkpoint by the survival
+        the regression head alone (Harrell's $C$ 0.77 for Full, 0.69 on average over all recipes, up to
+        0.79 for S1 $\times$ R4, vs 0.66; the best recipe is picked on test scores, so it is optimistic).
+        On DeepHit synthetic they are worse (Full 0.58, average 0.55, vs 0.70): joint models choose their checkpoint by the survival
         $C_{td}$, so the regression head is not what is optimised.
   \item EBMT: predicted times carry almost no ranking information in any setup (Harrell's $C\approx0.5$).
 \end{itemize}

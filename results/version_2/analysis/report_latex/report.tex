@@ -190,17 +190,18 @@ With $L_{PCH}$ alone (S1) some splits fail; with $L_{rank}+L_{mul}$ (S4) none do
 \centering
 \small
 \caption{Predicted times: Harrell $C$ (higher is better), mean (sd) over 10 splits. Best per dataset
-in bold. ``Joint'' is the mean over all S $\times$ R combinations (both heads trained together).
+in bold. ``Full (joint)'' is the same model as ``Ours Full'' in Tables~1--2: both heads trained
+together, S4 $\times$ R2 (S2 $\times$ R2 on METABRIC and SUPPORT).
 n/a: $L_{MM}$ needs several events, so R3/R4 do not exist on METABRIC and SUPPORT.}
 \begin{tabular}{lccccc}
 \toprule
 Recipe & METABRIC & SUPPORT & EBMT & hsa synth. & DeepHit synth. \\
 \midrule
 R1    & 0.608 (0.018) & 0.546 (0.007) & 0.510 (0.012) & 0.566 (0.021) & 0.689 (0.046) \\
-R2    & \textbf{0.643} (0.012) & \textbf{0.592} (0.009) & 0.524 (0.014) & 0.663 (0.047) & 0.704 (0.042) \\
+R2    & \textbf{0.643} (0.012) & 0.592 (0.009) & 0.524 (0.014) & 0.663 (0.047) & 0.704 (0.042) \\
 R3    & n/a & n/a & 0.530 (0.009) & 0.663 (0.087) & 0.700 (0.035) \\
 R4    & n/a & n/a & \textbf{0.533} (0.011) & 0.665 (0.063) & \textbf{0.714} (0.003) \\
-Joint & 0.626 (0.026) & 0.575 (0.023) & 0.504 (0.015) & \textbf{0.689} (0.125) & 0.551 (0.141) \\
+Full (joint) & 0.642 (0.015) & \textbf{0.594} (0.008) & 0.505 (0.018) & \textbf{0.767} (0.112) & 0.576 (0.114) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -218,7 +219,7 @@ R1    & 80.6 (2.8) & 613.9 (9.1) & 4254 (123) & 396.4 (5.8) & 38.8 (1.5) \\
 R2    & \textbf{76.7} (3.2) & \textbf{604.6} (9.6) & \textbf{4232} (130) & 408.7 (96.7) & 34.8 (3.2) \\
 R3    & n/a & n/a & 4245 (126) & 420.6 (94.9) & 35.0 (3.0) \\
 R4    & n/a & n/a & 4247 (120) & \textbf{379.8} (62.2) & \textbf{33.9} (0.4) \\
-Joint & 80.7 (4.7) & 612.3 (13.7) & 4321 (150) & 487.5 (120.6) & 44.3 (5.6) \\
+Full (joint) & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -231,11 +232,13 @@ Joint & 80.7 (4.7) & 612.3 (13.7) & 4321 (150) & 487.5 (120.6) & 44.3 (5.6) \\
         (hsa synthetic is the exception).
   \item \textbf{The mismatch loss (R3, R4) adds little.} R4 is the best recipe on EBMT, hsa and DeepHit
         synthetic, but only by small margins over R2.
-  \item \textbf{Joint training:} on hsa synthetic training both heads together ranks times better than
-        the regression head alone (0.689 vs about 0.66). On DeepHit synthetic it is much worse (0.551
-        vs about 0.70), because joint models pick their checkpoint by the survival $C_{td}$, not by
-        the quality of the predicted times. The large sd (0.125, 0.141) shows that the result depends
-        strongly on the recipe.
+  \item \textbf{Joint training (Full):} on hsa synthetic training both heads together ranks times much
+        better than the regression head alone (0.767 vs about 0.66); the best joint combination there
+        (S1 $\times$ R4) even reaches 0.790, but it was picked by its test score, so it is optimistic.
+        On DeepHit synthetic joint training is much worse (0.576 vs about 0.70), because joint models
+        pick their checkpoint by the survival $C_{td}$, not by the quality of the predicted times.
+        The large sd (0.112, 0.114) shows that the joint results vary a lot between splits.
+        On METABRIC and SUPPORT, Full is as good as the regression head alone.
   \item \textbf{EBMT:} Harrell $C \approx 0.5$ in every setup, so predicted times there carry almost
         no information (the same as for the survival head).
 \end{itemize}
@@ -255,7 +258,7 @@ Joint & 80.7 (4.7) & 612.3 (13.7) & 4321 (150) & 487.5 (120.6) & 44.3 (5.6) \\
   \item \textbf{For the regression head the best guess matters most} (R2 better than R1);
         $L_{MM}$ adds little.
   \item \textbf{Joint training helps predicted times on hsa synthetic but hurts them on DeepHit
-        synthetic} (Harrell $C$ 0.689 vs 0.551), because the checkpoint is chosen by the survival
+        synthetic} (Harrell $C$ 0.767 vs 0.576), because the checkpoint is chosen by the survival
         $C_{td}$, not by the regression score.
   \item \textbf{Calibration is good} on four of five datasets, and better than SurvTRACE on
         METABRIC. EBMT is the exception.

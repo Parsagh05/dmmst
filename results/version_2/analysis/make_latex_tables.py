@@ -151,8 +151,11 @@ for ds in DS:
         y = x[x.variant == v]
         lines.append(f"{DS[ds]} & regression only & {v.replace('reg_', '')} & {cell(y.reg_mae_margin, d=1)} & "
                      f"{cell(y.reg_mae_pseudo_obs, d=1)} & {cell(y.reg_harrell)} & --- \\\\")
-    j = x[x.setup == "joint"]
-    lines.append(f"{DS[ds]} & joint (all recipes) & mean & {cell(j.reg_mae_margin, d=1)} & "
+    full = "joint_S4xR2" if K[ds] > 1 else "joint_S2xR2"
+    j = x[x.variant == full]
+    recipe = full.replace("joint_", "").replace("x", " $\\times$ ")
+    lines.append(f"{DS[ds]} & Full (joint) & {recipe} & "
+                 f"{cell(j.reg_mae_margin, d=1)} & "
                  f"{cell(j.reg_mae_pseudo_obs, d=1)} & {cell(j.reg_harrell)} & {cell(j.ctd_weighted_avg)} \\\\")
     lines.append("\\midrule")
 write("regression", "Dataset & Setup & Recipe & MAE-margin & MAE-pseudo-obs. & Harrell $C$ & $C_{td}$",
