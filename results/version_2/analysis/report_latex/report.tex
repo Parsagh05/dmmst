@@ -96,7 +96,13 @@ The first two score the survival head, the last two the regression head.
         IBS (integrated Brier score) is the Brier score averaged over the whole time range.
   \item MAE (mean absolute error): average distance between the predicted and the true event time,
         in the dataset's time unit (lower is better).
-  \item Harrell $C$: the classic C-index, applied to the predicted times (higher is better).
+  \item Harrell $C$: the classic C-index, applied to the predicted times. Take every pair of patients
+        where we know who had the event first (the earlier time must be an observed event, not
+        censoring); the pair is correct if that patient also got the shorter predicted time.
+        Harrell $C$ is the share of correct pairs (higher is better; 0.5 is random, 1 is perfect).
+        Example: A has the event at month 5, B at month 12; the model predicts 8 and 10 months:
+        correct, even though both predictions are off. So Harrell $C$ measures the \emph{order} of the
+        predicted times, MAE their \emph{size}.
 \end{itemize}
 
 \section{Results}
