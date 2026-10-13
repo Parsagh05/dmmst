@@ -262,8 +262,6 @@ Full & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
         (0.594 vs 0.592), slightly worse on EBMT (0.505 vs 0.524, both close to random) and clearly
         worse on DeepHit synthetic (0.576 vs 0.704), because the checkpoint is chosen by the survival
         $C_{td}$, not by the regression score.
-  \item \textbf{Calibration is good} on four of five datasets, and better than SurvTRACE on
-        METABRIC. EBMT is the exception.
   \item \textbf{EBMT is hard for every model} ($C_{td}$ 0.50--0.55): it has only four categorical
         features.
 \end{enumerate}
