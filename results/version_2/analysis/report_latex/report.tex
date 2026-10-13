@@ -256,8 +256,11 @@ Full & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
         used (``Full'' $\approx$ S2/S4).
   \item \textbf{For the regression head the best guess matters most} (R2 better than R1);
         $L_{MM}$ adds little.
-  \item \textbf{Full (both heads) helps predicted times on hsa synthetic but hurts them on DeepHit
-        synthetic} (Harrell $C$ 0.767 vs 0.576), because the checkpoint is chosen by the survival
+  \item \textbf{Training both heads together (Full) changes the predicted times differently per dataset}
+        (Harrell $C$, Full vs the regression head alone with the same loss, R2):
+        better on hsa synthetic (0.767 vs 0.663), the same on METABRIC (0.642 vs 0.643) and SUPPORT
+        (0.594 vs 0.592), slightly worse on EBMT (0.505 vs 0.524, both close to random) and clearly
+        worse on DeepHit synthetic (0.576 vs 0.704), because the checkpoint is chosen by the survival
         $C_{td}$, not by the regression score.
   \item \textbf{Calibration is good} on four of five datasets, and better than SurvTRACE on
         METABRIC. EBMT is the exception.
