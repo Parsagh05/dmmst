@@ -105,6 +105,23 @@ The first two score the survival head, the last two the regression head.
         predicted times, MAE their \emph{size}.
 \end{itemize}
 
+\paragraph{Losses (what each one does).}
+\emph{Survival head:}
+\begin{itemize}
+  \item $L_{PCH}$: the main loss; makes the predicted survival curves fit what really happened
+        (event times and censoring).
+  \item $L_{rank}$: compares patients; the patient whose event comes first should get the higher risk.
+  \item $L_{mul}$: compares the events of one patient; the event that happens first should get the
+        higher risk (multi-event data only).
+\end{itemize}
+\emph{Regression head:}
+\begin{itemize}
+  \item $L_{MAE}$: the distance between predicted and true event time; for censored patients the true
+        time is replaced by the best guess (R2--R4) or the patient is left out (R1).
+  \item $L_{MM}$ (mismatch): penalises the model when it predicts the wrong event to come first
+        (multi-event data only).
+\end{itemize}
+
 \section{Results}
 
 \begin{table}[H]
