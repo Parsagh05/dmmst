@@ -117,6 +117,20 @@ R4 & R2 + $L_{MM}$, best guesses (multi-event data only) \\
 \end{tabular}
 \end{center}
 
+\paragraph{Tuning.} Before the experiments, the settings of every model were chosen on the
+validation set of the first split only (the test set was never used). It was done in two steps:
+\begin{enumerate}
+  \item \textbf{Models:} for our model and SurvTRACE, 24 settings were tried, drawn from SurvTRACE's
+        published search grid (learning rate, weight decay, number of layers, embedding size,
+        hidden size, attention heads). Cox, RSF, DeepSurv and PC-Hazard were tuned on their own small
+        grids. DeepHit, DSM and MENSA use our tuned transformer with their own head.
+  \item \textbf{Loss weights:} with the chosen model, the weight and $\sigma$ of $L_{rank}$ and
+        $L_{mul}$ (9 combinations each), the weight of $L_{MM}$ (3 values) and the time unit of the
+        regression head were chosen.
+\end{enumerate}
+For each dataset, the setting with the best validation $C_{td}$ was kept (for the regression head:
+the lowest validation MAE) and then used in all experiments.
+
 \section{Results}
 
 \begin{table}[H]
