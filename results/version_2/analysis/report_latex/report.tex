@@ -87,11 +87,16 @@ each dataset) and Harrell $C$ (how well predicted times rank the patients, highe
 \end{itemize}
 
 \paragraph{Scores.}
+The first two score the survival head, the last two the regression head.
 \begin{itemize}
-  \item $C_{td}$: does the model give higher risk to the patient whose event comes first? (higher is better; 0.5 is random, 1 is perfect).
-  \item IBS: integrated Brier score, the squared error of the predicted survival probabilities over time (lower is better).
-  \item MAE: average error of the predicted event time, in the dataset's time unit (lower is better).
-  \item Harrell $C$: like $C_{td}$, but for the predicted times (higher is better).
+  \item $C_{td}$ (time-dependent C-index): does the model give higher risk to the patient whose event
+        comes first? (higher is better; 0.5 is random, 1 is perfect).
+  \item Brier score: how close is the predicted probability to what actually happened? It is the
+        squared error, averaged over all patients (lower is better; always guessing 50\% gives 0.25).
+        IBS (integrated Brier score) is the Brier score averaged over the whole time range.
+  \item MAE (mean absolute error): average distance between the predicted and the true event time,
+        in the dataset's time unit (lower is better).
+  \item Harrell $C$: the classic C-index, applied to the predicted times (higher is better).
 \end{itemize}
 
 \section{Results}
