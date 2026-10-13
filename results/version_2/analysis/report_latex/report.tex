@@ -88,7 +88,7 @@ S1 & $L_{PCH}$ (survival likelihood) \\
 S2 & $L_{PCH} + L_{rank}$ \\
 S3 & $L_{PCH} + L_{mul}$ (multi-event data only) \\
 S4 & $L_{PCH} + L_{rank} + L_{mul}$ (multi-event data only) \\
-Full & survival head with all its losses + regression head ($L_{MAE}$ with best guess) \\
+Full & the complete model: one joint model, S4 $\times$ R2 (S2 $\times$ R2 on single-event data) \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -113,7 +113,7 @@ R1 & $L_{MAE}$ on observed events only (censored patients ignored) \\
 R2 & $L_{MAE}$ with the best guess for censored patients \\
 R3 & R2 + $L_{MM}$ (mismatch loss), observed times (multi-event data only) \\
 R4 & R2 + $L_{MM}$, best guesses (multi-event data only) \\
-Joint & both heads trained together, every S $\times$ R combination \\
+Joint & both heads trained together, every S $\times$ R combination (``Full'' is one of them) \\
 \bottomrule
 \end{tabular}
 \end{center}
