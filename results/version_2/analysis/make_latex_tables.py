@@ -154,7 +154,7 @@ for ds in DS:
     full = "joint_S4xR2" if K[ds] > 1 else "joint_S2xR2"
     j = x[x.variant == full]
     recipe = full.replace("joint_", "").replace("x", " $\\times$ ")
-    lines.append(f"{DS[ds]} & Full (joint) & {recipe} & "
+    lines.append(f"{DS[ds]} & Full & {recipe} & "
                  f"{cell(j.reg_mae_margin, d=1)} & "
                  f"{cell(j.reg_mae_pseudo_obs, d=1)} & {cell(j.reg_harrell)} & {cell(j.ctd_weighted_avg)} \\\\")
     lines.append("\\midrule")

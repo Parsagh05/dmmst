@@ -88,7 +88,7 @@ S1 & $L_{PCH}$ (survival likelihood) \\
 S2 & $L_{PCH} + L_{rank}$ \\
 S3 & $L_{PCH} + L_{mul}$ (multi-event data only) \\
 S4 & $L_{PCH} + L_{rank} + L_{mul}$ (multi-event data only) \\
-Full & the complete model: one joint model, S4 $\times$ R2 (S2 $\times$ R2 on single-event data) \\
+Full & the complete model: both heads trained together, S4 $\times$ R2 (S2 $\times$ R2 on single-event data) \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -113,7 +113,6 @@ R1 & $L_{MAE}$ on observed events only (censored patients ignored) \\
 R2 & $L_{MAE}$ with the best guess for censored patients \\
 R3 & R2 + $L_{MM}$ (mismatch loss), observed times (multi-event data only) \\
 R4 & R2 + $L_{MM}$, best guesses (multi-event data only) \\
-Joint & both heads trained together, every S $\times$ R combination (``Full'' is one of them) \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -190,7 +189,7 @@ With $L_{PCH}$ alone (S1) some splits fail; with $L_{rank}+L_{mul}$ (S4) none do
 \centering
 \small
 \caption{Predicted times: Harrell $C$ (higher is better), mean (sd) over 10 splits. Best per dataset
-in bold. ``Full (joint)'' is the same model as ``Ours Full'' in Tables~1--2: both heads trained
+in bold. ``Full'' is the same model as ``Ours Full'' in Tables~1--2: both heads trained
 together, S4 $\times$ R2 (S2 $\times$ R2 on METABRIC and SUPPORT).
 n/a: $L_{MM}$ needs several events, so R3/R4 do not exist on METABRIC and SUPPORT.}
 \begin{tabular}{lccccc}
@@ -201,7 +200,7 @@ R1    & 0.608 (0.018) & 0.546 (0.007) & 0.510 (0.012) & 0.566 (0.021) & 0.689 (0
 R2    & \textbf{0.643} (0.012) & 0.592 (0.009) & 0.524 (0.014) & 0.663 (0.047) & 0.704 (0.042) \\
 R3    & n/a & n/a & 0.530 (0.009) & 0.663 (0.087) & 0.700 (0.035) \\
 R4    & n/a & n/a & \textbf{0.533} (0.011) & 0.665 (0.063) & \textbf{0.714} (0.003) \\
-Full (joint) & 0.642 (0.015) & \textbf{0.594} (0.008) & 0.505 (0.018) & \textbf{0.767} (0.112) & 0.576 (0.114) \\
+Full & 0.642 (0.015) & \textbf{0.594} (0.008) & 0.505 (0.018) & \textbf{0.767} (0.112) & 0.576 (0.114) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -219,7 +218,7 @@ R1    & 80.6 (2.8) & 613.9 (9.1) & 4254 (123) & 396.4 (5.8) & 38.8 (1.5) \\
 R2    & \textbf{76.7} (3.2) & \textbf{604.6} (9.6) & \textbf{4232} (130) & 408.7 (96.7) & 34.8 (3.2) \\
 R3    & n/a & n/a & 4245 (126) & 420.6 (94.9) & 35.0 (3.0) \\
 R4    & n/a & n/a & 4247 (120) & \textbf{379.8} (62.2) & \textbf{33.9} (0.4) \\
-Full (joint) & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
+Full & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.2) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -232,7 +231,7 @@ Full (joint) & 77.6 (3.7) & 609.5 (15.3) & 4312 (111) & 435.2 (115.8) & 43.0 (5.
         (hsa synthetic is the exception).
   \item \textbf{The mismatch loss (R3, R4) adds little.} R4 is the best recipe on EBMT, hsa and DeepHit
         synthetic, but only by small margins over R2.
-  \item \textbf{Joint training (Full):} on hsa synthetic training both heads together ranks times much
+  \item \textbf{Full:} on hsa synthetic training both heads together ranks times much
         better than the regression head alone (0.767 vs about 0.66); the best joint combination there
         (S1 $\times$ R4) even reaches 0.790, but it was picked by its test score, so it is optimistic.
         On DeepHit synthetic joint training is much worse (0.576 vs about 0.70), because joint models
