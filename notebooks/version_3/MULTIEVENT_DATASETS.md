@@ -20,8 +20,6 @@ Access: **open** = download freely; **registration** = free account + accept ter
 | **MIMIC-III** | ICU (Boston) | 13,801 stays | 3 (respiratory failure, shock, death) | Semi-competing | Many, incl. time series | Credentialed (same PhysioNet access as MIMIC-IV) | Tjandra, Moon |
 | **ADNI** | Alzheimer's | 1,604 | 2 (Alzheimer's onset, death) | Semi-competing | Clinical, cognitive, imaging | Application (adni.loni.usc.edu) | Tjandra |
 | **SEER** | US cancer registry | 11k-500k+ | 1-2 (cause of death) | Competing | ~17 | Blocked (SEER+ policy) | MENSA, Tjandra |
-| Dana-Farber VTE | Cancer, blood clots | - | 2 (VTE, death) | Competing | Longitudinal EHR | Private | Moon |
-| Simulated illness-death (`coxed`) | Simulated | 5,000 | 2-3 states | Multi-state | Few | Open (R package) | Groha |
 
 Patient counts and feature numbers for MENSA's datasets are from its appendix (Table 7),
 whose text extraction was partly scrambled; check them when the prepare scripts are written.
