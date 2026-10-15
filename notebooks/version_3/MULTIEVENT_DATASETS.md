@@ -12,8 +12,8 @@ Access: **open** = download freely; **registration** = free account + accept ter
 
 | Dataset | Domain | Patients | Events (K) | Event type | Features | Access | Used by |
 |---|---|---|---|---|---|---|---|
-| **EBMT** | Bone-marrow transplant | 2,279 | 4 (5 with recovery+AE) | Semi-competing | 4 categorical (6 one-hot) | Open (R `mstate`, Python `pymsm`) | Ours, MENSA (K=5), Groha |
-| **hsa synthetic** | Simulated | 5,000 | 2 | Semi-competing | Few numeric | Open | Ours, Tjandra |
+| **EBMT** | Bone-marrow transplant | 2,279 | 4 (5 with recovery+AE) | Semi-competing | 4 categorical (6 one-hot) | Open (R `mstate`, Python `pymsm`) | MENSA (K=5), Groha |
+| **hsa synthetic** | Simulated | 5,000 | 2 | Semi-competing | Few numeric | Open | Tjandra |
 | **Rotterdam** | Breast cancer | 2,982 | 2-3 (recurrence, death) | Semi-competing | ~10 clinical | Open (R `survival::rotterdam`) | MENSA |
 | **PRO-ACT** | ALS clinical trials | ~3,000 (after MENSA's filtering) | 4 (speech, swallowing, handwriting, walking) | **Non-exclusive (true multi-event)** | ~8 baseline | Registration (ncri1.partners.org/ProACT) | MENSA |
 | **MIMIC-IV** | ICU / hospital (Boston) | ~19,000 (MENSA cohort) | 3 (e.g. sepsis, respiratory failure, death) | Semi-competing | ~100 | Credentialed (PhysioNet) | MENSA |
@@ -22,8 +22,6 @@ Access: **open** = download freely; **registration** = free account + accept ter
 | **SEER** | US cancer registry | 11k-500k+ | 1-2 (cause of death) | Competing | ~17 | Blocked (SEER+ policy) | MENSA, Tjandra |
 | Dana-Farber VTE | Cancer, blood clots | - | 2 (VTE, death) | Competing | Longitudinal EHR | Private | Moon |
 | Simulated illness-death (`coxed`) | Simulated | 5,000 | 2-3 states | Multi-state | Few | Open (R package) | Groha |
-| Our colleague's 4-event synthetic | Simulated | configurable | 4 | Non-exclusive | 15 numeric | Ours (generator in her code) | Colleague |
-| MIMIC-IV demo | ICU | 100 | - | - | - | Open (PhysioNet, ODbL) | - |
 
 Patient counts and feature numbers for MENSA's datasets are from its appendix (Table 7),
 whose text extraction was partly scrambled; check them when the prepare scripts are written.
