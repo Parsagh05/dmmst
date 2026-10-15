@@ -14,7 +14,6 @@ Access: **open** = download freely; **registration** = free account + accept ter
 |---|---|---|---|---|---|---|---|---|
 | **EBMT** | Bone-marrow transplant | 2,279 | 4 (5 with recovery+AE) | Semi-competing | 4 categorical (6 one-hot) | Open (R `mstate`, Python `pymsm`) | **Have** (4 events, v2) | Ours, MENSA (K=5), Groha |
 | **hsa synthetic** | Simulated | 5,000 | 2 | Semi-competing | Few numeric | Open | **Have** (v2) | Ours, Tjandra |
-| **DeepHit synthetic** | Simulated | 30,000 | 2 | Competing | 12 numeric | Open | **Have** (v2) | Ours, DeepHit, Groha |
 | **Rotterdam** | Breast cancer | 2,982 | 2-3 (recurrence, death) | Semi-competing | ~10 clinical | Open (R `survival::rotterdam`) | **Can add now** | MENSA |
 | **PRO-ACT** | ALS clinical trials | ~3,000 (after MENSA's filtering) | 4 (speech, swallowing, handwriting, walking) | **Non-exclusive (true multi-event)** | ~8 baseline | Registration (ncri1.partners.org/ProACT) | **Can add** after registration | MENSA |
 | **MIMIC-IV** | ICU / hospital (Boston) | ~19,000 (MENSA cohort) | 3 (e.g. sepsis, respiratory failure, death) | Semi-competing | ~100 | Credentialed (PhysioNet) | **Can add** after credentialing | MENSA |
