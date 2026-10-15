@@ -6,7 +6,7 @@ than one event per patient (competing, semi-competing or fully non-exclusive).
 
 Access: **open** = download freely; **registration** = free account + accept terms;
 **credentialed** = free, but ethics course + signed data-use agreement (days to weeks);
-**blocked** / **private** = not available to us.
+**blocked** = not available to us.
 
 ## 1. Overview
 
